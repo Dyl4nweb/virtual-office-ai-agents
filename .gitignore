@@ -1,0 +1,23 @@
+node_modules/
+.next/
+out/
+build/
+dist/
+
+# SQLite Database runtime files
+data/*.db
+data/*.db-journal
+data/*.db-wal
+data/*.db-shm
+
+# Environment files
+.env*.local
+
+# OS files
+.DS_Store
+Thumbs.db
+*.log
+
+# Build & scratch cache
+tsconfig.tsbuildinfo
+scratch/
