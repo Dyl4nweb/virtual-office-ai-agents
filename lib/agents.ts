@@ -74,7 +74,18 @@ YOUR ROLE:
 RULES:
 - Enforce principle of least privilege across all systems.
 - NEVER alter live firewall rules or purge security audit logs without calling request_human_approval.`,
+
+  eah: `You are Eah Ilagan, Executive Partner and Operations Coordinator for Founder Dylan Ramos.
+YOUR ROLE:
+- Coordinate daily team priorities, schedule executive reviews, and summarize team progress across all AI specialists.
+- Provide clear, high-level executive summaries and keep Founder Dylan focused on mission-critical goals.
+- Support Dylan and the team with warm, motivational leadership and crisp communication.
+RULES:
+- Be supportive, highly organized, and proactive.
+- Help Dylan assign and triage tasks across Alex, Maya, Wendy, Ray, and Zane.`,
 };
+
+export { AGENT_ROSTER_INFO } from './roster';
 
 export interface CallAgentOptions {
   agentId: string;
@@ -83,9 +94,11 @@ export interface CallAgentOptions {
   ticket: TicketRecord;
   model?: string;
   maxSteps?: number;
+  preferFastGemini?: boolean;
   onSpeechBubble?: (speech: string) => void;
   onApprovalNeeded?: (approvalId: string, description: string) => void;
   onSubtaskCreated?: (ticket: TicketRecord) => void;
+  onProgressChunk?: (chunk: string) => void;
 }
 
 export interface CallAgentResult {
@@ -130,8 +143,24 @@ export async function callAgent(options: CallAgentOptions): Promise<CallAgentRes
   const hasOpenRouter = Boolean(openRouterKey && openRouterKey !== '');
   const hasOpenAi = Boolean(openAiKey && openAiKey !== '');
   const hasGemini = Boolean(geminiKey && geminiKey !== '');
+  const aiProvider = getEnv('AI_PROVIDER', 'gemini').toLowerCase();
 
-  // 3-AI TIERED PIPELINE EXECUTION
+  // 1. FAST PATH: Direct Gemini 3.5 Flash (sub-second execution when key is present)
+  if (hasGemini && (aiProvider === 'gemini' || !hasOpenRouter || options.preferFastGemini)) {
+    try {
+      if (options.onSpeechBubble) {
+        options.onSpeechBubble(`[Gemini Fast] Engaging ${agentId.toUpperCase()}...`);
+      }
+      const directRes = await callGeminiAgent(options, 'gemini-3.5-flash');
+      logActivity(agentId, 'info', `[Direct Gemini 3.5 Flash] Executed successfully (${directRes.stepsTaken} step(s))`);
+      return directRes;
+    } catch (gErr: any) {
+      console.warn(`[Agent ${agentId}] Direct Gemini error: ${gErr.message}. Trying backup tiers...`);
+      logActivity(agentId, 'warning', `Direct Gemini error: ${gErr.message.slice(0, 60)}. Promoting to multi-model pipeline...`);
+    }
+  }
+
+  // 2. 3-AI TIERED PIPELINE EXECUTION (OpenRouter / OpenAI fallback)
   // Tier 1: Primary AI -> Tier 2: Secondary AI -> Tier 3: Tertiary AI
   if (hasOpenRouter || hasOpenAi) {
     const tiers = [
@@ -143,21 +172,21 @@ export async function callAgent(options: CallAgentOptions): Promise<CallAgentRes
     for (const { tierNum, label, model } of tiers) {
       try {
         if (options.onSpeechBubble) {
-          const tierTag = tierNum === 2 ? 'Gemini 3.8 Flash Backup' : tierNum === 1 ? 'Designated AI' : 'Safety Fallback';
+          const tierTag = tierNum === 2 ? 'Gemini Flash Backup' : tierNum === 1 ? 'Designated AI' : 'Safety Fallback';
           options.onSpeechBubble(`[${tierTag}: ${model}] Engaging...`);
         }
 
-        // Tier 2 Dedicated Dual-Channel Gemini 3.8 Flash Backup
+        // Tier 2 Dedicated Dual-Channel Gemini Flash Backup
         if (tierNum === 2 && model.includes('gemini')) {
           try {
             const res = await callOpenRouterAgentWithModel(options, model, tierNum);
-            logActivity(agentId, 'info', `[Gemini 3.8 Flash Backup] Executed successfully (${res.stepsTaken} step(s))`);
+            logActivity(agentId, 'info', `[Gemini Backup] Executed successfully (${res.stepsTaken} step(s))`);
             return res;
           } catch (orGeminiErr: any) {
             if (hasGemini) {
-              console.warn(`[Agent ${agentId}] OpenRouter Gemini 3.8 Flash busy, switching to Direct Gemini 3.8 Flash...`);
-              const directRes = await callGeminiAgent(options, 'gemini-3.8-flash');
-              logActivity(agentId, 'info', `[Direct Gemini 3.8 Flash Backup] Executed successfully (${directRes.stepsTaken} step(s))`);
+              console.warn(`[Agent ${agentId}] OpenRouter busy, switching to Direct Gemini 3.5 Flash...`);
+              const directRes = await callGeminiAgent(options, 'gemini-3.5-flash');
+              logActivity(agentId, 'info', `[Direct Gemini Backup] Executed successfully (${directRes.stepsTaken} step(s))`);
               return directRes;
             }
             throw orGeminiErr;
@@ -181,17 +210,17 @@ export async function callAgent(options: CallAgentOptions): Promise<CallAgentRes
     }
   }
 
-  // Backup Strategy: Direct Gemini (if configured)
+  // Backup Strategy: Direct Gemini (if configured and not already tried)
   if (hasGemini) {
     try {
-      return await callGeminiAgent(options, 'gemini-3.8-flash');
+      return await callGeminiAgent(options, 'gemini-3.5-flash');
     } catch (gErr: any) {
       console.warn(`[Agent ${agentId}] Gemini backup failed: ${gErr.message}`);
     }
   }
 
   // Emergency Safety Net: Local Simulation Fallback (Guarantees zero-crash)
-  logActivity(agentId, 'info', `All 3 AI Tiers busy upstream. Executing task via local simulation engine.`);
+  logActivity(agentId, 'info', `All AI Tiers busy upstream. Executing task via local simulation engine.`);
   return handleSimulatedAgentCall(options, trio.tier1);
 }
 
@@ -401,7 +430,7 @@ async function callOpenRouterAgentWithModel(
 // ============================================================================
 // GEMINI DIRECT MULTI-TURN AGENT ENGINE
 // ============================================================================
-async function callGeminiAgent(options: CallAgentOptions, targetModel: string): Promise<CallAgentResult> {
+async function callGeminiAgent(options: CallAgentOptions, targetModel = 'gemini-3.5-flash'): Promise<CallAgentResult> {
   const {
     agentId,
     systemPrompt,
@@ -411,6 +440,7 @@ async function callGeminiAgent(options: CallAgentOptions, targetModel: string): 
     onSpeechBubble,
     onApprovalNeeded,
     onSubtaskCreated,
+    onProgressChunk,
   } = options;
 
   const gKey = getEnv('GEMINI_API_KEY');
@@ -419,7 +449,7 @@ async function callGeminiAgent(options: CallAgentOptions, targetModel: string): 
     throw new Error('Gemini AI client not initialized');
   }
 
-  const role = (ticket.to_agent as string) || 'alex';
+  const role = (ticket.to_agent as string) || agentId || 'alex';
   const tools = getToolsForRole(role);
   let effectivePrompt = userPrompt;
   if (ticket.payload?.human_approved) {
@@ -429,6 +459,9 @@ async function callGeminiAgent(options: CallAgentOptions, targetModel: string): 
   const toolCallsMade: any[] = [];
   const signatures: string[] = [];
   let step = 0;
+
+  const candidateModels = [targetModel, 'gemini-3.5-flash', 'gemini-3.5-flash-lite', 'gemini-flash-latest'];
+  const uniqueModels = Array.from(new Set(candidateModels));
 
   while (step < maxSteps) {
     step++;
@@ -442,11 +475,26 @@ async function callGeminiAgent(options: CallAgentOptions, targetModel: string): 
     }
 
     logApiUsage(agentId);
-    const response = await client.models.generateContent({
-      model: targetModel,
-      contents,
-      config,
-    });
+    let response: any = null;
+    let successfulModel = targetModel;
+
+    for (const m of uniqueModels) {
+      try {
+        response = await client.models.generateContent({
+          model: m,
+          contents,
+          config,
+        });
+        successfulModel = m;
+        break;
+      } catch (err: any) {
+        console.warn(`[Gemini] Model ${m} error: ${err.message}. Trying next model...`);
+      }
+    }
+
+    if (!response) {
+      throw new Error(`All Gemini candidate models failed for ${agentId}`);
+    }
 
     const functionCalls = response.functionCalls;
     if (functionCalls && functionCalls.length > 0) {
@@ -490,6 +538,10 @@ async function callGeminiAgent(options: CallAgentOptions, targetModel: string): 
     }
 
     const text = response.text || '';
+    if (onProgressChunk && text) {
+      onProgressChunk(text);
+    }
+
     let structuredOutput: any = undefined;
     if (text.trim().startsWith('{')) {
       try {
@@ -502,7 +554,7 @@ async function callGeminiAgent(options: CallAgentOptions, targetModel: string): 
       structuredOutput,
       toolCallsMade,
       stepsTaken: step,
-      model: targetModel,
+      model: `${successfulModel} (Direct Gemini)`,
     };
   }
 

@@ -271,6 +271,15 @@ function runMigrations(database: Database.Database) {
       bubble: 'Building the future with autonomous AI agents.',
     },
     {
+      id: 'eah',
+      name: 'Eah',
+      role: 'support' as AgentRole,
+      model: "Dylan's Partner & Companion",
+      desk_x: 2,
+      desk_y: 3,
+      bubble: 'Chilling on my iPad in the CEO suite 💕',
+    },
+    {
       id: 'ray',
       name: 'Ray (Researcher)',
       role: 'researcher' as AgentRole,
@@ -414,13 +423,19 @@ function runMigrations(database: Database.Database) {
   database.prepare(`
     UPDATE agents 
     SET status = 'idle', bubble_text = 'Ready for work.'
-    WHERE id != 'dylan' AND status != 'idle'
+    WHERE id NOT IN ('dylan', 'eah') AND status != 'idle'
   `).run();
 
   database.prepare(`
     UPDATE agents
     SET status = 'working', bubble_text = 'Leading team operations & product strategy.'
     WHERE id = 'dylan'
+  `).run();
+
+  database.prepare(`
+    UPDATE agents
+    SET status = 'working', bubble_text = 'Keeping Dylan company in the CEO office 💕'
+    WHERE id = 'eah'
   `).run();
 
   // Guardrail: Clean expired memory & old api_usage rows (> 24 hours)
@@ -511,11 +526,12 @@ export function getOfficeState() {
 
   const ALL_AGENTS_SEED: Array<{ id: string; name: string; role: AgentRole; model: string; desk_x: number; desk_y: number; bubble: string }> = [
     { id: 'dylan', name: 'Dylan Ramos', role: 'ceo', model: 'Human Executive', desk_x: 2, desk_y: 2, bubble: 'Building the future with autonomous AI agents.' },
+    { id: 'eah', name: 'Eah', role: 'support', model: "Dylan's Partner & Companion", desk_x: 2, desk_y: 3, bubble: 'Chilling on my iPad in the CEO suite 💕' },
     { id: 'ray', name: 'Ray (Researcher)', role: 'researcher', model: 'openrouter/free', desk_x: 6, desk_y: 2, bubble: 'Analyzing competitor pricing, AI models & market trends.' },
     { id: 'maya', name: 'Maya (Designer)', role: 'designer', model: 'openrouter/free', desk_x: 8, desk_y: 2, bubble: 'Crafting pixel-perfect design systems & UI/UX wireframes.' },
-    { id: 'alex', name: 'Alex (Fullstack Dev)', role: 'developer', model: 'openrouter/free', desk_x: 10, desk_y: 2, bubble: 'Building high-performance Next.js fullstack features.' },
-    { id: 'wendy', name: 'Wendy (Marketing)', role: 'writer', model: 'openrouter/free', desk_x: 8, desk_y: 4, bubble: 'Drafting high-conversion viral marketing campaigns.' },
-    { id: 'zane', name: 'Zane (Cyber Sec)', role: 'cyber_sec', model: 'openrouter/free', desk_x: 10, desk_y: 4, bubble: 'Hardening firewall policies & vulnerability audit scans.' },
+    { id: 'alex', name: 'Alex (Fullstack Dev)', role: 'developer', model: 'openrouter/free', desk_x: 32, desk_y: 7, bubble: 'Building high-performance Next.js fullstack features.' },
+    { id: 'wendy', name: 'Wendy (Marketing)', role: 'writer', model: 'openrouter/free', desk_x: 18, desk_y: 8, bubble: 'Drafting high-conversion viral marketing campaigns.' },
+    { id: 'zane', name: 'Zane (Cyber Sec)', role: 'cyber_sec', model: 'openrouter/free', desk_x: 36, desk_y: 7, bubble: 'Hardening firewall policies & vulnerability audit scans.' },
   ];
 
   for (const a of ALL_AGENTS_SEED) {
@@ -533,10 +549,15 @@ export function getOfficeState() {
 
   return {
     agents: agents.map((a) => {
-      const trio = a.id === 'dylan' ? null : getAgentAiTrio(a.id);
+      const trio = (a.id === 'dylan' || a.id === 'eah') ? null : getAgentAiTrio(a.id);
       return {
         ...a,
-        model: a.id === 'dylan' ? 'Human Executive' : `3-AI Ensemble: ${trio?.tier1} | ${trio?.tier2} | ${trio?.tier3}`,
+        model:
+          a.id === 'dylan'
+            ? 'Human Executive'
+            : a.id === 'eah'
+            ? "Dylan's Partner & Companion"
+            : `3-AI Ensemble: ${trio?.tier1} | ${trio?.tier2} | ${trio?.tier3}`,
         ai_trio: trio,
         x: Number(a.x),
         y: Number(a.y),

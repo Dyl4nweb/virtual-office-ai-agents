@@ -63,6 +63,7 @@ export interface ActivityLogRecord {
 interface SidePanelProps {
   selectedAgentId?: string | null;
   onSelectAgent?: (id: string | null) => void;
+  onOpenActionModal?: (id?: string) => void;
 }
 
 const AGENT_META: Record<
@@ -75,6 +76,13 @@ const AGENT_META: Record<
     color: '#ffbe0b',
     border: 'rgba(255, 190, 11, 0.5)',
     bg: 'rgba(255, 190, 11, 0.12)',
+  },
+  eah: {
+    name: 'Eah',
+    title: "CEO's Girlfriend & Partner",
+    color: '#f43f5e',
+    border: 'rgba(244, 63, 94, 0.45)',
+    bg: 'rgba(244, 63, 94, 0.12)',
   },
   alex: {
     name: 'Alex',
@@ -113,7 +121,7 @@ const AGENT_META: Record<
   },
 };
 
-export default function SidePanel({ selectedAgentId, onSelectAgent }: SidePanelProps) {
+export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenActionModal }: SidePanelProps) {
   // Office State
   const [agents, setAgents] = useState<AgentRecord[]>([]);
   const [tickets, setTickets] = useState<TicketRecord[]>([]);
@@ -137,6 +145,13 @@ export default function SidePanel({ selectedAgentId, onSelectAgent }: SidePanelP
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const logsEndRef = useRef<HTMLDivElement>(null);
+
+  // Sync selectedAgentId with commandAgent
+  useEffect(() => {
+    if (selectedAgentId && ['alex', 'maya', 'wendy', 'ray', 'zane', 'eah'].includes(selectedAgentId)) {
+      setCommandAgent(selectedAgentId);
+    }
+  }, [selectedAgentId]);
 
   // 1. Initial State Fetch + SSE Real-Time Sync
   useEffect(() => {
@@ -920,6 +935,40 @@ export default function SidePanel({ selectedAgentId, onSelectAgent }: SidePanelP
                   {isSubmitting ? '...' : 'SEND'}
                 </button>
               </div>
+
+              {/* Real-time Streaming Modal Trigger */}
+              <button
+                type="button"
+                onClick={() => onOpenActionModal?.(commandAgent)}
+                style={{
+                  width: '100%',
+                  backgroundColor: 'rgba(0, 240, 255, 0.08)',
+                  border: '1px solid rgba(0, 240, 255, 0.35)',
+                  color: '#00f0ff',
+                  borderRadius: '4px',
+                  padding: '7px 10px',
+                  fontFamily: "'Fira Code', monospace",
+                  fontSize: '11px',
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '6px',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 240, 255, 0.18)';
+                  e.currentTarget.style.borderColor = '#00f0ff';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = 'rgba(0, 240, 255, 0.08)';
+                  e.currentTarget.style.borderColor = 'rgba(0, 240, 255, 0.35)';
+                }}
+              >
+                <span>⚡</span>
+                <span>OPEN REAL-TIME LIVE CONSOLE</span>
+              </button>
             </form>
 
             {/* Quick Test Preset Workflows */}
@@ -1297,7 +1346,7 @@ export default function SidePanel({ selectedAgentId, onSelectAgent }: SidePanelP
             {/* -------------------------------------------------------------- */}
             {activeTab === 'agents' && (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {['dylan', 'alex', 'maya', 'wendy', 'ray', 'zane'].map((agentId) => {
+                {['dylan', 'eah', 'alex', 'maya', 'wendy', 'ray', 'zane'].map((agentId) => {
                   const meta = AGENT_META[agentId] || { name: agentId, title: 'Team Member', color: '#38bdf8', border: 'rgba(56, 189, 248, 0.4)', bg: 'rgba(56, 189, 248, 0.08)' };
                   const liveAgent = agents.find((a) => a.id === agentId);
                   const isSelected = selectedAgentId === agentId;
@@ -1383,7 +1432,7 @@ export default function SidePanel({ selectedAgentId, onSelectAgent }: SidePanelP
                       </div>
 
                       {/* 3-AI Tiered Pipeline Display */}
-                      {agentId !== 'dylan' ? (
+                      {agentId !== 'dylan' && agentId !== 'eah' ? (
                         <div
                           style={{
                             display: 'flex',
@@ -1470,6 +1519,23 @@ export default function SidePanel({ selectedAgentId, onSelectAgent }: SidePanelP
                             </span>
                           </div>
                         </div>
+                      ) : agentId === 'eah' ? (
+                        <div
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            background: 'rgba(244, 63, 94, 0.1)',
+                            border: '1px solid rgba(244, 63, 94, 0.35)',
+                            padding: '6px 10px',
+                            borderRadius: '6px',
+                            fontSize: '10px',
+                            fontFamily: "'Fira Code', monospace",
+                            color: '#fb7185',
+                          }}
+                        >
+                          <span>💖 Executive Partner &amp; Dylan&apos;s Girlfriend • iPad Chilling in CEO Suite</span>
+                        </div>
                       ) : (
                         <div
                           style={{
@@ -1508,6 +1574,41 @@ export default function SidePanel({ selectedAgentId, onSelectAgent }: SidePanelP
                           Ticket: {liveAgent?.current_ticket_id ? liveAgent.current_ticket_id.slice(0, 10) : 'None'}
                         </span>
                       </div>
+
+                      {agentId !== 'dylan' && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onOpenActionModal?.(agentId);
+                          }}
+                          style={{
+                            marginTop: '4px',
+                            backgroundColor: `${meta.color}22`,
+                            border: `1px solid ${meta.color}`,
+                            color: meta.color,
+                            borderRadius: '6px',
+                            padding: '6px 10px',
+                            fontSize: '9px',
+                            fontFamily: "'Press Start 2P', monospace",
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            transition: 'all 0.15s ease',
+                          }}
+                          onMouseEnter={(e) => {
+                            e.currentTarget.style.backgroundColor = `${meta.color}44`;
+                          }}
+                          onMouseLeave={(e) => {
+                            e.currentTarget.style.backgroundColor = `${meta.color}22`;
+                          }}
+                        >
+                          <span>⚡</span>
+                          <span>ASSIGN TASK (REAL-TIME)</span>
+                        </button>
+                      )}
                     </div>
                   );
                 })}

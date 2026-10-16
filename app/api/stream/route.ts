@@ -39,6 +39,8 @@ export async function GET(request: NextRequest) {
       const onApprovalResolved = forwardEvent('approval:resolved');
       const onActivityLog = forwardEvent('activity:log');
       const onKillswitchState = forwardEvent('killswitch:state');
+      const onMeetingStart = forwardEvent('office:meeting:start');
+      const onMeetingEnd = forwardEvent('office:meeting:end');
 
       officeEmitter.on('agent:move', onAgentMove);
       officeEmitter.on('agent:status', onAgentStatus);
@@ -48,6 +50,8 @@ export async function GET(request: NextRequest) {
       officeEmitter.on('approval:resolved', onApprovalResolved);
       officeEmitter.on('activity:log', onActivityLog);
       officeEmitter.on('killswitch:state', onKillswitchState);
+      officeEmitter.on('office:meeting:start', onMeetingStart);
+      officeEmitter.on('office:meeting:end', onMeetingEnd);
 
       // 3. Heartbeat every 15 seconds to keep connection alive
       const heartbeatInterval = setInterval(() => {
@@ -69,6 +73,8 @@ export async function GET(request: NextRequest) {
         officeEmitter.off('approval:resolved', onApprovalResolved);
         officeEmitter.off('activity:log', onActivityLog);
         officeEmitter.off('killswitch:state', onKillswitchState);
+        officeEmitter.off('office:meeting:start', onMeetingStart);
+        officeEmitter.off('office:meeting:end', onMeetingEnd);
         try {
           controller.close();
         } catch {}

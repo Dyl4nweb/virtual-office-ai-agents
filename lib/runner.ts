@@ -36,18 +36,18 @@ export const officeEmitter = getOfficeEmitter();
 // Desk & Meeting Seat Coordinates (in TILE GRID units, 32px scale)
 export const OFFICE_TILES = {
   DESKS: {
-    ray: { x: 18, y: 5 },
-    maya: { x: 22, y: 5 },
-    alex: { x: 26, y: 5 },
-    wendy: { x: 20, y: 8 },
-    zane: { x: 24, y: 8 },
+    ray: { x: 15, y: 4 },
+    maya: { x: 22, y: 4 },
+    wendy: { x: 18, y: 8 },
+    alex: { x: 32, y: 7 },
+    zane: { x: 36, y: 7 },
   },
   MEETING_SEATS: {
-    ray: { x: 12, y: 14 },
-    maya: { x: 14, y: 14 },
-    alex: { x: 16, y: 14 },
-    wendy: { x: 13, y: 16 },
-    zane: { x: 15, y: 16 },
+    ray: { x: 27, y: 14 },
+    maya: { x: 29, y: 14 },
+    alex: { x: 32, y: 14 },
+    wendy: { x: 28, y: 18 },
+    zane: { x: 31, y: 18 },
   },
 };
 
@@ -173,6 +173,7 @@ async function executeAgentTicket(agentId: string, ticket: TicketRecord) {
       full_text: result.text,
       structured: result.structuredOutput,
       tools_used: result.toolCallsMade.map((t) => t.name),
+      tool_calls: result.toolCallsMade,
       completed_at: new Date().toISOString(),
     });
     officeEmitter.emit('ticket:updated', getTicket(ticket.id)!);
@@ -204,5 +205,14 @@ async function executeAgentTicket(agentId: string, ticket: TicketRecord) {
       officeEmitter.emit('agent:move', { agentId, x: desk.x, y: desk.y, duration: 1400 });
     }
     runningAgents.delete(agentId);
+  }
+}
+
+export function executeAgentTicketImmediately(ticket: TicketRecord) {
+  if (ticket && ticket.to_agent) {
+    // Non-blocking trigger of immediate execution
+    executeAgentTicket(ticket.to_agent, ticket).catch((err) => {
+      console.error('[Runner] Immediate execution error:', err);
+    });
   }
 }

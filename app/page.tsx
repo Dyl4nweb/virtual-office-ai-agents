@@ -3,7 +3,8 @@
 import dynamic from 'next/dynamic';
 import React, { useState } from 'react';
 import SidePanel from '@/components/SidePanel';
-import PixelOffice from '@/components/PixelOffice';
+import WorkerActionModal from '@/components/WorkerActionModal';
+import { AGENT_ROSTER_INFO } from '@/lib/roster';
 
 // Dynamically load Three.js 3D Voxel Scene on client-side only (no SSR)
 const Office3D = dynamic(() => import('@/components/Office3D'), {
@@ -27,8 +28,21 @@ const Office3D = dynamic(() => import('@/components/Office3D'), {
 });
 
 export default function HomePage() {
-  const [selectedAgentId, setSelectedAgentId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'pixel' | 'voxel'>('pixel');
+  const [selectedAgentId, setSelectedAgentId] = useState<string | null>('alex');
+  const [isActionModalOpen, setIsActionModalOpen] = useState<boolean>(false);
+
+  // Triggered when an agent is clicked in 3D or HUD
+  const handleSelectAgent = (agentId: string | null) => {
+    setSelectedAgentId(agentId);
+    if (agentId && ['alex', 'maya', 'wendy', 'ray', 'zane', 'eah'].includes(agentId)) {
+      setIsActionModalOpen(true);
+    }
+  };
+
+  const handleOpenActionModal = (agentId?: string) => {
+    if (agentId) setSelectedAgentId(agentId);
+    setIsActionModalOpen(true);
+  };
 
   return (
     <main
@@ -43,75 +57,26 @@ export default function HomePage() {
     >
       {/* Viewport Container */}
       <div style={{ flex: 1, height: '100%', position: 'relative' }}>
-        {/* Top-Right Mode Toggle */}
-        <div
-          style={{
-            position: 'absolute',
-            top: '16px',
-            right: '20px',
-            zIndex: 25,
-            background: 'rgba(15, 23, 42, 0.9)',
-            backdropFilter: 'blur(10px)',
-            border: '1px solid rgba(99, 115, 178, 0.3)',
-            borderRadius: '8px',
-            padding: '4px',
-            display: 'flex',
-            gap: '4px',
-          }}
-        >
-          <button
-            onClick={() => setViewMode('pixel')}
-            style={{
-              background: viewMode === 'pixel' ? '#00f0ff' : 'transparent',
-              color: viewMode === 'pixel' ? '#0a0c14' : '#94a3b8',
-              border: 'none',
-              borderRadius: '5px',
-              padding: '6px 10px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '9px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            🕹️ PIXEL VIEW
-          </button>
-          <button
-            onClick={() => setViewMode('voxel')}
-            style={{
-              background: viewMode === 'voxel' ? '#00f0ff' : 'transparent',
-              color: viewMode === 'voxel' ? '#0a0c14' : '#94a3b8',
-              border: 'none',
-              borderRadius: '5px',
-              padding: '6px 10px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '9px',
-              fontWeight: 'bold',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            🧊 3D VOXEL
-          </button>
-        </div>
-
-        {/* View Switcher: Pixel Office (Default, matches image) vs 3D Voxel View */}
-        {viewMode === 'pixel' ? (
-          <PixelOffice
-            selectedAgentId={selectedAgentId}
-            onSelectAgent={(agentId) => setSelectedAgentId(agentId)}
-          />
-        ) : (
-          <Office3D
-            selectedAgentId={selectedAgentId}
-            onSelectAgent={(agentId) => setSelectedAgentId(agentId)}
-          />
-        )}
+        {/* Dedicated Pure 3D Voxel Office Canvas with Master Executive HUD Header */}
+        <Office3D
+          selectedAgentId={selectedAgentId}
+          onSelectAgent={handleSelectAgent}
+          onOpenActionModal={handleOpenActionModal}
+        />
       </div>
 
       {/* Control Panel / Live HUD Sidebar for Dylan Ramos */}
       <SidePanel
         selectedAgentId={selectedAgentId}
+        onSelectAgent={handleSelectAgent}
+        onOpenActionModal={handleOpenActionModal}
+      />
+
+      {/* Interactive Real-Time AI Task Assignment Modal */}
+      <WorkerActionModal
+        agentId={selectedAgentId}
+        isOpen={isActionModalOpen}
+        onClose={() => setIsActionModalOpen(false)}
         onSelectAgent={(agentId) => setSelectedAgentId(agentId)}
       />
     </main>

@@ -8,6 +8,8 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 export interface PixelOfficeProps {
   selectedAgentId?: string | null;
   onSelectAgent?: (id: string | null) => void;
+  viewMode?: 'pixel' | 'voxel';
+  onViewModeChange?: (mode: 'pixel' | 'voxel') => void;
 }
 
 export interface Waypoint {
@@ -51,10 +53,381 @@ export interface CharacterEntity {
     | 'kitchen_work'
     | 'garden_relax'
     | 'sofa_relax'
+    | 'eah_cooking'
+    | 'eah_carrying_food'
+    | 'eah_brewing_coffee'
+    | 'eah_carrying_coffee'
+    | 'eah_serving'
+    | 'eah_petting_dog'
     | 'syncing'
     | 'reporting'
     | 'stretching'
     | 'meeting';
+}
+
+// ============================================================================
+// 16-BIT RETRO RPG CHARACTER SPRITE PALETTES (4 Directions, 3-Frame Walk Cycles)
+// ============================================================================
+export interface SpritePalette {
+  hairBase: string;
+  hairLight: string;
+  hairDark: string;
+  skinBase: string;
+  skinDark: string;
+  eyeColor: string;
+  shirtBase: string;
+  shirtLight: string;
+  shirtDark: string;
+  pantsBase: string;
+  pantsDark: string;
+  shoeColor: string;
+  soleColor: string;
+  blushColor?: string;
+}
+
+export const CHARACTER_SPRITE_PALETTES: Record<string, SpritePalette> = {
+  dylan: {
+    hairBase: '#5c3a21',
+    hairLight: '#8d532a',
+    hairDark: '#382012',
+    skinBase: '#ffdfba',
+    skinDark: '#e2b892',
+    eyeColor: '#78350f',
+    shirtBase: '#1e1b4b',
+    shirtLight: '#3730a3',
+    shirtDark: '#0f0d26',
+    pantsBase: '#1e293b',
+    pantsDark: '#0f172a',
+    shoeColor: '#9a3412',
+    soleColor: '#fef3c7',
+  },
+  eah: {
+    hairBase: '#1c1917',
+    hairLight: '#44403c',
+    hairDark: '#0c0a09',
+    skinBase: '#ffe4d6',
+    skinDark: '#fbcfe8',
+    eyeColor: '#451a03',
+    shirtBase: '#fb7185',
+    shirtLight: '#fda4af',
+    shirtDark: '#e11d48',
+    pantsBase: '#334155',
+    pantsDark: '#1e293b',
+    shoeColor: '#f43f5e',
+    soleColor: '#fff1f2',
+    blushColor: 'rgba(244, 63, 94, 0.45)',
+  },
+  alex: {
+    hairBase: '#1c1917',
+    hairLight: '#334155',
+    hairDark: '#0f172a',
+    skinBase: '#fed7aa',
+    skinDark: '#fdba74',
+    eyeColor: '#0284c7',
+    shirtBase: '#ea580c',
+    shirtLight: '#f97316',
+    shirtDark: '#9a3412',
+    pantsBase: '#334155',
+    pantsDark: '#1e293b',
+    shoeColor: '#ea580c',
+    soleColor: '#fff7ed',
+  },
+  maya: {
+    hairBase: '#4a044e',
+    hairLight: '#a21caf',
+    hairDark: '#2e0234',
+    skinBase: '#ffedd5',
+    skinDark: '#fed7aa',
+    eyeColor: '#9333ea',
+    shirtBase: '#db2777',
+    shirtLight: '#f472b6',
+    shirtDark: '#9d174d',
+    pantsBase: '#0f172a',
+    pantsDark: '#020617',
+    shoeColor: '#ec4899',
+    soleColor: '#fdf2f8',
+    blushColor: 'rgba(236, 72, 153, 0.4)',
+  },
+  ray: {
+    hairBase: '#3e2723',
+    hairLight: '#5d4037',
+    hairDark: '#271714',
+    skinBase: '#fed7aa',
+    skinDark: '#fdba74',
+    eyeColor: '#15803d',
+    shirtBase: '#0284c7',
+    shirtLight: '#38bdf8',
+    shirtDark: '#0369a1',
+    pantsBase: '#374151',
+    pantsDark: '#1f2937',
+    shoeColor: '#ffffff',
+    soleColor: '#94a3b8',
+  },
+  wendy: {
+    hairBase: '#b45309',
+    hairLight: '#f59e0b',
+    hairDark: '#78350f',
+    skinBase: '#fed7aa',
+    skinDark: '#fdba74',
+    eyeColor: '#92400e',
+    shirtBase: '#059669',
+    shirtLight: '#34d399',
+    shirtDark: '#047857',
+    pantsBase: '#1e293b',
+    pantsDark: '#0f172a',
+    shoeColor: '#b45309',
+    soleColor: '#fef3c7',
+  },
+  zane: {
+    hairBase: '#052e16',
+    hairLight: '#166534',
+    hairDark: '#021e0e',
+    skinBase: '#e2e8f0',
+    skinDark: '#cbd5e1',
+    eyeColor: '#475569',
+    shirtBase: '#15803d',
+    shirtLight: '#22c55e',
+    shirtDark: '#14532d',
+    pantsBase: '#0f172a',
+    pantsDark: '#020617',
+    shoeColor: '#15803d',
+    soleColor: '#0f172a',
+  },
+};
+
+// ============================================================================
+// CHARACTER-SPECIFIC LAPTOP HARDWARE FINISHES (MacBook, Starlight, ThinkPad, Blade)
+// ============================================================================
+export interface LaptopStyle2D {
+  baseColor: string;
+  lidColor: string;
+  kbColor: string;
+  trackpadColor: string;
+  logoColor: string;
+  hasAppleLogo: boolean;
+  hasTrackPoint: boolean; // Iconic IBM/Lenovo ThinkPad red nub
+  accentGlow: string;
+  screenBg: string;
+  brandName: string;
+}
+
+export const LAPTOP_STYLES_2D: Record<string, LaptopStyle2D> = {
+  dylan: {
+    baseColor: '#cbd5e1',     // Apple Anodized Silver MacBook Pro
+    lidColor: '#94a3b8',
+    kbColor: '#1e293b',
+    trackpadColor: '#94a3b8',
+    logoColor: '#ffffff',
+    hasAppleLogo: true,
+    hasTrackPoint: false,
+    accentGlow: '#00f0ff',
+    screenBg: '#082f49',
+    brandName: 'MacBook Pro Silver',
+  },
+  maya: {
+    baseColor: '#ebe3d7',     // Apple Starlight (Pale Gold / Champagne Silver)
+    lidColor: '#d6cbbd',
+    kbColor: '#1e293b',
+    trackpadColor: '#c4b5a5',
+    logoColor: '#ffffff',
+    hasAppleLogo: true,
+    hasTrackPoint: false,
+    accentGlow: '#ec4899',
+    screenBg: '#2e1065',
+    brandName: 'MacBook Air Starlight',
+  },
+  alex: {
+    baseColor: '#475569',     // Space Gray / Dark Titanium Blade
+    lidColor: '#334155',
+    kbColor: '#0f172a',
+    trackpadColor: '#1e293b',
+    logoColor: '#f97316',
+    hasAppleLogo: false,
+    hasTrackPoint: false,
+    accentGlow: '#f97316',
+    screenBg: '#0f172a',
+    brandName: 'Titanium Blade',
+  },
+  ray: {
+    baseColor: '#e2e8f0',     // Raw Silver MacBook Pro
+    lidColor: '#cbd5e1',
+    kbColor: '#1e293b',
+    trackpadColor: '#94a3b8',
+    logoColor: '#ffffff',
+    hasAppleLogo: true,
+    hasTrackPoint: false,
+    accentGlow: '#00f0ff',
+    screenBg: '#022c22',
+    brandName: 'MacBook Pro Silver',
+  },
+  wendy: {
+    baseColor: '#1e293b',     // Apple Midnight Deep Blue MacBook Pro
+    lidColor: '#0f172a',
+    kbColor: '#0a0f1d',
+    trackpadColor: '#334155',
+    logoColor: '#ffffff',
+    hasAppleLogo: true,
+    hasTrackPoint: false,
+    accentGlow: '#10b981',
+    screenBg: '#064e3b',
+    brandName: 'MacBook Pro Midnight',
+  },
+  zane: {
+    baseColor: '#18181b',     // Matte Stealth Carbon Black ThinkPad X1
+    lidColor: '#09090b',
+    kbColor: '#000000',
+    trackpadColor: '#27272a',
+    logoColor: '#ef4444',     // Red dot ThinkPad lid LED
+    hasAppleLogo: false,
+    hasTrackPoint: true,      // Iconic Red TrackPoint nub
+    accentGlow: '#22c55e',
+    screenBg: '#021e0e',
+    brandName: 'ThinkPad X1 Carbon',
+  },
+  eah: {
+    baseColor: '#f8fafc',     // iPad Pro on White Magic Keyboard
+    lidColor: '#e2e8f0',
+    kbColor: '#f1f5f9',
+    trackpadColor: '#cbd5e1',
+    logoColor: '#ffffff',
+    hasAppleLogo: true,
+    hasTrackPoint: false,
+    accentGlow: '#a855f7',
+    screenBg: '#1e1b4b',
+    brandName: 'iPad Pro Folio',
+  },
+};
+
+/**
+ * Renders an authentic high-end battle-station / workstation desktop PC tower (Lian Li O11 / NZXT style)
+ * with dark titanium chassis, tempered glass side panel, illuminated AIO liquid cooling pump,
+ * braided coolant tubes, RGB DDR5 RAM sticks, triple-slot RTX 4090 GPU with glowing logo strip,
+ * front intake fan RGB rings, and top 360mm radiator exhaust.
+ */
+export function drawLegitPCTower2D(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number = 18,
+  h: number = 38,
+  frame: number = 0,
+  theme: 'cyan' | 'orange' | 'emerald' | 'pink' = 'cyan'
+) {
+  const themeColors = {
+    cyan: { primary: '#00f0ff', secondary: '#38bdf8', aio: '#00f0ff', gpu: '#38bdf8', ram: '#22d3ee' },
+    orange: { primary: '#f97316', secondary: '#fb923c', aio: '#ea580c', gpu: '#f97316', ram: '#fdba74' },
+    emerald: { primary: '#22c55e', secondary: '#4ade80', aio: '#15803d', gpu: '#22c55e', ram: '#86efac' },
+    pink: { primary: '#ec4899', secondary: '#f472b6', aio: '#db2777', gpu: '#ec4899', ram: '#f9a8d4' },
+  };
+  const pal = themeColors[theme] || themeColors.cyan;
+  const pulse = 0.7 + Math.sin(frame * 0.1) * 0.3;
+
+  // Drop shadow
+  ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+  ctx.fillRect(x + 2, y + 3, w, h);
+
+  // Outer Aluminum / Titanium Chassis
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(x, y, w, h);
+
+  // Anti-vibration Rubber Feet
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(x + 2, y + h - 2, 4, 2);
+  ctx.fillRect(x + w - 6, y + h - 2, 4, 2);
+
+  // Top 360mm Radiator Exhaust Mesh
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(x + 2, y + 1, w - 4, 3);
+  ctx.fillStyle = pal.primary;
+  ctx.globalAlpha = 0.5 * pulse;
+  ctx.fillRect(x + 3, y + 2, w - 6, 1);
+  ctx.globalAlpha = 1.0;
+
+  // Tempered Glass Main Side Window (Glass viewport: x + 2, y + 5, w - 4, h - 14)
+  const gwX = x + 2;
+  const gwY = y + 5;
+  const gwW = w - 4;
+  const gwH = h - 14;
+  ctx.fillStyle = '#05070d';
+  ctx.fillRect(gwX, gwY, gwW, gwH);
+
+  // Motherboard tray background
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(gwX + 1, gwY + 1, gwW - 2, gwH - 2);
+
+  // 1. AIO Liquid CPU Cooler Pump Block (Upper Center)
+  const pumpX = gwX + Math.floor(gwW / 2) - 3;
+  const pumpY = gwY + 4;
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(pumpX - 1, pumpY - 1, 7, 7);
+  // Glowing circular RGB pump infinity mirror
+  ctx.fillStyle = pal.aio;
+  ctx.beginPath();
+  ctx.arc(pumpX + 2.5, pumpY + 2.5, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(pumpX + 2, pumpY + 2, 1, 1); // Center logo dot
+
+  // Braided Sleeved Coolant Tubes arching up to radiator
+  ctx.strokeStyle = '#334155';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pumpX, pumpY + 1);
+  ctx.quadraticCurveTo(gwX + 2, gwY + 1, gwX + 4, gwY);
+  ctx.moveTo(pumpX + 5, pumpY + 1);
+  ctx.quadraticCurveTo(gwX + gwW - 2, gwY + 1, gwX + gwW - 4, gwY);
+  ctx.stroke();
+
+  // 2. High-Speed RGB DDR5 RAM Sticks (Right of CPU Pump)
+  const ramX = pumpX + 6;
+  const ramY = pumpY;
+  ctx.fillStyle = '#0f172a';
+  ctx.fillRect(ramX, ramY, 3, 7);
+  // Dual glowing LED heatspreaders
+  ctx.fillStyle = pal.ram;
+  ctx.fillRect(ramX, ramY, 1, 6);
+  ctx.fillStyle = pal.primary;
+  ctx.fillRect(ramX + 2, ramY + 1, 1, 5);
+
+  // 3. Triple-Slot RTX 4090 Workstation GPU (Lower half of chamber)
+  const gpuX = gwX + 1;
+  const gpuY = gwY + 13;
+  const gpuW = gwW - 2;
+  const gpuH = 6;
+  // GPU backplate & heatsink fins
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(gpuX, gpuY, gpuW, gpuH);
+  ctx.fillStyle = '#334155';
+  ctx.fillRect(gpuX + 1, gpuY + 1, gpuW - 2, 1); // Metal edge bevel
+  // Glowing Side Branding Logo Bar ("GEFORCE RTX / WORKSTATION")
+  ctx.fillStyle = pal.gpu;
+  ctx.fillRect(gpuX + 2, gpuY + 2, Math.max(4, gpuW - 4), 2);
+  // GPU Axial Fan shroud intake vents underneath
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(gpuX + 2, gpuY + 4, 3, 1);
+  ctx.fillRect(gpuX + 6, gpuY + 4, 3, 1);
+
+  // 4. Tempered Glass Reflection Sheen (diagonal shine across glass panel)
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.18)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(gwX + 2, gwY + 2);
+  ctx.lineTo(gwX + gwW - 2, gwY + gwH - 4);
+  ctx.stroke();
+
+  // 5. Basement PSU Shroud Compartment (Bottom partition)
+  const psuY = y + h - 8;
+  ctx.fillStyle = '#090d16';
+  ctx.fillRect(x + 2, psuY, w - 4, 6);
+  ctx.fillStyle = '#1e293b';
+  ctx.fillRect(x + 3, psuY + 1, w - 6, 1);
+  // Illuminated power badge
+  ctx.fillStyle = pal.secondary;
+  ctx.fillRect(x + 4, psuY + 3, 3, 2);
+
+  // 6. Front Bezel with Power button LED
+  ctx.fillStyle = (frame % 30 < 25) ? '#22c55e' : '#15803d';
+  ctx.fillRect(x + 1, y + 2, 2, 2);
 }
 
 // 10 Full Tech Startup Team Members (Dylan CEO + 9 Autonomous Specialists)
@@ -67,14 +440,14 @@ const INITIAL_CHARACTERS: Record<string, CharacterEntity> = {
     currentY: 76,
     deskX: 145,
     deskY: 76,
-    seatX: 236,
-    seatY: 424,
+    seatX: 664,
+    seatY: 398,
     path: [],
     isWalking: false,
     isMeeting: false,
     isSeated: true,
     status: 'working',
-    statusText: 'You',
+    statusText: 'Founder & CEO 👑',
     emoji: '👑',
     avatarColor: '#ffbe0b',
     facing: 'down',
@@ -82,69 +455,49 @@ const INITIAL_CHARACTERS: Record<string, CharacterEntity> = {
     hairColor: '#5c3a21', // Styled brown hair
     routineTimer: 999999, // Dylan is human player controlled
   },
-  // Row 1 (AI Researcher, Designer, Fullstack Developer)
-  ray: {
-    id: 'ray',
-    name: 'Ray',
-    role: 'Lead AI Researcher',
-    currentX: 374,
-    currentY: 104,
-    deskX: 374,
-    deskY: 104,
-    seatX: 320,
-    seatY: 372,
+  // CEO Suite Permanent Resident: Dylan's Partner Eah Ilagan
+  eah: {
+    id: 'eah',
+    name: 'Eah Ilagan',
+    role: "Executive Partner",
+    currentX: 64,
+    currentY: 175,
+    deskX: 64,
+    deskY: 175,
+    seatX: 64,
+    seatY: 175,
     path: [],
     isWalking: false,
     isMeeting: false,
     isSeated: true,
-    status: 'idle',
-    statusText: 'Deep focus',
-    emoji: '🔍',
-    avatarColor: '#38bdf8',
-    facing: 'up',
-    shirtColor: '#0284c7', // Tech blue
-    hairColor: '#3e2723',
-    routineTimer: 10,
+    status: 'working',
+    statusText: 'With Dylan Ramos ✨',
+    emoji: '💖',
+    avatarColor: '#f43f5e',
+    facing: 'right',
+    shirtColor: '#fb7185', // Soft pastel blush rose top
+    hairColor: '#1c1917', // Luscious dark hair
+    routineTimer: 18, // Active autonomous caring cycles (cooking, coffee, Dylan delivery)
+    activity: 'sofa_relax',
+    bubbleText: 'Chilling on my iPad in our suite beside Dylan! ✨',
   },
-  maya: {
-    id: 'maya',
-    name: 'Maya',
-    role: 'UI/UX & Product Designer',
-    currentX: 544,
-    currentY: 104,
-    deskX: 544,
-    deskY: 104,
-    seatX: 420,
-    seatY: 372,
-    path: [],
-    isWalking: false,
-    isMeeting: false,
-    isSeated: true,
-    status: 'idle',
-    statusText: 'Figma prototypes',
-    emoji: '🎨',
-    avatarColor: '#ec4899',
-    facing: 'up',
-    shirtColor: '#db2777', // Magenta pink
-    hairColor: '#4a044e', // Plum styled bob
-    routineTimer: 12,
-  },
+  // Zone 6: High-Tech Cyber Security & Server Vault (Alex Fullstack + Zane Cybersec Together!)
   alex: {
     id: 'alex',
     name: 'Alex',
     role: 'Lead Fullstack Developer',
-    currentX: 714,
-    currentY: 104,
-    deskX: 714,
-    deskY: 104,
-    seatX: 520,
-    seatY: 372,
+    currentX: 890,
+    currentY: 220,
+    deskX: 890,
+    deskY: 220,
+    seatX: 835,
+    seatY: 348,
     path: [],
     isWalking: false,
     isMeeting: false,
     isSeated: true,
     status: 'idle',
-    statusText: 'Architecting APIs',
+    statusText: 'Fullstack & Edge architecture',
     emoji: '💻',
     avatarColor: '#f97316',
     facing: 'up',
@@ -152,17 +505,64 @@ const INITIAL_CHARACTERS: Record<string, CharacterEntity> = {
     hairColor: '#1c1917', // Jet black hair
     routineTimer: 14,
   },
-  // Row 2 (Marketing Strategist, Cybersecurity)
+  // Bullpen Row 1 (Maya Designer, Ray Researcher)
+  maya: {
+    id: 'maya',
+    name: 'Maya',
+    role: 'UI/UX & Product Designer',
+    currentX: 470,
+    currentY: 104,
+    deskX: 470,
+    deskY: 104,
+    seatX: 775,
+    seatY: 348,
+    path: [],
+    isWalking: false,
+    isMeeting: false,
+    isSeated: true,
+    status: 'idle',
+    statusText: 'Graphic tablet drawing',
+    emoji: '🎨',
+    avatarColor: '#ec4899',
+    facing: 'up',
+    shirtColor: '#db2777', // Magenta pink
+    hairColor: '#4a044e', // Plum styled bob
+    routineTimer: 12,
+  },
+  ray: {
+    id: 'ray',
+    name: 'Ray',
+    role: 'Lead AI Researcher',
+    currentX: 680,
+    currentY: 104,
+    deskX: 680,
+    deskY: 104,
+    seatX: 720,
+    seatY: 348,
+    path: [],
+    isWalking: false,
+    isMeeting: false,
+    isSeated: true,
+    status: 'idle',
+    statusText: 'Terminal research & tea',
+    emoji: '🔍',
+    avatarColor: '#38bdf8',
+    facing: 'up',
+    shirtColor: '#0284c7', // Tech blue
+    hairColor: '#3e2723',
+    routineTimer: 10,
+  },
+  // Bullpen Row 2 (Marketing Strategist)
   wendy: {
     id: 'wendy',
     name: 'Wendy',
     role: 'Marketing Strategist',
-    currentX: 459,
+    currentX: 575,
     currentY: 218,
-    deskX: 459,
+    deskX: 575,
     deskY: 218,
-    seatX: 360,
-    seatY: 462,
+    seatX: 745,
+    seatY: 432,
     path: [],
     isWalking: false,
     isMeeting: false,
@@ -176,22 +576,23 @@ const INITIAL_CHARACTERS: Record<string, CharacterEntity> = {
     hairColor: '#b45309', // Auburn hair
     routineTimer: 20,
   },
+  // Zone 6: High-Tech Cyber Security & Server Vault (Zane with Alex)
   zane: {
     id: 'zane',
     name: 'Zane',
     role: 'Cybersecurity Specialist',
-    currentX: 629,
-    currentY: 218,
-    deskX: 629,
-    deskY: 218,
-    seatX: 470,
-    seatY: 462,
+    currentX: 970,
+    currentY: 220,
+    deskX: 970,
+    deskY: 220,
+    seatX: 805,
+    seatY: 432,
     path: [],
     isWalking: false,
     isMeeting: false,
     isSeated: true,
     status: 'idle',
-    statusText: 'Zero-trust audit',
+    statusText: 'Zero-trust SOC & cyber telemetry',
     emoji: '🛡️',
     avatarColor: '#22c55e',
     facing: 'up',
@@ -259,17 +660,30 @@ export const CASUAL_CONVERSATIONS: Array<{
     first: { speaker: 'wendy', text: 'Working from the boardroom table is so productive.' },
     reply: { speaker: 'ray', text: 'Agreed! Perfect environment for deep literature review.' },
   },
+  {
+    first: { speaker: 'dylan', text: 'Hey Eah, thank you for keeping me company today 💕' },
+    reply: { speaker: 'eah', text: 'Always here for you Dylan! Chilling on my iPad ✨' },
+  },
+  {
+    first: { speaker: 'eah', text: 'Dylan, don\'t forget to take a break, babe! 💖' },
+    reply: { speaker: 'dylan', text: 'Will do babe! Having you here makes work so much better 🥰' },
+  },
+  {
+    first: { speaker: 'eah', text: 'Found some great UI inspiration on my iPad! 📱✨' },
+    reply: { speaker: 'dylan', text: 'Show me later babe! Your aesthetic taste is unmatched 💕' },
+  },
 ];
 
-// Helper to test if coordinates are within the executive boardroom suite
-export const isBoardroomZone = (x: number, y: number) => x > 226 && x <= 590 && y > 280;
+// Helper to test if coordinates are within the executive boardroom suite (Zone 4: Right Wing)
+export const isBoardroomZone = (x: number, y: number) => x > 560 && y > 280;
+export const isLoungeZone = (x: number, y: number) => x > 226 && x <= 560 && y > 280;
 
 // ============================================================================
 // SOLID COLLISION BOXES FOR SMOOTH HQ NAVIGATION
 // ============================================================================
 export function isWalkable(x: number, y: number): boolean {
-  // Outer perimeter walls
-  if (x < 24 || x > 816 || y < 24 || y > 498) return false;
+  // Outer perimeter walls (expanded to x = 1016)
+  if (x < 24 || x > 1016 || y < 24 || y > 498) return false;
 
   // Vertical Glass Wall between CEO Suite & Bullpen (x = 276, ONLY between y: 16..280!)
   // Wide open doorway is at y in [180, 260]
@@ -277,21 +691,36 @@ export function isWalkable(x: number, y: number): boolean {
     if (y < 180 || y > 260) return false;
   }
 
-  // Horizontal Glass Wall between Bullpen & Boardroom (y = 280, x = 16..824)
-  // Wide double doors are at x in [480, 550]
+  // Vertical Security Divider Wall between Bullpen & Server Room (x = 836, y in [16, 280])
+  // Doorway is at y in [130, 185]
+  if (x >= 832 && x <= 840 && y <= 280) {
+    if (y < 130 || y > 185) return false;
+  }
+
+  // Horizontal Glass Wall between Bullpen & South Wing Suites (y = 280, x = 16..1024)
+  // Double doors into Lounge are at x in [480, 550]
   if (y >= 276 && y <= 284) {
     if (x < 480 || x > 550) return false;
   }
 
-  // Vertical Glass Divider between Kitchen & Boardroom (x = 226, y in [280, 504])
+  // Server Room 42U Server Racks (North wall: x in [848, 1016], y in [20, 68])
+  if (x >= 848 && x <= 1016 && y >= 20 && y <= 68) return false;
+
+  // Server Room Dual Command Pod (Alex & Zane + bridge: x in [850, 1012], y in [174, 220])
+  if (x >= 850 && x <= 1012 && y >= 174 && y <= 220) return false;
+
+  // Server Room Diagnostic Crash Cart (x in [848, 880], y in [96, 136])
+  if (x >= 848 && x <= 880 && y >= 96 && y <= 136) return false;
+
+  // Vertical Glass Divider between Kitchen & Lounge (x = 226, y in [280, 504])
   // Doorway is at y in [310, 370]
   if (x >= 222 && x <= 230 && y >= 280 && y <= 504) {
     if (y < 310 || y > 370) return false;
   }
 
-  // Vertical Glass Divider between Boardroom & Lounge (x = 590, y in [280, 504])
+  // Vertical Glass Divider between Lounge & Boardroom (x = 560, y in [280, 504])
   // Doorway is at y in [310, 370]
-  if (x >= 586 && x <= 594 && y >= 280 && y <= 504) {
+  if (x >= 556 && x <= 564 && y >= 280 && y <= 504) {
     if (y < 310 || y > 370) return false;
   }
 
@@ -321,26 +750,35 @@ export function isWalkable(x: number, y: number): boolean {
   // CEO Sofa (x: 36..150, y: 232..272)
   if (x >= 36 && x <= 150 && y >= 232 && y <= 272) return false;
 
-  // Bullpen 2x3 Workstation Desks Grid (Cols: 304..444, 474..614, 644..784; Rows: 46..96, 160..210)
-  const isCol = (x >= 302 && x <= 446) || (x >= 472 && x <= 616) || (x >= 642 && x <= 786);
-  const isRow = (y >= 44 && y <= 98) || (y >= 158 && y <= 212);
-  if (isCol && isRow) return false;
+  // Bullpen Workstations: Row 1 (Maya: 410..550, Ray: 600..740, y: 44..98) & Row 2 (Wendy: 510..645, y: 158..212)
+  const isRow1 = y >= 44 && y <= 98 && ((x >= 410 && x <= 550) || (x >= 600 && x <= 740));
+  const isRow2 = y >= 158 && y <= 212 && (x >= 510 && x <= 645);
+  if (isRow1 || isRow2) return false;
 
-  // Boardroom Conference Table (Table surface is x: 270..570, y: 390..458)
-  // Collision box has generous clearance around all sides so characters never get stuck:
-  if (x >= 272 && x <= 568 && y >= 392 && y <= 456) return false;
+  // ZONE 3: Team Relaxation & Coffee Lounge (Center, x: 226..560, y: 280..504)
+  // Top-Left Sectional Booth Backrest & Arm (x: 254..360, y: 314..328 and x: 254..268, y: 328..380)
+  if (x >= 254 && x <= 360 && y >= 314 && y <= 328) return false;
+  if (x >= 254 && x <= 268 && y >= 328 && y <= 380) return false;
+  // Top Caramel Wooden Coffee Table (x: 286..330, y: 344..372)
+  if (x >= 286 && x <= 330 && y >= 344 && y <= 372) return false;
+  // Bottom-Right Sectional Booth Backrest & Arm (x: 390..496, y: 470..484 and x: 482..496, y: 404..470)
+  if (x >= 390 && x <= 496 && y >= 470 && y <= 484) return false;
+  if (x >= 482 && x <= 496 && y >= 404 && y <= 470) return false;
+  // Bottom Caramel Wooden Coffee Table (x: 422..466, y: 422..450)
+  if (x >= 422 && x <= 466 && y >= 422 && y <= 450) return false;
+  // Cute Office Puppy Donut Pet Bed (x: 492..520, y: 328..352)
+  if (x >= 492 && x <= 520 && y >= 328 && y <= 352) return false;
+  // Espresso Bar & Refreshment Station (x: 234..268, y: 416..480)
+  if (x >= 234 && x <= 268 && y >= 416 && y <= 480) return false;
+  // Retro Arcade Cabinet (x: 234..268, y: 316..352)
+  if (x >= 234 && x <= 268 && y >= 316 && y <= 352) return false;
 
-  // Relaxation & Coffee Lounge (Bottom-Right, x: 590..818, y: 290..504):
-  // Velvet Lounge Sofa Back (x: 660..780, y: 334..348)
-  if (x >= 660 && x <= 780 && y >= 334 && y <= 348) return false;
-  // Glass Coffee Table (x: 686..758, y: 396..422)
-  if (x >= 686 && x <= 758 && y >= 396 && y <= 422) return false;
-  // Collaborative Work Bench (x: 668..780, y: 440..466)
-  if (x >= 668 && x <= 780 && y >= 440 && y <= 466) return false;
-  // Espresso Bar & Counter (x: 606..646, y: 424..490)
-  if (x >= 606 && x <= 646 && y >= 424 && y <= 490) return false;
-  // Arcade Cabinet (x: 778..808, y: 318..358)
-  if (x >= 778 && x <= 808 && y >= 318 && y <= 358) return false;
+  // ZONE 4: Grand Executive Boardroom & Meeting Suite (Right Wing, x: 560..1024, y: 280..504) - "MALUWAG"
+  // Generous walking clearance around all 4 sides of the conference table!
+  // Table surface is x: 685..895, y: 365..428
+  if (x >= 685 && x <= 895 && y >= 365 && y <= 428) return false;
+  // Strategy Whiteboard on East Wall (x: 920..1000, y: 310..350)
+  if (x >= 920 && x <= 1000 && y >= 310 && y <= 350) return false;
 
   return true;
 }
@@ -350,14 +788,16 @@ export function isWalkable(x: number, y: number): boolean {
 // ============================================================================
 export function generateSmartPath(startX: number, startY: number, destX: number, destY: number): Waypoint[] {
   const isCeoSuite = (x: number, y: number) => x <= 276 && y <= 280;
-  const isBullpen = (x: number, y: number) => x > 276 && y <= 280;
+  const isServerRoom = (x: number, y: number) => x > 836 && y <= 280;
+  const isBullpen = (x: number, y: number) => x > 276 && x <= 836 && y <= 280;
   const isKitchen = (x: number, y: number) => x <= 226 && y > 280 && y <= 398;
   const isGarden = (x: number, y: number) => x <= 226 && y > 398;
-  const isLounge = (x: number, y: number) => x > 590 && y > 280;
-  const isBoardroom = (x: number, y: number) => x > 226 && x <= 590 && y > 280;
+  const isLounge = (x: number, y: number) => x > 226 && x <= 560 && y > 280;
+  const isBoardroom = (x: number, y: number) => x > 560 && y > 280;
 
   const getZone = (x: number, y: number) => {
     if (isCeoSuite(x, y)) return 'ceo';
+    if (isServerRoom(x, y)) return 'server';
     if (isBullpen(x, y)) return 'bullpen';
     if (isKitchen(x, y)) return 'kitchen';
     if (isGarden(x, y)) return 'garden';
@@ -382,18 +822,20 @@ export function generateSmartPath(startX: number, startY: number, destX: number,
         ];
       }
     }
+    if (startZone === 'server') {
+      return [
+        { x: startX, y: 155 },
+        { x: destX, y: 155 },
+        { x: destX, y: destY },
+      ];
+    }
     if (startZone === 'boardroom') {
-      if ((startX < 270 && destX >= 270) || (startX >= 270 && destX < 270)) {
+      // Ample walking perimeter around conference table (table: x: 645..875, y: 375..435)
+      if ((startY < 375 && destY > 435) || (startY > 435 && destY < 375)) {
+        const detourX = startX < 760 ? 600 : 910;
         return [
-          { x: startX < 270 ? 250 : startX, y: 340 },
-          { x: destX < 270 ? 250 : destX, y: 340 },
-          { x: destX, y: destY },
-        ];
-      }
-      if ((startY < 390 && destY > 456) || (startY > 456 && destY < 390)) {
-        return [
-          { x: 250, y: startY },
-          { x: 250, y: destY },
+          { x: detourX, y: startY },
+          { x: detourX, y: destY },
           { x: destX, y: destY },
         ];
       }
@@ -403,14 +845,28 @@ export function generateSmartPath(startX: number, startY: number, destX: number,
 
   // 2. Cross-zone navigation through designated doorways:
   const ceoDoorway = { x: 276, y: 220 };
-  const boardroomDoors = { x: 515, y: 280 };
+  const serverDoorway = { x: 836, y: 155 };
+  const loungeDoors = { x: 515, y: 280 };
+  const boardroomDoors = { x: 560, y: 340 };
   const kitchenDoorway = { x: 226, y: 340 };
   const gardenDoorway = { x: 120, y: 398 };
-  const loungeDoorway = { x: 590, y: 340 };
   const path: Waypoint[] = [];
 
   // Exit starting zone into intermediate corridor
-  if (startZone === 'ceo') {
+  if (startZone === 'server') {
+    path.push({ x: 880, y: 155 });
+    path.push(serverDoorway);
+    path.push({ x: 790, y: 155 });
+    if (destZone === 'bullpen') {
+      path.push({ x: destX, y: 155 });
+      path.push({ x: destX, y: destY });
+      return path;
+    } else {
+      path.push({ x: 515, y: 155 });
+      path.push(loungeDoors);
+      path.push({ x: 515, y: 340 });
+    }
+  } else if (startZone === 'ceo') {
     if (startY < 94) path.push({ x: 240, y: startY });
     path.push({ x: 240, y: 220 });
     path.push(ceoDoorway);
@@ -418,14 +874,26 @@ export function generateSmartPath(startX: number, startY: number, destX: number,
     if (destZone === 'bullpen') {
       path.push({ x: 330, y: 155 });
       path.push({ x: destX, y: 155 });
+    } else if (destZone === 'server') {
+      path.push({ x: 790, y: 155 });
+      path.push(serverDoorway);
+      path.push({ x: destX, y: 155 });
+      path.push({ x: destX, y: destY });
+      return path;
     } else {
       path.push({ x: 515, y: 220 });
-      path.push(boardroomDoors);
+      path.push(loungeDoors);
       path.push({ x: 515, y: 340 });
     }
   } else if (startZone === 'bullpen') {
     path.push({ x: startX, y: 155 });
-    if (destZone === 'ceo') {
+    if (destZone === 'server') {
+      path.push({ x: 790, y: 155 });
+      path.push(serverDoorway);
+      path.push({ x: destX, y: 155 });
+      path.push({ x: destX, y: destY });
+      return path;
+    } else if (destZone === 'ceo') {
       path.push({ x: 330, y: 155 });
       path.push({ x: 330, y: 220 });
       path.push(ceoDoorway);
@@ -433,7 +901,7 @@ export function generateSmartPath(startX: number, startY: number, destX: number,
       if (destY < 94) path.push({ x: 240, y: destY });
     } else {
       path.push({ x: 515, y: 155 });
-      path.push(boardroomDoors);
+      path.push(loungeDoors);
       path.push({ x: 515, y: 340 });
     }
   } else if (startZone === 'kitchen') {
@@ -456,32 +924,63 @@ export function generateSmartPath(startX: number, startY: number, destX: number,
       path.push({ x: 250, y: 340 });
     }
   } else if (startZone === 'lounge') {
-    path.push({ x: 620, y: 340 });
-    path.push(loungeDoorway);
-    path.push({ x: 550, y: 340 });
+    path.push({ x: startX, y: 340 });
+    if (destZone === 'boardroom') {
+      path.push({ x: 540, y: 340 });
+      path.push(boardroomDoors);
+      path.push({ x: 600, y: 340 });
+    } else if (destZone === 'kitchen' || destZone === 'garden') {
+      path.push({ x: 250, y: 340 });
+      path.push(kitchenDoorway);
+      path.push({ x: 120, y: 340 });
+      if (destZone === 'garden') {
+        path.push(gardenDoorway);
+        path.push({ x: 120, y: 415 });
+      }
+    } else {
+      path.push({ x: 515, y: 340 });
+      path.push(loungeDoors);
+      path.push({ x: 515, y: 155 });
+    }
   } else if (startZone === 'boardroom') {
-    if (startX < 270) path.push({ x: 250, y: 340 });
-    else path.push({ x: 515, y: 340 });
+    path.push({ x: 600, y: 340 });
+    path.push(boardroomDoors);
+    path.push({ x: 540, y: 340 });
   }
 
-  // Reach destination zone from common transit aisle:
-  if (destZone === 'kitchen' && startZone !== 'garden') {
+  // Reach destination zone from transit aisle:
+  if (destZone === 'server') {
+    path.push({ x: 515, y: 155 });
+    path.push({ x: 790, y: 155 });
+    path.push(serverDoorway);
+    path.push({ x: destX, y: 155 });
+    path.push({ x: destX, y: destY });
+    return path;
+  }
+
+  if (destZone === 'kitchen' && startZone !== 'garden' && startZone !== 'lounge') {
     path.push({ x: 250, y: 340 });
     path.push(kitchenDoorway);
     path.push({ x: 120, y: 340 });
-  } else if (destZone === 'garden' && startZone !== 'kitchen') {
+  } else if (destZone === 'garden' && startZone !== 'kitchen' && startZone !== 'lounge') {
     path.push({ x: 250, y: 340 });
     path.push(kitchenDoorway);
     path.push({ x: 120, y: 340 });
     path.push(gardenDoorway);
     path.push({ x: 120, y: 415 });
-  } else if (destZone === 'lounge') {
-    path.push({ x: 550, y: 340 });
-    path.push(loungeDoorway);
-    path.push({ x: 620, y: 340 });
+  } else if (destZone === 'lounge' && startZone !== 'lounge') {
+    if (startZone === 'boardroom') {
+      path.push({ x: 515, y: 340 });
+    } else if (startZone !== 'kitchen' && startZone !== 'garden') {
+      path.push({ x: 515, y: 340 });
+    }
+  } else if (destZone === 'boardroom' && startZone !== 'boardroom') {
+    path.push({ x: 540, y: 340 });
+    path.push(boardroomDoors);
+    path.push({ x: 600, y: 340 });
   } else if (destZone === 'ceo' && startZone !== 'bullpen') {
     path.push({ x: 515, y: 340 });
-    path.push(boardroomDoors);
+    path.push(loungeDoors);
     path.push({ x: 515, y: 220 });
     path.push({ x: 330, y: 220 });
     path.push(ceoDoorway);
@@ -489,18 +988,9 @@ export function generateSmartPath(startX: number, startY: number, destX: number,
     if (destY < 94) path.push({ x: 240, y: destY });
   } else if (destZone === 'bullpen' && startZone !== 'ceo') {
     path.push({ x: 515, y: 340 });
-    path.push(boardroomDoors);
+    path.push(loungeDoors);
     path.push({ x: 515, y: 155 });
     path.push({ x: destX, y: 155 });
-  } else if (destZone === 'boardroom') {
-    if (destX < 270) {
-      path.push({ x: 250, y: 340 });
-      path.push({ x: 250, y: destY });
-    } else if (destY > 456) {
-      path.push({ x: 250, y: 340 });
-      path.push({ x: 250, y: 480 });
-      path.push({ x: destX, y: 480 });
-    }
   }
 
   path.push({ x: destX, y: destY });
@@ -510,7 +1000,7 @@ export function generateSmartPath(startX: number, startY: number, destX: number,
 // ============================================================================
 // MAIN VIRTUAL OFFICE COMPONENT
 // ============================================================================
-export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOfficeProps) {
+export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode = 'pixel', onViewModeChange }: PixelOfficeProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   // Mutable Game State Ref (enables pure 60 FPS loop without React lag or timer reset bugs!)
@@ -534,11 +1024,33 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
   const inRestModeRef = useRef(inRestMode);
   inRestModeRef.current = inRestMode;
 
+  const handleStartDirectiveMeetingRef = useRef<((data: any) => void) | null>(null);
+  const handleEndDirectiveMeetingRef = useRef<((data: any) => void) | null>(null);
+
   // Real-time dialogue sequencing refs for boardroom meetings & office banter
   const meetingDialogueTimerRef = useRef(3.5);
   const meetingDialogueIndexRef = useRef(0);
-  const casualChatTimerRef = useRef(10.0);
+  const casualChatTimerRef = useRef(14.0);
   const pendingReplyRef = useRef<{ speaker: string; text: string; delay: number } | null>(null);
+
+  // Autonomous Caring & Routine State Refs for Eah (Cooking, Coffee, Dylan Delivery, Puppy Visit)
+  const eahRoutineStepRef = useRef<
+    | 'relaxing'
+    | 'cook_walk'
+    | 'cooking'
+    | 'deliver_food_walk'
+    | 'serving_food'
+    | 'coffee_walk'
+    | 'brewing'
+    | 'deliver_coffee_walk'
+    | 'serving_coffee'
+    | 'puppy_walk'
+    | 'petting_puppy'
+    | 'return_armchair'
+  >('relaxing');
+  const eahCycleCountRef = useRef<number>(0);
+  const servedDeskItemRef = useRef<'food' | 'coffee' | null>(null);
+  const dogSpeechRef = useRef<{ text: string; timer: number } | null>(null);
 
   // Virtual D-pad directional hold state
   const dpadDirRef = useRef<{ up: boolean; down: boolean; left: boolean; right: boolean }>({
@@ -651,6 +1163,20 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       } catch {}
     });
 
+    sse.addEventListener('office:meeting:start', (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        handleStartDirectiveMeetingRef.current?.(data);
+      } catch {}
+    });
+
+    sse.addEventListener('office:meeting:end', (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        handleEndDirectiveMeetingRef.current?.(data);
+      } catch {}
+    });
+
     return () => {
       isMounted = false;
       sse.close();
@@ -666,7 +1192,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       }
       const code = e.code;
       if (
-        ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Space', 'KeyE', 'ShiftLeft', 'ShiftRight'].includes(code)
+        ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Space', 'KeyE', 'KeyC', 'KeyB', 'ShiftLeft', 'ShiftRight'].includes(code)
       ) {
         e.preventDefault();
         keysPressed.current.add(code);
@@ -675,20 +1201,79 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
           setIsSprinting(true);
         }
 
+        // Direct shortcut keys for asking Eah to cook or brew coffee
+        if (code === 'KeyC' || code === 'KeyB') {
+          const d = charactersRef.current.dylan;
+          const distToEah = charactersRef.current.eah
+            ? Math.hypot(d.currentX - charactersRef.current.eah.currentX, d.currentY - charactersRef.current.eah.currentY)
+            : 999;
+          const eah = charactersRef.current.eah;
+          if (distToEah < 56 && eah) {
+            if (code === 'KeyC') {
+              d.bubbleText = 'Eah, could you cook some breakfast for me, please? 🍳';
+              d.bubbleTimer = 4.5;
+              eah.bubbleText = 'Right away Dylan! Cooking something delicious for you! 🍳✨';
+              eah.bubbleTimer = 4.5;
+              eahRoutineStepRef.current = 'cook_walk';
+              eah.isSeated = false;
+              eah.activity = 'working';
+              eah.path = generateSmartPath(eah.currentX, eah.currentY, 136, 350);
+              eah.isWalking = true;
+            } else {
+              d.bubbleText = 'Eah, can you brew some hot coffee for me, please? ☕';
+              d.bubbleTimer = 4.5;
+              eah.bubbleText = 'Sure Dylan! Brewing your favorite caramel latte right away! ☕✨';
+              eah.bubbleTimer = 4.5;
+              eahRoutineStepRef.current = 'coffee_walk';
+              eah.isSeated = false;
+              eah.activity = 'working';
+              eah.path = generateSmartPath(eah.currentX, eah.currentY, 275, 436);
+              eah.isWalking = true;
+            }
+            playSfx('click');
+            return;
+          }
+        }
+
         // Sit / Stand Toggle or Proximity Interact
         if (code === 'KeyE' || code === 'Space') {
           const d = charactersRef.current.dylan;
           const distToDesk = Math.hypot(d.currentX - d.deskX, d.currentY - d.deskY);
           const distToWater = Math.hypot(d.currentX - 780, d.currentY - 130);
-          const distToFridge = Math.hypot(d.currentX - 300, d.currentY - 170);
+          const distToFridge = Math.hypot(d.currentX - 120, d.currentY - 310);
 
-          const distToEspresso = Math.hypot(d.currentX - 626, d.currentY - 450);
-          const distToSofa = Math.hypot(d.currentX - 710, d.currentY - 370);
-          const distToArcade = Math.hypot(d.currentX - 792, d.currentY - 370);
+          const distToEspresso = Math.hypot(d.currentX - 268, d.currentY - 436);
+          const distToSofa = Math.hypot(d.currentX - 340, d.currentY - 340);
+          const distToArcade = Math.hypot(d.currentX - 250, d.currentY - 335);
           const distToKitchen = Math.hypot(d.currentX - 120, d.currentY - 370);
           const distToGarden = Math.hypot(d.currentX - 120, d.currentY - 460);
+          const distToDog = Math.hypot(d.currentX - 505, d.currentY - 340);
+          const distToEah = charactersRef.current.eah
+            ? Math.hypot(d.currentX - charactersRef.current.eah.currentX, d.currentY - charactersRef.current.eah.currentY)
+            : 999;
 
-          if (distToDesk < 28) {
+          if (distToEah < 52) {
+            d.facing = 'left';
+            d.bubbleText = 'Hi Eah! ✨ Everything going smoothly with your iPad?';
+            d.bubbleTimer = 4;
+            const eahQuotes = [
+              'Super cozy, Dylan! Browsing on my iPad ✨ Want me to cook for you? [Press C]',
+              'Need some hot coffee, Dylan? [Press B] ☕',
+              'Watching you lead our team as CEO is so inspiring, Dylan! 👑',
+              'Taking notes on my iPad 💻 Always so proud of what we are building, Dylan! ✨',
+              'You got this, Dylan! Always cheering for you as our CEO! 🚀',
+            ];
+            if (charactersRef.current.eah) {
+              charactersRef.current.eah.bubbleText = eahQuotes[Math.floor(Math.random() * eahQuotes.length)];
+              charactersRef.current.eah.bubbleTimer = 5;
+            }
+            playSfx('click');
+          } else if (distToDog < 44) {
+            d.bubbleText = 'Who\'s a good boy? 🐶 Fluffy office puppy!';
+            d.bubbleTimer = 4.0;
+            dogSpeechRef.current = { text: 'Arf arf! 🐶💕 *happy puppy tail wag*', timer: 5.0 };
+            playSfx('click');
+          } else if (distToDesk < 28) {
             const nextSeated = !d.isSeated;
             d.isSeated = nextSeated;
             d.isWalking = false;
@@ -744,6 +1329,15 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
             d.bubbleText = '🥤 Pure cold mountain water. Refreshed!';
             d.bubbleTimer = 4;
             playSfx('drink');
+          } else if (d.currentX > 836 && d.currentY <= 280) {
+            d.bubbleText = '🛡️ Zero-Trust Audit Complete: 4 Enterprise Racks 100% operational!';
+            d.bubbleTimer = 5;
+            const zane = charactersRef.current.zane;
+            if (zane) {
+              zane.bubbleText = 'Zero-trust perimeter locked down, Boss Dylan! Threat level 0. 🛡️⚡';
+              zane.bubbleTimer = 5;
+            }
+            playSfx('click');
           } else {
             // Stand up if seated
             if (d.isSeated) {
@@ -826,15 +1420,26 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
 
     const chars = charactersRef.current;
     const restSpots: Record<string, { x: number; y: number; bubble: string }> = {
-      dylan: { x: 620, y: 440, bubble: '👑 Founder laptop session at the espresso bar!' },
-      ray: { x: 676, y: 356, bubble: '🔍 Researching with laptop on the velvet sofa!' },
-      maya: { x: 712, y: 356, bubble: '🎨 Designing UI mockups on laptop in the lounge!' },
-      alex: { x: 692, y: 444, bubble: '💻 Coding APIs on the lounge collaborative work bench!' },
-      wendy: { x: 742, y: 444, bubble: '📢 Drafting launch copy on the sunny work bench!' },
-      zane: { x: 785, y: 375, bubble: '🛡️ Running security audit from the lounge bench!' },
+      dylan: { x: 275, y: 440, bubble: '👑 Founder espresso break in the boutique lounge!' },
+      ray: { x: 300, y: 338, bubble: '🔍 Relaxing on the leather sectional booth!' },
+      maya: { x: 335, y: 338, bubble: '🎨 Designing UI mockups in the sage-teal lounge!' },
+      alex: { x: 415, y: 462, bubble: '💻 Relaxing on the lower leather booth!' },
+      wendy: { x: 450, y: 462, bubble: '📢 Reviewing launch campaign from the lounge booth!' },
+      zane: { x: 250, y: 358, bubble: '🕹️ Speedrunning retro arcade high score!' },
     };
 
     Object.values(chars).forEach((char) => {
+      if (char.id === 'eah') {
+        char.isMeeting = false;
+        char.isWalking = false;
+        char.path = [];
+        char.isSeated = true;
+        char.activity = 'sofa_relax';
+        char.bubbleText = nextRest ? 'Cozy here on the sofa with my iPad 💕' : 'Chilling on my iPad in the CEO suite 💕';
+        char.bubbleTimer = 5;
+        return;
+      }
+
       if (nextRest) {
         char.isMeeting = false;
         char.isSeated = false;
@@ -871,6 +1476,17 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
 
     const chars = charactersRef.current;
     Object.values(chars).forEach((char) => {
+      if (char.id === 'eah') {
+        char.isMeeting = false;
+        char.isWalking = false;
+        char.path = [];
+        char.isSeated = true;
+        char.activity = 'sofa_relax';
+        char.bubbleText = nextMeeting ? 'Good luck in the all-hands meeting, Dylan! 💕' : 'Welcome back to the office, babe! ✨';
+        char.bubbleTimer = 4;
+        return;
+      }
+
       if (nextMeeting) {
         char.isMeeting = true;
         char.isSeated = false;
@@ -894,6 +1510,87 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       }
     });
   };
+
+  // Automated Directive Sprint Meeting in Boardroom (Pixel View)
+  const handleStartDirectiveMeeting = useCallback((data: { topic?: string; leadAgent?: string }) => {
+    playSfx('bell');
+    setInMeetingMode(true);
+    setInRestMode(false);
+
+    const topic = data.topic ? (data.topic.length > 36 ? data.topic.slice(0, 36) + '...' : data.topic) : 'Executive Directive';
+    const leadId = data.leadAgent || 'alex';
+
+    const roleLines: Record<string, string> = {
+      alex: '⚡ Fullstack arch & APIs ready!',
+      maya: '🎨 Designing UI tokens & layouts!',
+      ray: '🧠 Research & model patterns aligned!',
+      wendy: '📈 Growth & launch messaging locked!',
+      zane: '🛡️ Firewall & security verified!',
+    };
+
+    const chars = charactersRef.current;
+    Object.values(chars).forEach((char) => {
+      if (char.id === 'eah') {
+        char.isMeeting = false;
+        char.isWalking = false;
+        char.path = [];
+        char.isSeated = true;
+        char.activity = 'sofa_relax';
+        char.bubbleText = 'Good luck in the strategy meeting, Dylan! 💕';
+        char.bubbleTimer = 5;
+        return;
+      }
+
+      char.isMeeting = true;
+      char.isSeated = false;
+      char.activity = 'meeting';
+      char.path = generateSmartPath(char.currentX, char.currentY, char.seatX, char.seatY);
+      char.isWalking = true;
+      char.statusText = 'In Meeting';
+      char.emoji = '👥';
+
+      if (char.id === 'dylan') {
+        char.bubbleText = `📢 Dylan Ramos assigned: "${topic}"! Let's align!`;
+        char.bubbleTimer = 5;
+      } else if (char.id === leadId) {
+        char.bubbleText = `💪 On it Dylan! Leading this sprint!`;
+        char.bubbleTimer = 5;
+      } else {
+        char.bubbleText = roleLines[char.id] || 'Aligned for sprint!';
+        char.bubbleTimer = 4;
+      }
+    });
+  }, [playSfx]);
+
+  const handleEndDirectiveMeeting = useCallback((data?: { leadAgent?: string }) => {
+    playSfx('bell');
+    setInMeetingMode(false);
+    const leadId = data?.leadAgent;
+
+    const chars = charactersRef.current;
+    Object.values(chars).forEach((char) => {
+      if (char.id === 'eah') return;
+
+      char.isMeeting = false;
+      char.isSeated = false;
+      char.activity = 'idle';
+      char.path = generateSmartPath(char.currentX, char.currentY, char.deskX, char.deskY);
+      char.isWalking = true;
+      char.statusText = char.id === 'dylan' ? 'You' : 'Deep focus';
+      char.emoji = char.id === 'dylan' ? '🟢' : '💻';
+
+      if (char.id === leadId) {
+        char.bubbleText = 'Executing directive now! 💻🔥';
+        char.bubbleTimer = 5;
+      } else {
+        char.bubbleText = 'Returning to desk...';
+        char.bubbleTimer = 3;
+      }
+    });
+  }, [playSfx]);
+
+  handleStartDirectiveMeetingRef.current = handleStartDirectiveMeeting;
+  handleEndDirectiveMeetingRef.current = handleEndDirectiveMeeting;
 
   // Change Dylan's live status pill
   const handleDylanStatusChange = (status: 'You' | 'Deep focus' | 'Coffee break' | 'Shipping') => {
@@ -928,7 +1625,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
     let lastCeoDoorState = 0;
     let lastBoardDoorState = 0;
 
-    const LOGICAL_W = 840;
+    const LOGICAL_W = 1040;
     const LOGICAL_H = 520;
 
     const render = () => {
@@ -1132,6 +1829,26 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
                 char.isSeated = true;
                 char.facing = 'down';
                 char.activity = 'garden_relax';
+              } else if (Math.hypot(char.currentX - 250, char.currentY - 358) < 18) {
+                // Playing Retro Arcade Cabinet: Firmly standing, facing directly UP into arcade screen!
+                char.isSeated = false;
+                char.facing = 'up';
+                char.activity = 'playing_arcade';
+              } else if (char.currentX >= 270 && char.currentX <= 370 && char.currentY >= 325 && char.currentY <= 360) {
+                // Seated properly on Top Sectional Booth cushion
+                char.isSeated = true;
+                char.facing = 'down'; // Faces DOWN towards coffee table
+                char.activity = 'sofa_relax';
+              } else if (char.currentX >= 390 && char.currentX <= 490 && char.currentY >= 430 && char.currentY <= 470) {
+                // Seated properly on Bottom Sectional Booth cushion
+                char.isSeated = true;
+                char.facing = 'up'; // Faces UP towards coffee table
+                char.activity = 'sofa_relax';
+              } else if (Math.hypot(char.currentX - 275, char.currentY - 440) < 18) {
+                // Seated on Espresso Bar Stool
+                char.isSeated = true;
+                char.facing = 'left';
+                char.activity = 'drinking_coffee';
               }
             }
           } else {
@@ -1149,16 +1866,156 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
         if (char.waitTimer && char.waitTimer > 0 && char.path.length === 0) {
           char.waitTimer -= 0.016;
           if (char.waitTimer <= 0) {
-            // Once finished, walk back to personal desk!
-            char.path = generateSmartPath(char.currentX, char.currentY, char.deskX, char.deskY);
-            char.activity = 'working';
-            char.bubbleText = 'Heading back to work.';
-            char.bubbleTimer = 2.5;
+            if (char.id === 'eah') {
+              // Eah destination actions are advanced by the Eah State Machine below
+            } else {
+              // Once finished, walk back to personal desk!
+              char.path = generateSmartPath(char.currentX, char.currentY, char.deskX, char.deskY);
+              char.activity = 'working';
+              char.bubbleText = 'Heading back to work.';
+              char.bubbleTimer = 2.5;
+            }
           }
         }
 
-        // 3. Autonomous Periodic Stand-Up Cycle (every 10 - 20 seconds)
-        if (char.id !== 'dylan' && !char.isMeeting && !inRestMode && char.path.length === 0 && !char.waitTimer) {
+        // 3. Autonomous Periodic Stand-Up Cycle (every 10 - 20 seconds for bullpen workers & Eah's caring routines)
+        if (char.id === 'eah') {
+          const eahStep = eahRoutineStepRef.current;
+
+          if (eahStep === 'relaxing') {
+            char.isSeated = true;
+            char.activity = 'sofa_relax';
+            char.routineTimer -= 0.016;
+            if (char.routineTimer <= 0) {
+              eahCycleCountRef.current++;
+              const cycle = eahCycleCountRef.current % 3;
+
+              if (cycle === 1) {
+                // ROUTINE 1: Cook breakfast/comfort food for Dylan!
+                eahRoutineStepRef.current = 'cook_walk';
+                char.isSeated = false;
+                char.activity = 'working';
+                char.bubbleText = 'Cooking a delicious hot meal for Dylan Ramos! 🍳🥓';
+                char.bubbleTimer = 4.5;
+                char.path = generateSmartPath(char.currentX, char.currentY, 136, 350);
+                char.isWalking = true;
+              } else if (cycle === 2) {
+                // ROUTINE 2: Brew special espresso/latte for Dylan in the Lounge!
+                eahRoutineStepRef.current = 'coffee_walk';
+                char.isSeated = false;
+                char.activity = 'working';
+                char.bubbleText = 'Brewing a special hot coffee for CEO Dylan! ☕✨';
+                char.bubbleTimer = 4.5;
+                char.path = generateSmartPath(char.currentX, char.currentY, 275, 436);
+                char.isWalking = true;
+              } else {
+                // ROUTINE 3: Visit puppy in Lounge!
+                eahRoutineStepRef.current = 'puppy_walk';
+                char.isSeated = false;
+                char.activity = 'working';
+                char.bubbleText = 'Taking a quick break to visit our puppy, Dylan! 🐶🐾';
+                char.bubbleTimer = 4.5;
+                char.path = generateSmartPath(char.currentX, char.currentY, 490, 346);
+                char.isWalking = true;
+              }
+            }
+          } else if (eahStep === 'cook_walk') {
+            if (char.path.length === 0) {
+              eahRoutineStepRef.current = 'cooking';
+              char.activity = 'eah_cooking';
+              char.facing = 'down';
+              char.waitTimer = 7.5;
+              char.bubbleText = 'Sizzling hot breakfast for Dylan! 🍳✨';
+              char.bubbleTimer = 4.5;
+            }
+          } else if (eahStep === 'cooking') {
+            if (!char.waitTimer || char.waitTimer <= 0) {
+              eahRoutineStepRef.current = 'deliver_food_walk';
+              char.activity = 'eah_carrying_food';
+              char.bubbleText = 'Fresh and piping hot! Delivering to Dylan Ramos! 🍲✨';
+              char.bubbleTimer = 4.0;
+              char.path = generateSmartPath(char.currentX, char.currentY, 120, 116);
+              char.isWalking = true;
+            }
+          } else if (eahStep === 'deliver_food_walk') {
+            if (char.path.length === 0) {
+              eahRoutineStepRef.current = 'serving_food';
+              char.activity = 'eah_serving';
+              char.facing = 'up';
+              char.waitTimer = 5.0;
+              char.bubbleText = 'Here you go Dylan, I cooked this specially for you! Enjoy! 🍲✨';
+              char.bubbleTimer = 5.0;
+              servedDeskItemRef.current = 'food';
+              const dylan = charactersRef.current.dylan;
+              if (dylan) {
+                dylan.bubbleText = 'Thank you so much Eah! ✨ This looks delicious, you are the best! 🍳';
+                dylan.bubbleTimer = 5.5;
+              }
+            }
+          } else if (eahStep === 'coffee_walk') {
+            if (char.path.length === 0) {
+              eahRoutineStepRef.current = 'brewing';
+              char.activity = 'eah_brewing_coffee';
+              char.facing = 'up';
+              char.waitTimer = 6.5;
+              char.bubbleText = 'Freshly brewed latte with heart foam art for Dylan ☕✨';
+              char.bubbleTimer = 4.0;
+            }
+          } else if (eahStep === 'brewing') {
+            if (!char.waitTimer || char.waitTimer <= 0) {
+              eahRoutineStepRef.current = 'deliver_coffee_walk';
+              char.activity = 'eah_carrying_coffee';
+              char.bubbleText = 'Delivering fresh hot coffee to Dylan Ramos! ☕✨';
+              char.bubbleTimer = 4.0;
+              char.path = generateSmartPath(char.currentX, char.currentY, 120, 116);
+              char.isWalking = true;
+            }
+          } else if (eahStep === 'deliver_coffee_walk') {
+            if (char.path.length === 0) {
+              eahRoutineStepRef.current = 'serving_coffee';
+              char.activity = 'eah_serving';
+              char.facing = 'up';
+              char.waitTimer = 5.0;
+              char.bubbleText = "Here is your fresh hot coffee Dylan! ☕✨ Don't work too hard!";
+              char.bubbleTimer = 5.0;
+              servedDeskItemRef.current = 'coffee';
+              const dylan = charactersRef.current.dylan;
+              if (dylan) {
+                dylan.bubbleText = "Thank you so much Eah! You're the best! ☕✨";
+                dylan.bubbleTimer = 5.5;
+              }
+            }
+          } else if (eahStep === 'puppy_walk') {
+            if (char.path.length === 0) {
+              eahRoutineStepRef.current = 'petting_puppy';
+              char.activity = 'eah_petting_dog';
+              char.facing = 'right';
+              char.waitTimer = 6.0;
+              char.bubbleText = 'You are the cutest puppy ever, Dylan will love you! 🐶✨';
+              char.bubbleTimer = 4.5;
+              dogSpeechRef.current = { text: 'Arf arf! 🐶💕 *happy puppy kisses for Dylan & Eah*', timer: 5.0 };
+            }
+          } else if (eahStep === 'serving_food' || eahStep === 'serving_coffee' || eahStep === 'petting_puppy') {
+            if (!char.waitTimer || char.waitTimer <= 0) {
+              eahRoutineStepRef.current = 'return_armchair';
+              char.activity = 'working';
+              char.bubbleText = 'Heading back to my cozy iPad nook beside Dylan ✨';
+              char.bubbleTimer = 3.5;
+              char.path = generateSmartPath(char.currentX, char.currentY, 64, 175);
+              char.isWalking = true;
+            }
+          } else if (eahStep === 'return_armchair') {
+            if (char.path.length === 0) {
+              eahRoutineStepRef.current = 'relaxing';
+              char.isSeated = true;
+              char.activity = 'sofa_relax';
+              char.facing = 'right';
+              char.routineTimer = 22 + Math.random() * 14;
+              char.bubbleText = 'Chilling on my iPad beside Dylan Ramos 💻✨';
+              char.bubbleTimer = 4.5;
+            }
+          }
+        } else if (char.id !== 'dylan' && !char.isMeeting && !inRestMode && char.path.length === 0 && !char.waitTimer) {
           char.routineTimer -= 0.016;
           if (char.routineTimer <= 0) {
             char.routineTimer = 12 + Math.random() * 14; // Next routine in 12-26s
@@ -1186,7 +2043,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
               char.activity = 'playing_arcade';
               char.bubbleText = '🕹️ Speedrunning retro arcade high score!';
               char.bubbleTimer = 4;
-              char.path = generateSmartPath(char.currentX, char.currentY, 785, 365);
+              char.path = generateSmartPath(char.currentX, char.currentY, 255, 335);
               char.waitTimer = 7.5;
             } else if (choice < 0.50) {
               // 4. Brew Fresh Artisanal Espresso at Coffee Bar
@@ -1194,7 +2051,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
               char.activity = 'drinking_coffee';
               char.bubbleText = '☕ Brewing a fresh hot espresso shot!';
               char.bubbleTimer = 4;
-              char.path = generateSmartPath(char.currentX, char.currentY, 620, 440);
+              char.path = generateSmartPath(char.currentX, char.currentY, 255, 440);
               char.waitTimer = 6.0;
             } else if (choice < 0.62) {
               // 5. Hydration Break at Water Cooler
@@ -1205,10 +2062,10 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
               char.path = generateSmartPath(char.currentX, char.currentY, 770, 130);
               char.waitTimer = 5.0;
             } else if (choice < 0.74) {
-              // 5. Relax on Sofa or Collaborative Work Bench with Laptop
+              // 5. Relax on Sofa or Collaborative Work Bench with Laptop in Lounge
               char.isSeated = false;
-              const targetX = char.id === 'alex' || char.id === 'wendy' ? 710 : char.id === 'zane' ? 785 : 690;
-              const targetY = char.id === 'alex' || char.id === 'wendy' ? 444 : char.id === 'zane' ? 375 : 356;
+              const targetX = char.id === 'alex' || char.id === 'wendy' ? 440 : char.id === 'zane' ? 500 : 310;
+              const targetY = char.id === 'alex' || char.id === 'wendy' ? 445 : char.id === 'zane' ? 346 : 355;
               if (char.id === 'alex' || char.id === 'wendy') {
                 char.activity = 'working';
                 char.bubbleText = '💻 Bringing my laptop to work on the lounge bench!';
@@ -1217,7 +2074,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
                 char.bubbleText = '🛡️ Running security audit from the arcade lounge!';
               } else {
                 char.activity = 'sofa_relax';
-                char.bubbleText = '🛋️ Sipping coffee and relaxing on the velvet sofa!';
+                char.bubbleText = '🛋️ Sipping coffee and relaxing in the cozy lounge!';
               }
               char.bubbleTimer = 4;
               char.path = generateSmartPath(char.currentX, char.currentY, targetX, targetY);
@@ -1288,18 +2145,22 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
         setNearbyPrompt('[E / Space] Work & Snack at Kitchen Island');
       } else if (dylan.currentX < 226 && dylan.currentY > 398) {
         setNearbyPrompt('[E / Space] Work & Relax at Outdoor Garden Patio');
-      } else if (Math.hypot(dylan.currentX - 626, dylan.currentY - 450) < 36) {
+      } else if (Math.hypot(dylan.currentX - 250, dylan.currentY - 440) < 36) {
         setNearbyPrompt('[E] Espresso Bar: Brew fresh coffee');
-      } else if (Math.hypot(dylan.currentX - 710, dylan.currentY - 370) < 40) {
-        setNearbyPrompt('[E / Space] Relax on Lounge Velvet Sofa');
-      } else if (Math.hypot(dylan.currentX - 720, dylan.currentY - 450) < 36) {
-        setNearbyPrompt('[E / Space] Work on Collaborative Oak Bench');
-      } else if (Math.hypot(dylan.currentX - 792, dylan.currentY - 370) < 36) {
-        setNearbyPrompt('[E] Retro Arcade: Play high-score game');
+      } else if (Math.hypot(dylan.currentX - 250, dylan.currentY - 335) < 36) {
+        setNearbyPrompt('[E] Play Retro Arcade Machine 🕹️');
+      } else if (Math.hypot(dylan.currentX - 308, dylan.currentY - 350) < 40) {
+        setNearbyPrompt('[E / Space] Relax in Top Leather Booth');
+      } else if (Math.hypot(dylan.currentX - 444, dylan.currentY - 440) < 40) {
+        setNearbyPrompt('[E / Space] Relax in Bottom Leather Booth');
+      } else if (Math.hypot(dylan.currentX - 506, dylan.currentY - 340) < 42) {
+        setNearbyPrompt('[Click / E] Pet Mochi the Office Puppy 🐶💕');
       } else if (Math.hypot(dylan.currentX - 300, dylan.currentY - 170) < 36) {
         setNearbyPrompt('[E] Mini Fridge: Grab energy drink');
       } else if (Math.hypot(dylan.currentX - 780, dylan.currentY - 130) < 36) {
         setNearbyPrompt('[E] Water Cooler: Drink cold water');
+      } else if (chars.eah && Math.hypot(dylan.currentX - chars.eah.currentX, dylan.currentY - chars.eah.currentY) < 52) {
+        setNearbyPrompt('[Click / E] Talk with Eah 💕 • [C] Cook Meal • [B] Brew Coffee');
       } else if (chars.ray && Math.hypot(dylan.currentX - chars.ray.currentX, dylan.currentY - chars.ray.currentY) < 40) {
         setNearbyPrompt('[Click / E] Consult Ray • Lead AI Researcher');
       } else if (chars.maya && Math.hypot(dylan.currentX - chars.maya.currentX, dylan.currentY - chars.maya.currentY) < 40) {
@@ -1308,10 +2169,12 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
         setNearbyPrompt('[Click / E] Consult Alex • Fullstack Dev & Architecture');
       } else if (chars.wendy && Math.hypot(dylan.currentX - chars.wendy.currentX, dylan.currentY - chars.wendy.currentY) < 40) {
         setNearbyPrompt('[Click / E] Consult Wendy • Marketing Strategist');
+      } else if (dylan.currentX > 836 && dylan.currentY <= 280) {
+        setNearbyPrompt('[Click / E] Server Vault & DevOps-SecOps Hub • Alex & Zane 💻🛡️');
       } else if (chars.zane && Math.hypot(dylan.currentX - chars.zane.currentX, dylan.currentY - chars.zane.currentY) < 40) {
         setNearbyPrompt('[Click / E] Consult Zane • Cybersecurity Specialist');
-      } else if (dylan.currentY > 360 && Math.hypot(dylan.currentX - 236, dylan.currentY - 424) < 36) {
-        setNearbyPrompt('[E] Take Head of Boardroom Table');
+      } else if (dylan.currentY > 360 && Math.hypot(dylan.currentX - 625, dylan.currentY - 405) < 40) {
+        setNearbyPrompt('[E] Take Head of Grand Boardroom Table');
       } else {
         setNearbyPrompt(null);
       }
@@ -1361,6 +2224,21 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       ctx.fillRect(29, 102, 10, 8);
       ctx.fillRect(32, 96, 4, 6);
 
+      // Eah's Cozy Luxury Velvet Armchair & Side Table along the side wall (not too close to CEO desk)
+      ctx.fillStyle = '#0f172a'; // Deep base shadow
+      ctx.fillRect(52, 165, 24, 24);
+      ctx.fillStyle = '#fb7185'; // Soft rose plush velvet seat
+      ctx.fillRect(54, 167, 20, 20);
+      ctx.fillStyle = '#f43f5e'; // Armchair backrest along wall
+      ctx.fillRect(52, 165, 4, 24);
+      ctx.fillStyle = '#fbbf24'; // Gold throw pillow
+      ctx.fillRect(54, 167, 6, 6);
+      // Small side pedestal table
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(58, 150, 12, 12);
+      ctx.fillStyle = '#f1f5f9';
+      ctx.fillRect(57, 149, 14, 2);
+
       // Executive Leather Lounge Couch
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(40, 234, 110, 36);
@@ -1395,28 +2273,57 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       const bullW = 540;
       const bullH = 264;
 
-      ctx.fillStyle = '#7a969e';
-      ctx.fillRect(bullX, bullY, bullW, bullH);
+      // 1. Light, warm-toned (pale peach/beige) brick pattern background wall behind desks (y: 16..46)
+      const brickWallH = 30;
+      ctx.fillStyle = '#ede4db';
+      ctx.fillRect(bullX, bullY, bullW, brickWallH);
 
-      const chv = 14;
-      for (let cy = bullY; cy < bullY + bullH; cy += chv) {
-        for (let cx = bullX; cx < bullX + bullW; cx += chv * 2) {
-          const alt = Math.floor((cy - bullY) / chv) % 2 === 0;
-          ctx.fillStyle = alt ? '#86a2aa' : '#6f8b93';
-          ctx.beginPath();
-          ctx.moveTo(cx, cy);
-          ctx.lineTo(cx + chv, cy + chv);
-          ctx.lineTo(cx + chv, cy + chv - 4);
-          ctx.lineTo(cx, cy - 4);
-          ctx.fill();
+      const bRowH = 6;
+      const bColW = 16;
+      for (let by = bullY; by < bullY + brickWallH; by += bRowH) {
+        const isShift = Math.floor((by - bullY) / bRowH) % 2 === 1;
+        const xOffset = isShift ? bColW / 2 : 0;
+        for (let bx = bullX - bColW; bx < bullX + bullW; bx += bColW) {
+          ctx.strokeStyle = '#dfd4c7';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(bx + xOffset, by, bColW, bRowH);
+        }
+      }
 
-          ctx.fillStyle = alt ? '#728e96' : '#8aa6ae';
-          ctx.beginPath();
-          ctx.moveTo(cx + chv, cy + chv);
-          ctx.lineTo(cx + chv * 2, cy);
-          ctx.lineTo(cx + chv * 2, cy - 4);
-          ctx.lineTo(cx + chv, cy + chv - 4);
-          ctx.fill();
+      // Faded rounded title banner visible at top center: "Product team"
+      const bannerW = 96;
+      const bannerH = 16;
+      const bannerX = 506;
+      const bannerY = 19;
+      ctx.fillStyle = 'rgba(252, 248, 242, 0.94)';
+      ctx.beginPath();
+      ctx.roundRect(bannerX, bannerY, bannerW, bannerH, 8);
+      ctx.fill();
+      ctx.strokeStyle = '#d7cbbf';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+
+      ctx.fillStyle = '#5b6275';
+      ctx.font = 'bold 8px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('Product team', bannerX + bannerW / 2, bannerY + 11.5);
+
+      // 2. Light and dark grey patterned tiled floor design (y: 46..280)
+      const floorStartY = bullY + brickWallH;
+      const floorH = bullH - brickWallH;
+      ctx.fillStyle = '#7a8c99';
+      ctx.fillRect(bullX, floorStartY, bullW, floorH);
+
+      const tileW = 18;
+      const tileH = 18;
+      for (let fy = floorStartY; fy < bullY + bullH; fy += tileH) {
+        for (let fx = bullX; fx < bullX + bullW; fx += tileW) {
+          const isAlt = (Math.floor((fx - bullX) / tileW) + Math.floor((fy - floorStartY) / tileH)) % 2 === 0;
+          ctx.fillStyle = isAlt ? '#8ca0ae' : '#738694';
+          ctx.fillRect(fx, fy, tileW, tileH);
+          ctx.strokeStyle = 'rgba(255, 255, 255, 0.08)';
+          ctx.lineWidth = 0.5;
+          ctx.strokeRect(fx, fy, tileW, tileH);
         }
       }
 
@@ -1429,6 +2336,77 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       ctx.beginPath();
       ctx.arc(808, 94, 6, Math.PI, 0);
       ctx.fill();
+
+      // ======================================================================
+      // ZONE 6: HIGH-TECH CYBER SECURITY OPERATIONS & SERVER VAULT (x: 836..1024, y: 16..280)
+      // ======================================================================
+      const srvX = 836;
+      const srvY = 16;
+      const srvW = 188;
+      const srvH = 264;
+
+      // Anti-Static Cyber Armor Grid Floor (Dark Navy / Emerald)
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(srvX, srvY, srvW, srvH);
+
+      // Glowing Emerald Anti-Static Floor Grid Lines
+      ctx.strokeStyle = '#052e16';
+      ctx.lineWidth = 1;
+      for (let sx = srvX; sx < srvX + srvW; sx += 16) {
+        ctx.beginPath();
+        ctx.moveTo(sx, srvY);
+        ctx.lineTo(sx, srvY + srvH);
+        ctx.stroke();
+      }
+      for (let sy = srvY; sy < srvY + srvH; sy += 16) {
+        ctx.beginPath();
+        ctx.moveTo(srvX, sy);
+        ctx.lineTo(srvX + srvW, sy);
+        ctx.stroke();
+      }
+
+      // Vertical Security Partition Wall at x = 836 (with Doorway at y: 130..185)
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+      ctx.fillRect(srvX - 2, srvY, 4, 114); // Top segment (y: 16..130)
+      ctx.fillRect(srvX - 2, 185, 4, srvH - (185 - srvY)); // Bottom segment (y: 185..280)
+
+      // Wall Lintel & Steel Frame
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(srvX - 4, srvY, 8, 4);
+      ctx.fillRect(srvX - 4, 126, 8, 4);
+      ctx.fillRect(srvX - 4, 185, 8, 4);
+      ctx.fillRect(srvX - 4, srvY + srvH - 4, 8, 4);
+
+      // Continuous Overhead Header Track across doorway
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(srvX - 3, 128, 6, 58);
+
+      // Biometric RFID Badge Reader on Wall facing Bullpen
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(srvX - 7, 142, 4, 12);
+      ctx.fillStyle = '#00f59b';
+      ctx.fillRect(srvX - 6, 144, 2, 3); // Active scanner diode
+      ctx.fillStyle = '#00f0ff';
+      ctx.fillRect(srvX - 6, 149, 2, 3); // Keypad LED
+
+      // Horizontal Wall separating Server Room from South Wing (y = 280, x: 836..1024)
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.4)';
+      ctx.fillRect(srvX, 278, srvW, 4);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(srvX, 280, srvW, 2);
+
+      // Glowing Neon Header Plaque: "🛡️ SOC & SERVER VAULT (ZONE 6)"
+      const srvPlaqueX = srvX + 20;
+      const srvPlaqueY = srvY + 4;
+      ctx.fillStyle = '#021e0e';
+      ctx.fillRect(srvPlaqueX, srvPlaqueY, 148, 12);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(srvPlaqueX, srvPlaqueY, 148, 12);
+      ctx.fillStyle = '#00f59b';
+      ctx.font = 'bold 7px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('🛡️ SOC & SERVER VAULT (ZONE 6)', srvPlaqueX + 6, srvPlaqueY + 9);
 
       // ZONE 5A: GOURMET PANTRY & KITCHEN (Indoor, x: 16..226, y: 290..398)
       // Checkered slate & marble kitchen floor
@@ -1703,238 +2681,665 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       ctx.fillRect(16, 402, 3, 2);
       ctx.fillRect(16, 503, 210, 2);
 
-      // ZONE 3: THE ENCLOSED EXECUTIVE BOARDROOM SUITE (Center, x: 226..590, y: 290..504)
-      ctx.fillStyle = '#543d2b';
-      ctx.fillRect(226, 290, 364, 214);
-      ctx.strokeStyle = '#3f2c1d';
+      // ======================================================================
+      // ZONE 3: TEAM RELAXATION & COFFEE LOUNGE (Center Suite, x: 226..560, y: 290..504)
+      // MATCHES DESIGN: SAGE-TEAL RUG, DUAL DARK LEATHER BOOTHS, CARAMEL WOOD TABLES,
+      // FLUFFY PUPPY MOCHI ON DONUT BED, RETRO ARCADE, ESPRESSO BAR, & FRAMED HEART PHOTO!
+      // ======================================================================
+      // 1. Grid Tile Border Floor
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(226, 290, 334, 214);
+      ctx.strokeStyle = '#334155';
       ctx.lineWidth = 1;
-      for (let by = 296; by < 504; by += 16) {
+      for (let gx = 226; gx <= 560; gx += 16) {
         ctx.beginPath();
-        ctx.moveTo(226, by);
-        ctx.lineTo(590, by);
+        ctx.moveTo(gx, 290);
+        ctx.lineTo(gx, 504);
+        ctx.stroke();
+      }
+      for (let gy = 290; gy <= 504; gy += 16) {
+        ctx.beginPath();
+        ctx.moveTo(226, gy);
+        ctx.lineTo(560, gy);
         ctx.stroke();
       }
 
-      // Presentation Smart Screen on Boardroom Wall (Sleek 150px display at x: 295..445, completely clear of doorway at 480..550)
+      // 2. Beautiful Soft Muted Sage-Teal Area Rug
+      const rugX = 242;
+      const rugY = 306;
+      const rugW = 302;
+      const rugH = 190;
+      ctx.fillStyle = '#5b8586'; // Elegant sage-teal base
+      ctx.beginPath();
+      ctx.roundRect(rugX, rugY, rugW, rugH, 10);
+      ctx.fill();
+      ctx.strokeStyle = '#4a7273';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Subtle woven chat-bubble silhouette woven into center of sage-teal rug
+      ctx.fillStyle = '#6f9b9c'; // Subtle tone-on-tone weave
+      ctx.beginPath();
+      ctx.roundRect(365, 368, 56, 44, 12);
+      ctx.fill();
+      // Small speech bubble pointer notch pointing towards center aisle
+      ctx.beginPath();
+      ctx.moveTo(377, 412);
+      ctx.lineTo(387, 420);
+      ctx.lineTo(389, 412);
+      ctx.closePath();
+      ctx.fill();
+
+      // Top Header Neon Sign
       ctx.fillStyle = '#0f172a';
-      ctx.fillRect(295, 296, 150, 42);
-      ctx.fillStyle = '#02182b';
-      ctx.fillRect(298, 299, 144, 36);
-      ctx.fillStyle = '#00f0ff';
+      ctx.fillRect(320, 294, 150, 12);
+      ctx.fillStyle = '#f59e0b';
       ctx.font = 'bold 7px monospace';
-      ctx.fillText('⚡ AI AGENTS EXECUTIVE BOARDROOM', 304, 311);
+      ctx.fillText('☕ BOUTIQUE LOUNGE & PUPPY NOOK', 324, 303);
+
+      // 3. TOP-LEFT SECTIONAL BOOTH (Dark Charcoal / Slate Leather + Caramel Wood Table)
+      // Top backrest (spans x: 254..360, y: 314..328)
+      ctx.fillStyle = '#1b2432';
+      ctx.fillRect(254, 314, 106, 14);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(254, 314, 106, 2);
+      // Left backrest / arm (spans x: 254..268, y: 328..380)
+      ctx.fillStyle = '#1b2432';
+      ctx.fillRect(254, 328, 14, 52);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(254, 328, 2, 52);
+
+      // Slate leather cushions base with horizontal pleat stitching
+      ctx.fillStyle = '#222d3d';
+      ctx.fillRect(268, 328, 92, 52);
+      ctx.fillStyle = '#283548';
+      ctx.fillRect(270, 330, 88, 48);
+      ctx.fillStyle = '#1b2432';
+      ctx.fillRect(270, 344, 88, 2);
+      ctx.fillRect(270, 358, 88, 2);
+      // Gold velvet accent throw pillow at corner
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(270, 330, 10, 10);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(272, 332, 6, 6);
+
+      // Top Caramel Wooden Coffee Table
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(292, 346, 44, 30);
+      ctx.fillStyle = '#c67d4b';
+      ctx.fillRect(290, 344, 44, 28);
+      ctx.fillStyle = '#df905b';
+      ctx.fillRect(290, 344, 44, 2);
+      ctx.fillRect(290, 344, 2, 28);
+      // Small ceramic coffee mug on top table
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(302, 352, 5, 6);
+      ctx.fillStyle = '#3e2318';
+      ctx.fillRect(303, 352, 3, 2);
+      const tSteam = (frame * 0.25) % 6;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.fillRect(304, 348 - tSteam, 2, 2);
+      // Sketchpad / book on table
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(318, 354, 10, 8);
+      ctx.fillStyle = '#0284c7';
+      ctx.fillRect(320, 356, 6, 4);
+
+      // 4. BOTTOM-RIGHT INVERTED SECTIONAL BOOTH
+      // Bottom backrest (spans x: 390..496, y: 470..484)
+      ctx.fillStyle = '#1b2432';
+      ctx.fillRect(390, 470, 106, 14);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(390, 482, 106, 2);
+      // Right backrest / arm (spans x: 482..496, y: 404..470)
+      ctx.fillStyle = '#1b2432';
+      ctx.fillRect(482, 404, 14, 66);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(494, 404, 2, 66);
+
+      // Slate leather cushions base with horizontal pleat stitching
+      ctx.fillStyle = '#222d3d';
+      ctx.fillRect(392, 412, 90, 58);
+      ctx.fillStyle = '#283548';
+      ctx.fillRect(394, 414, 86, 54);
+      ctx.fillStyle = '#1b2432';
+      ctx.fillRect(394, 428, 86, 2);
+      ctx.fillRect(394, 442, 86, 2);
+      ctx.fillRect(394, 456, 86, 2);
+      // Cream accent throw pillow
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(470, 458, 10, 10);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(472, 460, 6, 6);
+
+      // Bottom Caramel Wooden Coffee Table
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(424, 424, 44, 30);
+      ctx.fillStyle = '#c67d4b';
+      ctx.fillRect(422, 422, 44, 28);
+      ctx.fillStyle = '#df905b';
+      ctx.fillRect(422, 422, 44, 2);
+      ctx.fillRect(422, 422, 2, 28);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(436, 430, 5, 6);
+      ctx.fillStyle = '#3e2318';
+      ctx.fillRect(437, 430, 3, 2);
+      const bSteam = (frame * 0.28) % 6;
+      ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
+      ctx.fillRect(438, 426 - bSteam, 2, 2);
+
+      // 5. ADORABLE FLUFFY OFFICE DOG (HUSKY/SHIBA PUPPY MOCHI) PET SANCTUARY CORNER
+      const dogBedX = 506;
+      const dogBedY = 340;
+
+      // Plush Braided Woven Oval Rug under Dog Bed
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(dogBedX, dogBedY + 3, 26, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#fef08a';
+      ctx.beginPath();
+      ctx.ellipse(dogBedX, dogBedY + 2, 25, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#eab308';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.fillStyle = '#fef9c3';
+      ctx.beginPath();
+      ctx.ellipse(dogBedX, dogBedY + 2, 20, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Donut Pet Bed Base & Cushion
+      ctx.fillStyle = '#1e293b';
+      ctx.beginPath();
+      ctx.arc(dogBedX + 2, dogBedY + 2, 19, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#c27845';
+      ctx.beginPath();
+      ctx.arc(dogBedX, dogBedY, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#a85d2b';
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+      ctx.fillStyle = '#fef3c7';
+      ctx.beginPath();
+      ctx.arc(dogBedX, dogBedY, 12, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Stainless Steel Water Bowl with Animated Fresh Ripples (Left of bed)
+      const wBowlX = dogBedX - 22;
+      const wBowlY = dogBedY + 8;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.3)';
+      ctx.beginPath();
+      ctx.ellipse(wBowlX + 1, wBowlY + 1, 6, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#94a3b8'; // Stainless rim
+      ctx.beginPath();
+      ctx.ellipse(wBowlX, wBowlY, 5.5, 3.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#38bdf8'; // Clear fresh water
+      ctx.beginPath();
+      ctx.ellipse(wBowlX, wBowlY, 4, 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+      const ripple = (frame * 0.15) % 2.5;
+      ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
+      ctx.lineWidth = 0.8;
+      ctx.beginPath();
+      ctx.arc(wBowlX, wBowlY, 1 + ripple, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Ceramic Pet Food Bowl with Golden Crunchy Kibble
+      const fBowlX = dogBedX - 22;
+      const fBowlY = dogBedY - 4;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.3)';
+      ctx.beginPath();
+      ctx.ellipse(fBowlX + 1, fBowlY + 1, 6, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ef4444'; // Red ceramic bowl
+      ctx.beginPath();
+      ctx.ellipse(fBowlX, fBowlY, 5.5, 3.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#b45309'; // Golden brown kibbles
+      ctx.fillRect(fBowlX - 3, fBowlY - 1, 2, 2);
+      ctx.fillRect(fBowlX, fBowlY - 2, 2, 2);
+      ctx.fillRect(fBowlX + 1, fBowlY, 2, 2);
+      ctx.fillRect(fBowlX - 2, fBowlY + 1, 2, 1);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(fBowlX - 1, fBowlY - 1, 2, 2);
+
+      // Red Rubber Dog Chew Bone Toy (Right of bed)
+      const boneX = dogBedX + 17;
+      const boneY = dogBedY + 10;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.3)';
+      ctx.fillRect(boneX - 4, boneY + 2, 10, 3);
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(boneX - 4, boneY, 8, 3); // Middle shaft
+      ctx.beginPath();
+      ctx.arc(boneX - 4, boneY - 1, 2, 0, Math.PI * 2); // Left top knuckle
+      ctx.arc(boneX - 4, boneY + 3, 2, 0, Math.PI * 2); // Left bottom knuckle
+      ctx.arc(boneX + 4, boneY - 1, 2, 0, Math.PI * 2); // Right top knuckle
+      ctx.arc(boneX + 4, boneY + 3, 2, 0, Math.PI * 2); // Right bottom knuckle
+      ctx.fill();
+
+      // Cute Puppy (Mochi)
+      const dogBreathe = Math.sin(frame * 0.08) * 1.2;
+      const tailWag = Math.sin(frame * 0.32) * 4;
+      ctx.fillStyle = '#18181b';
+      ctx.beginPath();
+      ctx.arc(dogBedX + 7 + tailWag, dogBedY - 5, 4, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(dogBedX + 9 + tailWag, dogBedY - 6, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#18181b';
+      ctx.beginPath();
+      ctx.ellipse(dogBedX, dogBedY, 9, 7 + dogBreathe, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(dogBedX - 2, dogBedY + 1, 5, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#18181b';
+      ctx.beginPath();
+      ctx.arc(dogBedX - 2, dogBedY - 3, 6, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(dogBedX - 4, dogBedY - 1, 3.5, 2.8, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(dogBedX - 6, dogBedY - 2, 2, 2);
+      // Ears
+      ctx.fillStyle = '#18181b';
+      ctx.beginPath();
+      ctx.moveTo(dogBedX - 6, dogBedY - 7); ctx.lineTo(dogBedX - 3, dogBedY - 12); ctx.lineTo(dogBedX - 1, dogBedY - 7);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fbcfe8';
+      ctx.beginPath();
+      ctx.moveTo(dogBedX - 5, dogBedY - 7); ctx.lineTo(dogBedX - 3, dogBedY - 10); ctx.lineTo(dogBedX - 2, dogBedY - 7);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#18181b';
+      ctx.beginPath();
+      ctx.moveTo(dogBedX, dogBedY - 7); ctx.lineTo(dogBedX + 3, dogBedY - 12); ctx.lineTo(dogBedX + 5, dogBedY - 7);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#fbcfe8';
+      ctx.beginPath();
+      ctx.moveTo(dogBedX + 1, dogBedY - 7); ctx.lineTo(dogBedX + 3, dogBedY - 10); ctx.lineTo(dogBedX + 4, dogBedY - 7);
+      ctx.closePath(); ctx.fill();
+      // Eyes
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(dogBedX - 4, dogBedY - 5, 2, 2);
+      ctx.fillRect(dogBedX, dogBedY - 5, 2, 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(dogBedX - 4, dogBedY - 5, 1, 1);
+      ctx.fillRect(dogBedX, dogBedY - 5, 1, 1);
+      // Cheeks & Tongue
+      ctx.fillStyle = 'rgba(244, 63, 94, 0.45)';
+      ctx.fillRect(dogBedX - 6, dogBedY - 3, 2, 1);
+      ctx.fillRect(dogBedX + 2, dogBedY - 3, 2, 1);
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(dogBedX - 5, dogBedY, 3, 2);
+      if (frame % 80 < 35) {
+        ctx.fillStyle = '#fb7185';
+        ctx.font = 'bold 7px monospace';
+        ctx.fillText('💕', dogBedX + 10, dogBedY - 10);
+      }
+
+      // 6. FRAMED HEART PHOTO & MINIATURE SUCCULENT
+      const frameX = 356;
+      const frameY = 466;
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(frameX - 1, frameY + 12, 14, 2);
+      ctx.fillRect(frameX + 5, frameY + 14, 2, 6);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(frameX, frameY, 12, 14);
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(frameX, frameY, 12, 14);
+      ctx.fillStyle = '#ffe4e6';
+      ctx.fillRect(frameX + 2, frameY + 2, 8, 10);
+      ctx.fillStyle = '#e11d48';
+      ctx.font = 'bold 6px monospace';
+      ctx.fillText('❤️', frameX + 2, frameY + 9);
+      // Mini succulent pot
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(frameX + 16, frameY + 8, 8, 8);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(frameX + 15, frameY + 7, 10, 2);
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(frameX + 20, frameY + 5, 4, 0, Math.PI * 2);
+      ctx.arc(frameX + 17, frameY + 4, 3, 0, Math.PI * 2);
+      ctx.arc(frameX + 23, frameY + 4, 3, 0, Math.PI * 2);
+      ctx.fill();
+
+      // 7. ESPRESSO BAR & REFRESHMENT STATION (West Wall beside Kitchen)
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(236, 426, 32, 54);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(234, 424, 36, 14);
+      ctx.fillStyle = '#dc2626';
+      ctx.fillRect(238, 404, 18, 20);
+      ctx.fillStyle = '#991b1b';
+      ctx.fillRect(240, 406, 14, 8);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(242, 416, 3, 4);
+      ctx.fillRect(249, 416, 3, 4);
+      ctx.fillStyle = '#b45309';
+      ctx.fillRect(256, 410, 4, 12);
+      ctx.fillStyle = '#15803d';
+      ctx.fillRect(262, 410, 4, 12);
+
+      // 8. RETRO ARCADE CABINET (West Wall, Top - Clearly distinct from Lounge & Dog Corner!)
+      const arcX = 236;
+      const arcY = 318;
+      // Grounding shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(arcX + 2, arcY + 34, 28, 4);
+
+      // Cabinet Outer Housing (Deep Obsidian Navy with Neon Cyan & Magenta Bevels)
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(arcX, arcY, 28, 36);
+      ctx.fillStyle = '#ec4899'; // Left magenta neon side edge
+      ctx.fillRect(arcX, arcY, 2, 36);
+      ctx.fillStyle = '#06b6d4'; // Right cyan neon side edge
+      ctx.fillRect(arcX + 26, arcY, 2, 36);
+
+      // Illuminated Retro Marquee Header
+      ctx.fillStyle = '#1e1b4b';
+      ctx.fillRect(arcX + 2, arcY + 2, 24, 7);
+      ctx.fillStyle = frame % 30 < 15 ? '#ffbe0b' : '#f59e0b';
+      ctx.fillRect(arcX + 2, arcY + 2, 24, 1); // Top glow strip
+      ctx.fillStyle = '#facc15';
+      ctx.font = 'bold 4.5px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('★ ARCADE ★', arcX + 14, arcY + 7);
+
+      // Curved Glass CRT Bezel & Screen
+      ctx.fillStyle = '#020617';
+      ctx.fillRect(arcX + 2, arcY + 10, 24, 15);
+      // Screen interior
+      ctx.fillStyle = '#050c1e';
+      ctx.fillRect(arcX + 3, arcY + 11, 22, 13);
+
+      // Animated 8-bit Space Invader on CRT
+      const alienShift = Math.sin(frame * 0.15) * 3;
+      ctx.fillStyle = '#00f0ff';
+      ctx.fillRect(arcX + 11 + alienShift, arcY + 13, 6, 4);
+      ctx.fillRect(arcX + 12 + alienShift, arcY + 12, 4, 1);
+      ctx.fillStyle = '#050c1e';
+      ctx.fillRect(arcX + 12 + alienShift, arcY + 14, 1, 1); // Eye left
+      ctx.fillRect(arcX + 15 + alienShift, arcY + 14, 1, 1); // Eye right
+
+      // Firing laser blast on screen
+      const laserY = (frame * 1.2) % 8;
+      ctx.fillStyle = '#f43f5e';
+      ctx.fillRect(arcX + 13, arcY + 21 - laserY, 2, 3);
+
+      // Player 8-bit space ship at bottom of screen
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(arcX + 11, arcY + 22, 6, 2);
+      ctx.fillRect(arcX + 13, arcY + 21, 2, 1);
+
+      // CRT Scanline Filter effect
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
+      ctx.fillRect(arcX + 3, arcY + 13, 22, 1);
+      ctx.fillRect(arcX + 3, arcY + 16, 22, 1);
+      ctx.fillRect(arcX + 3, arcY + 19, 22, 1);
+
+      // Slanted Control Console Deck
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(arcX + 2, arcY + 25, 24, 5);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(arcX + 2, arcY + 25, 24, 1); // Deck bevel
+
+      // Red Ball Joystick (Left)
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(arcX + 6, arcY + 26, 2, 3);
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(arcX + 5, arcY + 25, 4, 2);
+
+      // Arcade Action Buttons (Right)
+      ctx.fillStyle = '#38bdf8'; // Blue button
+      ctx.fillRect(arcX + 13, arcY + 27, 2, 2);
+      ctx.fillStyle = '#eab308'; // Yellow button
+      ctx.fillRect(arcX + 17, arcY + 27, 2, 2);
+      ctx.fillStyle = '#ef4444'; // Red button
+      ctx.fillRect(arcX + 21, arcY + 27, 2, 2);
+
+      // Coin Doors & Dual LED 25¢ Insertion Slots
+      ctx.fillStyle = '#0b0f19';
+      ctx.fillRect(arcX + 4, arcY + 30, 20, 5);
+      ctx.fillStyle = '#f97316'; // Illuminated orange 25¢ insert slots
+      ctx.fillRect(arcX + 8, arcY + 31, 3, 1);
+      ctx.fillRect(arcX + 17, arcY + 31, 3, 1);
+      ctx.fillStyle = '#475569'; // Coin return cups
+      ctx.fillRect(arcX + 8, arcY + 33, 3, 1.5);
+      ctx.fillRect(arcX + 17, arcY + 33, 3, 1.5);
+
+      // Potted plants in Lounge
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(534, 464, 12, 18);
+      ctx.fillStyle = '#16a34a';
+      ctx.beginPath();
+      ctx.arc(540, 452, 12, 0, Math.PI * 2);
+      ctx.arc(534, 444, 9, 0, Math.PI * 2);
+      ctx.arc(546, 444, 9, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(274, 474, 10, 14);
+      ctx.fillStyle = '#22c55e';
+      ctx.beginPath();
+      ctx.arc(279, 470, 7, 0, Math.PI * 2);
+      ctx.fill();
+
+      // ======================================================================
+      // ZONE 4: GRAND EXECUTIVE BOARDROOM & ALL-HANDS MEETING SUITE (Right Wing, x: 560..1024, y: 290..504)
+      // "MALUWAG" / EXTRA SPACIOUS: MASSIVE 464PX WIDE EXECUTIVE WING, 85" ULTRA-HD PRESENTATION SCREEN,
+      // EXPANSIVE MAHOGANY CONFERENCE TABLE WITH TONS OF WALKING CLEARANCE, KANBAN STRATEGY WALL & PLANTS!
+      // ======================================================================
+      // 1. Dark Mahogany Herringbone Parquet Wood Floor
+      ctx.fillStyle = '#2d1810';
+      ctx.fillRect(560, 290, 464, 214);
+      ctx.strokeStyle = '#3e2318';
+      ctx.lineWidth = 1;
+      for (let bx = 560; bx <= 1024; bx += 18) {
+        ctx.beginPath();
+        ctx.moveTo(bx, 290);
+        ctx.lineTo(bx, 504);
+        ctx.stroke();
+      }
+      for (let by = 296; by < 504; by += 16) {
+        ctx.beginPath();
+        ctx.moveTo(560, by);
+        ctx.lineTo(1024, by);
+        ctx.stroke();
+      }
+
+      // 2. 85" Ultra-HD Smart Presentation Screen on North Glass Wall (x: 710..870, y: 294..336)
+      const bScrX = 710;
+      const bScrY = 294;
+      const bScrW = 160;
+      const bScrH = 42;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+      ctx.fillRect(bScrX + 3, bScrY + 3, bScrW, bScrH);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(bScrX, bScrY, bScrW, bScrH);
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(bScrX, bScrY, bScrW, bScrH);
+
+      // Dark digital screen interior
+      ctx.fillStyle = '#02182b';
+      ctx.fillRect(bScrX + 2, bScrY + 2, bScrW - 4, bScrH - 4);
+      ctx.fillStyle = '#00f0ff';
+      ctx.font = 'bold 6.5px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('⚡ GLOBAL AI ROADMAP & SPRINT METRICS', bScrX + 6, bScrY + 11);
+
+      // Glowing live telemetry line chart
       ctx.strokeStyle = '#00f59b';
       ctx.lineWidth = 1.5;
       ctx.beginPath();
-      ctx.moveTo(306, 327);
-      ctx.lineTo(322, 321);
-      ctx.lineTo(338, 324);
-      ctx.lineTo(358, 316);
-      ctx.lineTo(378, 319);
+      ctx.moveTo(bScrX + 8, bScrY + 28);
+      ctx.lineTo(bScrX + 28, bScrY + 22);
+      ctx.lineTo(bScrX + 48, bScrY + 25);
+      ctx.lineTo(bScrX + 72, bScrY + 17);
+      ctx.lineTo(bScrX + 96, bScrY + 20);
+      ctx.lineTo(bScrX + 116, bScrY + 15);
       ctx.stroke();
+      // Glowing pulse point on chart
+      ctx.fillStyle = '#00f59b';
+      ctx.beginPath();
+      ctx.arc(bScrX + 116, bScrY + 15, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Metric progress bars on right of screen
       ctx.fillStyle = '#9d4edd';
-      ctx.fillRect(390, 315, 20, 11);
+      ctx.fillRect(bScrX + 124, bScrY + 16, 26, 8);
       ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(414, 315, 20, 11);
+      ctx.fillRect(bScrX + 124, bScrY + 26, 26, 8);
+      ctx.fillStyle = '#ffffff';
+      ctx.font = 'bold 5px monospace';
+      ctx.fillText('REV +48%', bScrX + 125, bScrY + 22);
+      ctx.fillText('SLA 99.9%', bScrX + 125, bScrY + 32);
 
-      // Boardroom Mahogany Conference Table
-      const tableX = 270;
-      const tableY = 390;
-      const tableW = 300;
-      const tableH = 68;
+      // 3. Grand Executive Mahogany Conference Table ("MALUWAG" / EXTRA SPACIOUS)
+      // Has generous walking clearance around all 4 sides!
+      const tableX = 690;
+      const tableY = 368;
+      const tableW = 200;
+      const tableH = 58;
 
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      // Table drop shadow
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
       ctx.fillRect(tableX + 4, tableY + 6, tableW, tableH);
+      // Rich solid mahogany outer rim
       ctx.fillStyle = '#2d1810';
       ctx.fillRect(tableX, tableY, tableW, tableH);
+      // High-gloss polished mahogany top surface
       ctx.fillStyle = '#3e2318';
-      ctx.fillRect(tableX + 4, tableY + 4, tableW - 8, tableH - 8);
-
+      ctx.fillRect(tableX + 3, tableY + 3, tableW - 6, tableH - 6);
+      // Inlaid warm mahogany center veneer
       ctx.fillStyle = '#4a2c1e';
-      ctx.fillRect(tableX + 30, tableY + 16, tableW - 60, tableH - 32);
+      ctx.fillRect(tableX + 20, tableY + 12, tableW - 40, tableH - 24);
+
+      // Inlaid gold brass perimeter accent pinstripe
+      ctx.strokeStyle = '#b45309';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(tableX + 10, tableY + 7, tableW - 20, tableH - 14);
+
+      // Central omnidirectional conference speakerphone puck with glowing cyan ring
       ctx.fillStyle = '#0f172a';
       ctx.beginPath();
-      ctx.arc(tableX + tableW / 2, tableY + tableH / 2, 8, 0, Math.PI * 2);
+      ctx.arc(tableX + tableW / 2, tableY + tableH / 2, 7, 0, Math.PI * 2);
       ctx.fill();
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 1;
+      ctx.stroke();
       ctx.fillStyle = '#00f0ff';
-      ctx.fillRect(tableX + tableW / 2 - 2, tableY + tableH / 2 - 2, 4, 4);
+      ctx.fillRect(tableX + tableW / 2 - 1.5, tableY + tableH / 2 - 1.5, 3, 3);
 
-      // 6 Conference Chairs around Table (Dylan Head of Table + 3 North + 2 South)
+      // Dual pop-up charging stations with brushed brass covers
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(tableX + 45, tableY + tableH / 2 - 3, 10, 6);
+      ctx.fillRect(tableX + tableW - 55, tableY + tableH / 2 - 3, 10, 6);
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(tableX + 46, tableY + tableH / 2 - 2, 8, 4);
+      ctx.fillRect(tableX + tableW - 54, tableY + tableH / 2 - 2, 8, 4);
+
+      // 4. 6 Executive Aeron Chairs around Table
+      // (Dylan CEO Head of Table on West + 3 Specialists North + 2 Specialists South)
       const confChairs = [
-        { x: tableX - 22, y: tableY + 24 }, // Dylan CEO seat (Head of Table)
+        { x: tableX - 26, y: tableY + 18, label: 'DYLAN (CEO)' },
         // North side (Ray, Maya, Alex)
-        { x: tableX + 40, y: tableY - 18 },
-        { x: tableX + 130, y: tableY - 18 },
-        { x: tableX + 220, y: tableY - 18 },
+        { x: tableX + 25, y: tableY - 20, label: 'RAY' },
+        { x: tableX + 80, y: tableY - 20, label: 'MAYA' },
+        { x: tableX + 140, y: tableY - 20, label: 'ALEX' },
         // South side (Wendy, Zane)
-        { x: tableX + 80, y: tableY + tableH + 4 },
-        { x: tableX + 190, y: tableY + tableH + 4 },
+        { x: tableX + 50, y: tableY + tableH + 4, label: 'WENDY' },
+        { x: tableX + 110, y: tableY + tableH + 4, label: 'ZANE' },
       ];
 
       confChairs.forEach((cc) => {
-        ctx.fillStyle = '#1e293b';
+        // Chair shadow & base
+        ctx.fillStyle = '#0f172a';
         ctx.fillRect(cc.x, cc.y, 22, 18);
+        // Slate mesh contoured cushion
         ctx.fillStyle = '#334155';
         ctx.fillRect(cc.x + 2, cc.y + 2, 18, 14);
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(cc.x + 2, cc.y + 2, 18, 14);
       });
 
-      // ======================================================================
-      // REST AREA & TEAM RELAXATION / WORK LOUNGE (Bottom-Right, x: 596..818, y: 298..500)
-      // ======================================================================
-      // 1. Cozy Lounge Carpet / Dark Slate Planks
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(596, 298, 222, 202);
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(602, 304, 210, 190);
-
-      // Acoustic Vertical Wood Slat Accent Wall (Luxury modern office backdrop)
-      ctx.fillStyle = '#1e1b4b';
-      ctx.fillRect(648, 298, 154, 30);
-      for (let wx = 650; wx < 800; wx += 6) {
-        ctx.fillStyle = '#78350f'; // Warm oak slat
-        ctx.fillRect(wx, 299, 4, 28);
-        ctx.fillStyle = '#92400e'; // Highlight
-        ctx.fillRect(wx + 1, 299, 1, 28);
-      }
-
-      // Decorative Warm Indigo Rug under Sofa, Table & Bench
-      ctx.fillStyle = '#312e81';
-      ctx.fillRect(648, 326, 152, 148);
-      ctx.strokeStyle = '#4f46e5';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(648, 326, 152, 148);
-
-      // Neon Sign: "☕ RELAX & WORK LOUNGE"
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(650, 298, 144, 14);
-      ctx.fillStyle = '#ec4899';
-      ctx.font = 'bold 7px monospace';
-      ctx.fillText('☕ RELAX & WORK LOUNGE', 654, 308);
-
-      // 2. Velvet Emerald Green Lounge Sectional Sofa
-      ctx.fillStyle = '#064e3b';
-      ctx.fillRect(664, 334, 116, 12); // Backrest
-      ctx.fillStyle = '#047857';
-      ctx.fillRect(664, 346, 116, 22); // Cushion Base
-      ctx.fillStyle = '#059669';
-      ctx.fillRect(668, 348, 34, 18);
-      ctx.fillRect(705, 348, 34, 18);
-      ctx.fillRect(742, 348, 34, 18);
-      ctx.fillStyle = '#065f46';
-      ctx.fillRect(658, 336, 8, 32); // Left armrest
-      ctx.fillRect(778, 336, 8, 32); // Right armrest
-      // Gold Velvet Accent Throw Pillows
-      ctx.fillStyle = '#f59e0b';
-      ctx.fillRect(666, 340, 8, 8);
-      ctx.fillRect(770, 340, 8, 8);
-
-      // 3. Modern Glass Coffee Table with Steaming Mugs & Design Magazine
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
-      ctx.fillRect(690, 396, 68, 24);
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(688, 392, 68, 22);
-      ctx.fillStyle = '#7dd3fc';
-      ctx.fillRect(690, 394, 64, 18);
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(700, 398, 5, 7); // Mug 1
-      ctx.fillStyle = '#ffbe0b';
-      ctx.fillRect(726, 398, 5, 7); // Mug 2
-      ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
-      const lSteam = (frame * 0.4) % 6;
-      ctx.fillRect(702, 394 - lSteam, 2, 2);
-      ctx.fillRect(728, 394 - lSteam, 2, 2);
-      // Tech Magazine on table
-      ctx.fillStyle = '#ec4899';
-      ctx.fillRect(738, 398, 10, 8);
+      // 5. East Wall Executive Strategy Whiteboard / Kanban Board (x: 924..996, y: 335..435)
+      const wbX = 924;
+      const wbY = 335;
+      const wbW = 74;
+      const wbH = 96;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fillRect(wbX + 3, wbY + 3, wbW, wbH);
+      // Frosted tempered glass whiteboard panel
       ctx.fillStyle = '#f8fafc';
-      ctx.fillRect(740, 400, 6, 4);
+      ctx.fillRect(wbX, wbY, wbW, wbH);
+      ctx.strokeStyle = '#cbd5e1';
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(wbX, wbY, wbW, wbH);
 
-      // 3B. NEW! COLLABORATIVE OAK & COGNAC LEATHER LAPTOP WORK BENCH (Bench 2)
-      // Solid Natural White Oak Base Frame
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(670, 440, 110, 24);
-      ctx.fillStyle = '#b45309';
-      ctx.fillRect(672, 442, 106, 20);
-      ctx.fillStyle = '#d97706';
-      ctx.fillRect(672, 442, 106, 2); // Golden oak top beveled bevel
-
-      // Cognac Padded Leather Cushion Pads (Seat 1 on left, Seat 2 on right)
-      ctx.fillStyle = '#78350f';
-      ctx.fillRect(675, 446, 46, 14);
-      ctx.fillRect(729, 446, 46, 14);
-      ctx.fillStyle = '#92400e'; // Rich cognac leather cushion
-      ctx.fillRect(676, 447, 44, 12);
-      ctx.fillRect(730, 447, 44, 12);
-
-      // Center Integrated Brass Power Hub & USB-C Station
+      // Title header
       ctx.fillStyle = '#0f172a';
-      ctx.fillRect(722, 447, 6, 12);
-      ctx.fillStyle = '#10b981'; // Green active charging LED
-      ctx.fillRect(724, 451, 2, 2);
+      ctx.font = 'bold 5px monospace';
+      ctx.textAlign = 'left';
+      ctx.fillText('SPRINT GOALS', wbX + 6, wbY + 10);
 
-      // Brass-Capped Sturdy Metal Legs
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(673, 464, 4, 6);
-      ctx.fillRect(773, 464, 4, 6);
-      ctx.fillStyle = '#fbbf24'; // Polished gold brass foot caps
-      ctx.fillRect(673, 468, 4, 2);
-      ctx.fillRect(773, 468, 4, 2);
+      // 3 Kanban Columns
+      ctx.strokeStyle = '#e2e8f0';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(wbX + 24, wbY + 14); ctx.lineTo(wbX + 24, wbY + wbH - 8);
+      ctx.moveTo(wbX + 48, wbY + 14); ctx.lineTo(wbX + 48, wbY + wbH - 8);
+      ctx.stroke();
 
-      // Soft ambient LED underglow under the new bench
-      ctx.fillStyle = 'rgba(251, 191, 36, 0.25)';
-      ctx.fillRect(672, 466, 106, 2);
+      // Colorful Kanban Sticky Notes
+      // Column 1: Backlog (Yellow & Pink notes)
+      ctx.fillStyle = '#fef08a'; ctx.fillRect(wbX + 4, wbY + 18, 14, 10);
+      ctx.fillStyle = '#fbcfe8'; ctx.fillRect(wbX + 4, wbY + 32, 14, 10);
+      ctx.fillStyle = '#fef08a'; ctx.fillRect(wbX + 4, wbY + 46, 14, 10);
+      // Column 2: In Progress (Cyan notes)
+      ctx.fillStyle = '#bae6fd'; ctx.fillRect(wbX + 28, wbY + 18, 16, 10);
+      ctx.fillStyle = '#bae6fd'; ctx.fillRect(wbX + 28, wbY + 32, 16, 10);
+      // Column 3: Done (Green notes!)
+      ctx.fillStyle = '#bbf7d0'; ctx.fillRect(wbX + 52, wbY + 18, 16, 10);
+      ctx.fillStyle = '#bbf7d0'; ctx.fillRect(wbX + 52, wbY + 32, 16, 10);
+      ctx.fillStyle = '#bbf7d0'; ctx.fillRect(wbX + 52, wbY + 46, 16, 10);
 
-      // 4. Espresso Bar & Refreshment Station
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(608, 426, 38, 66);
-      ctx.fillStyle = '#e2e8f0';
-      ctx.fillRect(606, 424, 40, 16);
-      ctx.fillStyle = '#dc2626';
-      ctx.fillRect(610, 404, 18, 22);
-      ctx.fillStyle = '#991b1b';
-      ctx.fillRect(612, 406, 14, 8);
-      ctx.fillStyle = '#fbbf24';
-      ctx.fillRect(614, 418, 3, 4);
-      ctx.fillRect(621, 418, 3, 4);
-      ctx.fillStyle = '#b45309';
-      ctx.fillRect(632, 412, 4, 12);
+      // Marker tray at bottom of whiteboard
+      ctx.fillStyle = '#94a3b8';
+      ctx.fillRect(wbX + 10, wbY + wbH - 4, wbW - 20, 3);
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(wbX + 16, wbY + wbH - 6, 6, 2);
+      ctx.fillStyle = '#3b82f6'; ctx.fillRect(wbX + 26, wbY + wbH - 6, 6, 2);
+      ctx.fillStyle = '#10b981'; ctx.fillRect(wbX + 36, wbY + wbH - 6, 6, 2);
+
+      // 6. Luxury Potted Indoor Ficus & Bird of Paradise Plants in Boardroom Corners
+      // Bottom-right corner plant
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(994, 465, 16, 18);
       ctx.fillStyle = '#15803d';
-      ctx.fillRect(638, 412, 4, 12);
-
-      // 5. Retro Pixel Arcade Cabinet
-      ctx.fillStyle = '#1e1b4b';
-      ctx.fillRect(780, 318, 26, 44);
-      ctx.fillStyle = '#4338ca';
-      ctx.fillRect(782, 320, 22, 10);
-      ctx.fillStyle = '#ffbe0b';
-      ctx.font = 'bold 6px monospace';
-      ctx.fillText('ARCADE', 783, 328);
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(782, 332, 22, 18);
-      ctx.fillStyle = frame % 30 < 15 ? '#ec4899' : '#00f0ff';
-      ctx.fillRect(786, 336, 6, 6);
-      ctx.fillStyle = '#facc15';
-      ctx.fillRect(794, 340, 4, 4);
-      ctx.fillStyle = '#dc2626';
-      ctx.fillRect(786, 352, 3, 3);
-      ctx.fillStyle = '#00f59b';
-      ctx.fillRect(792, 352, 2, 2);
-      ctx.fillRect(796, 352, 2, 2);
-
-      // 6. Lush Potted Fiddle-Leaf Fig Tree & Monstera Plant
+      ctx.beginPath();
+      ctx.arc(1002, 452, 14, 0, Math.PI * 2);
+      ctx.arc(994, 442, 10, 0, Math.PI * 2);
+      ctx.arc(1010, 442, 10, 0, Math.PI * 2);
+      ctx.fill();
+      // Top-right corner plant
       ctx.fillStyle = '#78350f';
-      ctx.fillRect(804, 464, 12, 18);
+      ctx.fillRect(994, 305, 14, 16);
       ctx.fillStyle = '#16a34a';
       ctx.beginPath();
-      ctx.arc(810, 452, 12, 0, Math.PI * 2);
-      ctx.arc(804, 444, 9, 0, Math.PI * 2);
-      ctx.arc(816, 444, 9, 0, Math.PI * 2);
+      ctx.arc(1001, 296, 12, 0, Math.PI * 2);
       ctx.fill();
-
-      // Second Planter: Potted Golden Pothos next to Espresso Bar
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(648, 474, 10, 14);
-      ctx.fillStyle = '#22c55e';
       ctx.beginPath();
       ctx.arc(653, 470, 7, 0, Math.PI * 2);
       ctx.fill();
@@ -1993,16 +3398,18 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       ctx.fillRect(275, ceoDoorY + Math.round(ceoDoorH * 0.38), 2, 16);
       ctx.fillRect(283, ceoDoorY + Math.round(ceoDoorH * 0.38), 2, 16);
 
-      // Horizontal Glass Wall between Bullpen & Boardroom (y = 280)
+      // Horizontal Glass Wall between Bullpen & Lounge / Boardroom (y = 280)
       ctx.fillStyle = 'rgba(56, 189, 248, 0.18)';
       ctx.fillRect(16, 280, 464, 8);  // Left wall segment (x: 16..480)
-      ctx.fillRect(550, 280, 274, 8); // Right wall segment (x: 550..824)
+      ctx.fillRect(550, 280, 140, 8); // Wall segment (x: 550..690)
+      ctx.fillRect(760, 280, 264, 8); // Right wall segment (x: 760..1024)
       ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
       ctx.lineWidth = 1;
       ctx.strokeRect(16, 280, 464, 8);
-      ctx.strokeRect(550, 280, 274, 8);
+      ctx.strokeRect(550, 280, 140, 8);
+      ctx.strokeRect(760, 280, 264, 8);
 
-      // Continuous floor threshold plate & guide track for Boardroom doorway (x: 480..550)
+      // Continuous floor threshold plate & guide track for Lounge doorway (x: 480..550)
       ctx.fillStyle = '#1e293b';
       ctx.fillRect(480, 278, 70, 12); // Threshold plate
       ctx.fillStyle = '#0f172a';
@@ -2015,17 +3422,17 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       ctx.fillStyle = boardDoorProgress > 0.08 ? '#10b981' : '#00f0ff';
       ctx.fillRect(513, 274, 4, 2);
 
-      // Boardroom Illuminated Acrylic Sign
+      // Lounge Illuminated Acrylic Sign
       ctx.fillStyle = '#0f172a';
-      ctx.fillRect(476, 264, 78, 12);
-      ctx.strokeStyle = '#00f0ff';
+      ctx.fillRect(484, 264, 62, 12);
+      ctx.strokeStyle = '#ec4899';
       ctx.lineWidth = 1;
-      ctx.strokeRect(476, 264, 78, 12);
-      ctx.fillStyle = '#00f0ff';
+      ctx.strokeRect(484, 264, 62, 12);
+      ctx.fillStyle = '#ec4899';
       ctx.font = 'bold 7px monospace';
-      ctx.fillText('BOARDROOM', 484, 273);
+      ctx.fillText('LOUNGE', 497, 273);
 
-      // Boardroom Bi-Parting Double Sliding Glass Doors (meeting in center x = 515)
+      // Lounge Bi-Parting Double Sliding Glass Doors (meeting in center x = 515)
       const boardSlideOffset = Math.round(boardDoorProgress * 28);
       // Left leaf: normal closed x = 480, width = 35. Slides left!
       const leftDoorX = 480 - boardSlideOffset;
@@ -2064,7 +3471,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       ctx.fillRect(rightDoorX + 4, 278, 2, 4);
       ctx.fillRect(rightDoorX + 4, 286, 2, 4);
 
-      // Vertical Glass Divider between Billiards Lounge & Boardroom (x = 226, y in [280, 504])
+      // Vertical Glass Divider between Kitchen & Lounge (x = 226, y in [280, 504])
       ctx.fillStyle = 'rgba(56, 189, 248, 0.16)';
       ctx.fillRect(226, 288, 8, 22);  // Top wall segment (y: 288..310)
       ctx.fillRect(226, 370, 8, 134); // Bottom wall segment (y: 370..504)
@@ -2085,36 +3492,36 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       ctx.fillRect(227, 334, 6, 12);
       // West Divider Plaque
       ctx.fillStyle = '#0f172a';
-      ctx.fillRect(200, 290, 54, 10);
-      ctx.fillStyle = '#38bdf8';
-      ctx.font = 'bold 5.5px monospace';
-      ctx.fillText('BOARDROOM W', 202, 297);
-
-      // Vertical Glass Divider between Boardroom & Rest Lounge (x = 590, y in [280, 504])
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.16)';
-      ctx.fillRect(590, 288, 8, 22);  // Top wall segment (y: 288..310)
-      ctx.fillRect(590, 370, 8, 134); // Bottom wall segment (y: 370..504)
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(590, 288, 8, 22);
-      ctx.strokeRect(590, 370, 8, 134);
-      // Floor guide track / threshold across doorway (y: 310..370)
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(588, 310, 12, 60);
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(587, 308, 14, 4); // Top jamb
-      ctx.fillRect(587, 368, 14, 4); // Bottom jamb
-      // Frosted Sliding Door Leaf / Open Portal
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
-      ctx.fillRect(590, 312, 8, 56);
-      ctx.fillStyle = 'rgba(224, 242, 254, 0.6)';
-      ctx.fillRect(591, 334, 6, 12);
-      // East Divider Plaque
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(594, 290, 52, 10);
+      ctx.fillRect(195, 290, 58, 10);
       ctx.fillStyle = '#ec4899';
       ctx.font = 'bold 5.5px monospace';
-      ctx.fillText('LOUNGE EAST', 596, 297);
+      ctx.fillText('LOUNGE W', 200, 297);
+
+      // Vertical Glass Divider between Lounge & Grand Boardroom (x = 560, y in [280, 504])
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.16)';
+      ctx.fillRect(560, 288, 8, 22);  // Top wall segment (y: 288..310)
+      ctx.fillRect(560, 370, 8, 134); // Bottom wall segment (y: 370..504)
+      ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(560, 288, 8, 22);
+      ctx.strokeRect(560, 370, 8, 134);
+      // Floor guide track / threshold across doorway (y: 310..370)
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(558, 310, 12, 60);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(557, 308, 14, 4); // Top jamb
+      ctx.fillRect(557, 368, 14, 4); // Bottom jamb
+      // Frosted Sliding Door Leaf / Open Portal
+      ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
+      ctx.fillRect(560, 312, 8, 56);
+      ctx.fillStyle = 'rgba(224, 242, 254, 0.6)';
+      ctx.fillRect(561, 334, 6, 12);
+      // East Divider Plaque
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(564, 290, 64, 10);
+      ctx.fillStyle = '#00f0ff';
+      ctx.font = 'bold 5.5px monospace';
+      ctx.fillText('BOARDROOM', 568, 297);
 
       // ======================================================================
       // 3. WORKSTATION DESKS & PERMANENT CHAIRS
@@ -2163,24 +3570,33 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(dDeskX + 28, dDeskY + 6, 94, 34);
 
-      // Liquid-Cooled Gaming Tower
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(dDeskX + 6, dDeskY + 10, 18, 38);
-      ctx.fillStyle = '#00f0ff';
-      ctx.fillRect(dDeskX + 10, dDeskY + 16, 3, 26);
+      // Liquid-Cooled Workstation Battle-Station Tower (Lian Li Dual-Chamber)
+      drawLegitPCTower2D(ctx, dDeskX + 6, dDeskY + 10, 18, 38, frame, 'cyan');
 
-      // Open Executive MacBook Pro on Desk (Facing Dylan)
-      ctx.fillStyle = '#cbd5e1';
+      // Open Executive Apple Silver MacBook Pro on Desk (Facing Dylan)
+      const dylLap = LAPTOP_STYLES_2D.dylan;
+      ctx.fillStyle = dylLap.baseColor;
       ctx.fillRect(dDeskX + 8, dDeskY + 12, 18, 10);
-      ctx.fillStyle = '#0f172a';
+      ctx.fillStyle = dylLap.kbColor;
       ctx.fillRect(dDeskX + 10, dDeskY + 13, 14, 5); // Keyboard
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = dylLap.trackpadColor;
       ctx.fillRect(dDeskX + 14, dDeskY + 19, 6, 2);  // Trackpad
       // Display lid with screen facing north towards Dylan
-      ctx.fillStyle = '#94a3b8';
+      ctx.fillStyle = dylLap.lidColor;
       ctx.fillRect(dDeskX + 8, dDeskY + 22, 18, 8);
-      ctx.fillStyle = '#00f0ff'; // Executive cyan glowing screen facing Dylan
-      ctx.fillRect(dDeskX + 9, dDeskY + 22, 16, 4);
+      ctx.fillStyle = dylLap.screenBg;
+      ctx.fillRect(dDeskX + 9, dDeskY + 22, 16, 5);
+      // Glowing white Apple logo on back of lid
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(dDeskX + 16, dDeskY + 28, 2, 2);
+      // Active code & telemetry lines on laptop screen
+      ctx.fillStyle = '#00f0ff';
+      ctx.fillRect(dDeskX + 10, dDeskY + 23, 8, 1);
+      ctx.fillRect(dDeskX + 10, dDeskY + 25, 12, 1);
+      if (frame % 24 < 12) {
+        ctx.fillStyle = '#ffffff'; // Blinking prompt cursor
+        ctx.fillRect(dDeskX + 23, dDeskY + 25, 1, 2);
+      }
 
       // Mechanical Keyboard & Precision Mouse (in front of Dylan, on desk pad)
       ctx.fillStyle = '#0f172a';
@@ -2193,52 +3609,670 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       // Dylan Dual Monitors: 49" Panoramic Ultrawide + Vertical KPI Display
       // (Screen faces North/up towards Dylan, sleek black casing faces South/down towards door)
       // Casing back (facing down towards door)
-      ctx.fillStyle = '#1e1b4b';
+      ctx.fillStyle = '#090d16';
       ctx.fillRect(dDeskX + 32, dDeskY + 24, 56, 18);
-      // Active glowing screen (facing up towards Dylan)
-      ctx.fillStyle = '#0284c7';
-      ctx.fillRect(dDeskX + 34, dDeskY + 22, 52, 4);
-      ctx.fillStyle = '#00f0ff';
-      ctx.fillRect(dDeskX + 42, dDeskY + 22, 24, 2);
-
-      // Secondary Vertical Metrics Monitor
       ctx.fillStyle = '#1e293b';
-      ctx.fillRect(dDeskX + 92, dDeskY + 18, 24, 26);
-      ctx.fillStyle = '#0a0c14';
-      ctx.fillRect(dDeskX + 94, dDeskY + 16, 20, 6);
-      ctx.fillStyle = '#38bdf8';
-      ctx.fillRect(dDeskX + 96, dDeskY + 16, 14, 2);
+      ctx.fillRect(dDeskX + 33, dDeskY + 25, 54, 16);
+      // Metallic dual monitor arm stand
+      ctx.fillStyle = '#64748b';
+      ctx.fillRect(dDeskX + 57, dDeskY + 38, 6, 4);
 
-      // Bullpen Desks (5 Specialists: 3 Row 1, 2 Row 2)
-      const bpDesks = [
-        // Row 1 (AI Researcher, Designer, Fullstack Dev)
-        { id: 'ray', x: 304, y: 46 },
-        { id: 'maya', x: 474, y: 46 },
-        { id: 'alex', x: 644, y: 46 },
-        // Row 2 (Marketing, Cybersecurity)
-        { id: 'wendy', x: 389, y: 160 },
-        { id: 'zane', x: 559, y: 160 },
+      // Active 49" Glowing Screen (facing up towards Dylan) with Live Candlestick & Telemetry
+      ctx.fillStyle = '#030712';
+      ctx.fillRect(dDeskX + 34, dDeskY + 20, 52, 6);
+      ctx.strokeStyle = '#0284c7';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(dDeskX + 34, dDeskY + 20, 52, 6);
+
+      // Live High-Frequency Trading Candlesticks & Upward Revenue Trendline
+      for (let ci = 0; ci < 7; ci++) {
+        const cX = dDeskX + 36 + ci * 5;
+        const wave = Math.sin(frame * 0.06 + ci * 0.9);
+        const isUp = wave > -0.1;
+        const barH = 2 + Math.floor(Math.abs(wave) * 3);
+        ctx.fillStyle = isUp ? '#22c55e' : '#ef4444';
+        ctx.fillRect(cX, dDeskY + 24 - barH, 3, barH);
+        // Wick
+        ctx.fillStyle = isUp ? '#4ade80' : '#f87171';
+        ctx.fillRect(cX + 1, dDeskY + 24 - barH - 1, 1, barH + 2);
+      }
+      // Pulsing cyan KPI badge on right edge of 49" display
+      ctx.fillStyle = (frame % 28 < 14) ? '#00f0ff' : '#0284c7';
+      ctx.fillRect(dDeskX + 73, dDeskY + 21, 11, 3);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(dDeskX + 75, dDeskY + 22, 7, 1);
+
+      // Secondary Vertical Metrics Monitor (w = 24, h = 26)
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(dDeskX + 92, dDeskY + 18, 24, 26);
+      ctx.fillStyle = '#030712';
+      ctx.fillRect(dDeskX + 94, dDeskY + 16, 20, 26);
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(dDeskX + 94, dDeskY + 16, 20, 26);
+
+      // Active Vertical Telemetry Cards: ARR, Active Agents, System Health
+      const kpiProg1 = 4 + Math.floor((Math.sin(frame * 0.04) + 1) * 6);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(dDeskX + 96, dDeskY + 18, kpiProg1, 3);
+      const kpiProg2 = 4 + Math.floor((Math.cos(frame * 0.05) + 1) * 5);
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(dDeskX + 96, dDeskY + 24, kpiProg2, 3);
+      const kpiProg3 = 8 + Math.floor((Math.sin(frame * 0.03 + 2) + 1) * 4);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(dDeskX + 96, dDeskY + 30, kpiProg3, 3);
+      // Blinking operational heartbeat dot
+      ctx.fillStyle = (frame % 30 < 15) ? '#22c55e' : '#14532d';
+      ctx.fillRect(dDeskX + 110, dDeskY + 37, 2, 2);
+
+      // WARM BREAKFAST / FRESH ARTISANAL COFFEE SERVED BY EAH ON DYLAN'S DESK
+      if (servedDeskItemRef.current === 'food') {
+        // White porcelain plate with golden breakfast, sunny-side eggs & herbs
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(dDeskX + 118, dDeskY + 36, 16, 12);
+        ctx.fillStyle = '#fbbf24';
+        ctx.strokeRect(dDeskX + 118, dDeskY + 36, 16, 12);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(dDeskX + 120, dDeskY + 38, 7, 6); // Sunny egg white/golden
+        ctx.fillStyle = '#ea580c';
+        ctx.fillRect(dDeskX + 122, dDeskY + 40, 3, 3); // Orange yolk
+        ctx.fillStyle = '#dc2626';
+        ctx.fillRect(dDeskX + 128, dDeskY + 39, 4, 5); // Crispy bacon/ham
+        ctx.fillStyle = '#16a34a';
+        ctx.fillRect(dDeskX + 127, dDeskY + 38, 2, 2); // Fresh herb garnish
+        // Tiny cutlery
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(dDeskX + 115, dDeskY + 38, 2, 8); // Fork
+        ctx.fillRect(dDeskX + 135, dDeskY + 38, 2, 8); // Knife
+        // Gentle steam curls rising
+        const fSteam = (frame * 0.25) % 6;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
+        ctx.fillRect(dDeskX + 124, dDeskY + 33 - fSteam, 2, 2);
+        ctx.fillRect(dDeskX + 128, dDeskY + 31 - fSteam, 2, 2);
+      } else if (servedDeskItemRef.current === 'coffee') {
+        // Ceramic Mug with Heart Latte Art
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(dDeskX + 122, dDeskY + 36, 10, 10);
+        ctx.fillStyle = '#fb7185';
+        ctx.fillRect(dDeskX + 122, dDeskY + 36, 10, 2); // Rose gold rim
+        ctx.fillStyle = '#3e2318';
+        ctx.fillRect(dDeskX + 124, dDeskY + 38, 6, 4); // Rich coffee
+        ctx.fillStyle = '#fef3c7';
+        ctx.fillRect(dDeskX + 126, dDeskY + 39, 2, 2); // Heart foam art
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(dDeskX + 132, dDeskY + 39, 2, 4); // Handle
+        // Steaming curls rising
+        const cSteam = (frame * 0.3) % 7;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.fillRect(dDeskX + 126, dDeskY + 33 - cSteam, 2, 2);
+      }
+
+      // ======================================================================
+      // 3. WORKSTATION DESKS & PERMANENT CHAIRS
+      // ======================================================================
+      // ROW 1: PRODUCT TEAM (2 Long White Desks Placed with Ample Walking Room)
+      // Middle: Maya (Dual Monitors, Graphic Tablet with Stylus, Notepad & Phone, Dark Keyboard, Mouse)
+      // Right: Ray (Succulent in Orange Pot, Laptop Terminal, Retro Warm Lamp, Green Backpack)
+      const productDesks = [
+        { id: 'maya', x: 380, y: 46, w: 180, h: 54 },
+        { id: 'ray', x: 600, y: 46, w: 180, h: 54 },
       ];
 
-      bpDesks.forEach((d) => {
-        const w = 140;
-        const h = 50;
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+      productDesks.forEach((d) => {
+        // Drop shadow
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
+        ctx.fillRect(d.x + 4, d.y + 6, d.w, d.h);
+
+        // Long white desk top surface
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(d.x, d.y, d.w, d.h - 8);
+        ctx.strokeStyle = '#cbd5e1';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(d.x, d.y, d.w, d.h - 8);
+
+        // Front edge bevel line
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(d.x, d.y + d.h - 9, d.w, 1);
+
+        // Dark grey-blue front modesty skirt / panel
+        ctx.fillStyle = '#556075';
+        ctx.fillRect(d.x, d.y + d.h - 8, d.w, 8);
+        ctx.strokeStyle = '#334155';
+        ctx.strokeRect(d.x, d.y + d.h - 8, d.w, 8);
+
+        // Dark sturdy corner legs
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(d.x + 4, d.y + d.h, 6, 8);
+        ctx.fillRect(d.x + d.w - 10, d.y + d.h, 6, 8);
+
+        // Dark grey rolling office chair facing upward
+        const chairX = d.x + d.w / 2 - 14;
+        const chairY = d.y + d.h + 8;
+        // Five-star spider rolling caster base
+        ctx.fillStyle = '#0f172a';
+        ctx.fillRect(chairX - 2, chairY + 14, 32, 3);
+        ctx.fillRect(chairX - 4, chairY + 15, 3, 3);
+        ctx.fillRect(chairX + 29, chairY + 15, 3, 3);
+        ctx.fillRect(chairX + 12, chairY + 6, 4, 10);
+        // Mesh contoured seat & backrest facing upward
+        ctx.fillStyle = '#334155';
+        ctx.beginPath();
+        ctx.roundRect(chairX, chairY, 28, 14, 3);
+        ctx.fill();
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        // Inner backrest mesh accent
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(chairX + 4, chairY + 2, 20, 3);
+        // Left & right armrests
+        ctx.fillStyle = '#1e293b';
+        ctx.fillRect(chairX - 3, chairY + 2, 3, 10);
+        ctx.fillRect(chairX + 28, chairY + 2, 3, 10);
+
+        // --------------------------------------------------------------------
+        // DISTINCT HARDWARE & PROPS FOR EACH OF THE 3 DESKS
+        // --------------------------------------------------------------------
+        if (d.id === 'alex') {
+          // ==================================================================
+          // DESK 1 (LEFT): DEVELOPER / GAMER SETUP
+          // ==================================================================
+          // A. PC Tower on far left of desk
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(d.x + 10, d.y + 6, 16, 36);
+          ctx.strokeStyle = '#0f172a';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(d.x + 10, d.y + 6, 16, 36);
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(d.x + 12, d.y + 8, 12, 10);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(d.x + 14, d.y + 18, 3, 20); // Glowing vertical blue LED strip
+          ctx.fillStyle = '#0284c7';
+          ctx.fillRect(d.x + 18, d.y + 10, 4, 2);
+
+          // B. Gamepad / Controller below PC tower
+          const gpX = d.x + 8;
+          const gpY = d.y + 36;
+          ctx.fillStyle = '#2d3748';
+          ctx.beginPath();
+          ctx.roundRect(gpX, gpY, 20, 12, 4);
+          ctx.fill();
+          ctx.strokeStyle = '#1a202c';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          // D-pad on left
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(gpX + 3, gpY + 5, 5, 2);
+          ctx.fillRect(gpX + 4.5, gpY + 3.5, 2, 5);
+          // Action buttons on right (ABXY)
+          ctx.fillStyle = '#38bdf8'; ctx.fillRect(gpX + 13, gpY + 4, 2, 2);
+          ctx.fillStyle = '#f43f5e'; ctx.fillRect(gpX + 16, gpY + 5.5, 2, 2);
+          ctx.fillStyle = '#fbbf24'; ctx.fillRect(gpX + 11.5, gpY + 6.5, 2, 2);
+          ctx.fillStyle = '#10b981'; ctx.fillRect(gpX + 14, gpY + 8, 2, 2);
+          // Analog thumbsticks
+          ctx.fillStyle = '#1a202c';
+          ctx.beginPath(); ctx.arc(gpX + 7, gpY + 9, 2, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(gpX + 13, gpY + 9, 2, 0, Math.PI * 2); ctx.fill();
+
+          // C. Main Monitor (Horizontal) - Synthwave / Vaporwave Scene
+          const m1X = d.x + 32;
+          const m1Y = d.y + 5;
+          const m1W = 44;
+          const m1H = 26;
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(m1X + m1W / 2 - 6, m1Y + m1H, 12, 5); // Desktop stand
+          ctx.fillRect(m1X + m1W / 2 - 2, m1Y + m1H - 4, 4, 5);
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(m1X, m1Y, m1W, m1H);
+          ctx.strokeStyle = '#0f172a';
+          ctx.strokeRect(m1X, m1Y, m1W, m1H);
+
+          // Synthwave Screen (Purple twilight sky, pink sun, perspective cyan/pink grid)
+          const s1X = m1X + 2;
+          const s1Y = m1Y + 2;
+          const s1W = m1W - 4;
+          const s1H = m1H - 4;
+          ctx.fillStyle = '#2e0854';
+          ctx.fillRect(s1X, s1Y, s1W, s1H * 0.55);
+          ctx.fillStyle = '#581c87';
+          ctx.fillRect(s1X, s1Y + 4, s1W, s1H * 0.35);
+          // Neon pink sun on horizon
+          ctx.fillStyle = '#f43f5e';
+          ctx.beginPath();
+          ctx.arc(s1X + s1W / 2, s1Y + s1H * 0.55, 6, Math.PI, 0);
+          ctx.fill();
+          ctx.fillStyle = '#fb7185';
+          ctx.fillRect(s1X + s1W / 2 - 5, s1Y + s1H * 0.55 - 2, 10, 1);
+          // Distant mountains
+          ctx.fillStyle = '#1e1b4b';
+          ctx.beginPath();
+          ctx.moveTo(s1X + 2, s1Y + s1H * 0.55);
+          ctx.lineTo(s1X + 10, s1Y + s1H * 0.38);
+          ctx.lineTo(s1X + 18, s1Y + s1H * 0.55);
+          ctx.lineTo(s1X + s1W - 12, s1Y + s1H * 0.35);
+          ctx.lineTo(s1X + s1W - 2, s1Y + s1H * 0.55);
+          ctx.fill();
+          // Wireframe neon grid
+          const gY = s1Y + Math.floor(s1H * 0.55);
+          const gH = s1H - Math.floor(s1H * 0.55);
+          ctx.fillStyle = '#0a0a1a';
+          ctx.fillRect(s1X, gY, s1W, gH);
+          ctx.fillStyle = '#06b6d4';
+          ctx.fillRect(s1X, gY + 2, s1W, 1);
+          ctx.fillRect(s1X, gY + 5, s1W, 1);
+          ctx.fillRect(s1X, gY + 8, s1W, 1);
+          ctx.strokeStyle = '#f43f5e';
+          ctx.lineWidth = 0.8;
+          ctx.beginPath();
+          ctx.moveTo(s1X + s1W / 2, gY); ctx.lineTo(s1X + 2, s1Y + s1H);
+          ctx.moveTo(s1X + s1W / 2, gY); ctx.lineTo(s1X + 8, s1Y + s1H);
+          ctx.moveTo(s1X + s1W / 2, gY); ctx.lineTo(s1X + s1W / 2, s1Y + s1H);
+          ctx.moveTo(s1X + s1W / 2, gY); ctx.lineTo(s1X + s1W - 8, s1Y + s1H);
+          ctx.moveTo(s1X + s1W / 2, gY); ctx.lineTo(s1X + s1W - 2, s1Y + s1H);
+          ctx.stroke();
+
+          // D. Vertical Secondary Monitor on right (dark interface with colorful spots)
+          const m2X = d.x + 80;
+          const m2Y = d.y + 6;
+          const m2W = 22;
+          const m2H = 34;
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(m2X, m2Y, m2W, m2H);
+          ctx.strokeStyle = '#0f172a';
+          ctx.strokeRect(m2X, m2Y, m2W, m2H);
+          ctx.fillStyle = '#090d16';
+          ctx.fillRect(m2X + 2, m2Y + 2, m2W - 4, m2H - 4);
+          const spotColors = ['#f43f5e', '#38bdf8', '#fbbf24', '#34d399', '#a855f7', '#fb7185', '#38bdf8', '#fbbf24'];
+          for (let spi = 0; spi < 8; spi++) {
+            const rowY = m2Y + 5 + spi * 3.2;
+            ctx.fillStyle = spotColors[spi % spotColors.length];
+            ctx.fillRect(m2X + 4, rowY, 3, 2);
+            ctx.fillStyle = spotColors[(spi + 2) % spotColors.length];
+            ctx.fillRect(m2X + 9, rowY, 5, 2);
+            if (spi % 2 === 0) {
+              ctx.fillStyle = spotColors[(spi + 4) % spotColors.length];
+              ctx.fillRect(m2X + 15, rowY, 3, 2);
+            }
+          }
+
+          // E. Blue Mechanical Keyboard
+          const kbX = d.x + 36;
+          const kbY = d.y + 36;
+          ctx.fillStyle = '#0284c7';
+          ctx.fillRect(kbX, kbY, 34, 11);
+          ctx.strokeStyle = '#0369a1';
+          ctx.strokeRect(kbX, kbY, 34, 11);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(kbX + 2, kbY + 2, 30, 2);
+          ctx.fillRect(kbX + 2, kbY + 5, 30, 2);
+          ctx.fillStyle = '#bae6fd';
+          ctx.fillRect(kbX + 8, kbY + 8, 16, 2);
+
+          // F. Dark Mouse
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(d.x + 74, d.y + 37, 7, 10);
+          ctx.fillStyle = '#38bdf8';
+          ctx.fillRect(d.x + 76, d.y + 39, 3, 2);
+
+        } else if (d.id === 'maya') {
+          // ==================================================================
+          // DESK 2 (MIDDLE): DESIGNER / ARTIST SETUP (MAYA)
+          // ==================================================================
+          // Legit Liquid-Cooled Lian Li Workstation PC Tower (Designer Pink/White RGB)
+          drawLegitPCTower2D(ctx, d.x + 130, d.y + 8, 18, 38, frame, 'pink');
+
+          // A. Dual Monitor Setup: Figma Canvas + Design System Tokens
+          // Monitor 1: Wider Monitor on left (Active Figma App UI with Animated Selection Box)
+          const mm1X = d.x + 8;
+          const mm1Y = d.y + 6;
+          const mm1W = 42;
+          const mm1H = 26;
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(mm1X + mm1W / 2 - 5, mm1Y + mm1H, 10, 5);
+          ctx.fillStyle = '#090d16';
+          ctx.fillRect(mm1X, mm1Y, mm1W, mm1H);
+          ctx.strokeStyle = '#ec4899';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(mm1X, mm1Y, mm1W, mm1H);
+
+          // Figma Top Toolbar
+          ctx.fillStyle = '#1e1b4b';
+          ctx.fillRect(mm1X + 1, mm1Y + 1, mm1W - 2, 3);
+          ctx.fillStyle = '#ec4899'; ctx.fillRect(mm1X + 3, mm1Y + 2, 2, 1);
+          ctx.fillStyle = '#38bdf8'; ctx.fillRect(mm1X + 7, mm1Y + 2, 2, 1);
+          ctx.fillStyle = '#a855f7'; ctx.fillRect(mm1X + 11, mm1Y + 2, 2, 1);
+
+          // Figma Canvas background
+          ctx.fillStyle = '#18181b';
+          ctx.fillRect(mm1X + 1, mm1Y + 4, mm1W - 2, mm1H - 5);
+
+          // Mobile App Wireframe Frame (Artboard)
+          const abX = mm1X + 10;
+          const abY = mm1Y + 6;
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(abX, abY, 18, 14);
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(abX + 2, abY + 2, 14, 3); // Header
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(abX + 2, abY + 6, 14, 4); // Card
+          ctx.fillStyle = '#ec4899';
+          ctx.fillRect(abX + 4, abY + 11, 10, 2); // Primary CTA Button
+
+          // Animated Pulsing Figma Selection Marquee Box around Card
+          if (frame % 30 < 18) {
+            ctx.strokeStyle = '#00f0ff';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(abX + 1, abY + 5, 16, 6);
+            // 4 corner handles
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(abX, abY + 4, 2, 2);
+            ctx.fillRect(abX + 16, abY + 4, 2, 2);
+            ctx.fillRect(abX, abY + 10, 2, 2);
+            ctx.fillRect(abX + 16, abY + 10, 2, 2);
+          }
+
+          // Monitor 2: Vertical Design Tokens & Color Palette Monitor
+          const mm2X = d.x + 52;
+          const mm2Y = d.y + 6;
+          const mm2W = 18;
+          const mm2H = 32;
+          ctx.fillStyle = '#090d16';
+          ctx.fillRect(mm2X, mm2Y, mm2W, mm2H);
+          ctx.strokeStyle = '#8b5cf6';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(mm2X, mm2Y, mm2W, mm2H);
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(mm2X + 1, mm2Y + 1, mm2W - 2, mm2H - 2);
+
+          // Design tokens & animated property slider
+          const dColors = ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981', '#f59e0b', '#f43f5e'];
+          for (let di = 0; di < dColors.length; di++) {
+            ctx.fillStyle = dColors[di];
+            ctx.fillRect(mm2X + 3, mm2Y + 3 + di * 4, 4, 2);
+            ctx.fillStyle = '#64748b';
+            ctx.fillRect(mm2X + 9, mm2Y + 3 + di * 4, 6, 2);
+          }
+          // Animated slider thumb moving
+          const sPos = 3 + Math.floor((Math.sin(frame * 0.08) + 1) * 5);
+          ctx.fillStyle = '#ec4899';
+          ctx.fillRect(mm2X + 3, mm2Y + 27, 12, 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(mm2X + sPos, mm2Y + 26, 3, 4);
+
+          // B. Artist's Graphic Tablet with Stylus (Wacom pen display)
+          const tabX = d.x + 72;
+          const tabY = d.y + 8;
+          const tabW = 34;
+          const tabH = 24;
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(tabX, tabY, tabW, tabH);
+          ctx.strokeStyle = '#0f172a';
+          ctx.strokeRect(tabX, tabY, tabW, tabH);
+          // Express keys on left bezel
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(tabX + 2, tabY + 3, 2, 3);
+          ctx.fillRect(tabX + 2, tabY + 8, 2, 3);
+          ctx.fillRect(tabX + 2, tabY + 13, 2, 3);
+          // Screen with checkerboard canvas
+          const scrX = tabX + 5;
+          const scrY = tabY + 2;
+          const scrW = tabW - 7;
+          const scrH = tabH - 4;
+          for (let cy = scrY; cy < scrY + scrH; cy += 4) {
+            for (let cx = scrX; cx < scrX + scrW - 4; cx += 4) {
+              const isChk = (Math.floor((cx - scrX) / 4) + Math.floor((cy - scrY) / 4)) % 2 === 0;
+              ctx.fillStyle = isChk ? '#cbd5e1' : '#ffffff';
+              ctx.fillRect(cx, cy, 4, 4);
+            }
+          }
+          // Color picker palette on right edge of tablet display
+          const palX = scrX + scrW - 4;
+          ctx.fillStyle = '#ec4899'; ctx.fillRect(palX, scrY + 2, 3, 3);
+          ctx.fillStyle = '#10b981'; ctx.fillRect(palX, scrY + 6, 3, 3);
+          ctx.fillStyle = '#3b82f6'; ctx.fillRect(palX, scrY + 10, 3, 3);
+          ctx.fillStyle = '#f59e0b'; ctx.fillRect(palX, scrY + 14, 3, 3);
+
+          // C. Open Apple Starlight MacBook Air on Desk
+          const mayLap = LAPTOP_STYLES_2D.maya;
+          const mlX = d.x + 108;
+          const mlY = d.y + 12;
+          ctx.fillStyle = mayLap.baseColor;
+          ctx.fillRect(mlX, mlY, 18, 10);
+          ctx.fillStyle = mayLap.kbColor;
+          ctx.fillRect(mlX + 2, mlY + 1, 14, 5);
+          ctx.fillStyle = mayLap.trackpadColor;
+          ctx.fillRect(mlX + 6, mlY + 7, 6, 2);
+          // Upright lid facing Maya
+          ctx.fillStyle = mayLap.lidColor;
+          ctx.fillRect(mlX, mlY - 8, 18, 9);
+          ctx.fillStyle = mayLap.screenBg;
+          ctx.fillRect(mlX + 1, mlY - 7, 16, 7);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(mlX + 8, mlY - 4, 2, 2); // Apple Logo
+          ctx.fillStyle = '#ec4899';
+          ctx.fillRect(mlX + 3, mlY - 6, 8, 2);
+          ctx.fillRect(mlX + 3, mlY - 3, 10, 2);
+
+          // D. Stylus pen standing upright in desktop stand
+          const stX = d.x + 108;
+          const stY = d.y + 26;
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.arc(stX + 4, stY + 6, 4, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#ec4899';
+          ctx.fillRect(stX + 3, stY - 2, 2, 8);
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(stX + 3, stY - 2, 2, 2);
+
+          // E. Dark Mechanical Keyboard and Mouse
+          const dkbX = d.x + 28;
+          const dkbY = d.y + 36;
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(dkbX, dkbY, 30, 10);
+          ctx.strokeStyle = '#ec4899';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(dkbX, dkbY, 30, 10);
+          ctx.fillStyle = '#ec4899';
+          ctx.fillRect(dkbX + 2, dkbY + 2, 26, 2);
+          ctx.fillRect(dkbX + 2, dkbY + 5, 26, 2);
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(d.x + 62, d.y + 37, 6, 8);
+
+        } else if (d.id === 'ray') {
+          // ==================================================================
+          // DESK 3 (RIGHT): AI RESEARCHER SETUP (RAY)
+          // ==================================================================
+          // Legit Liquid-Cooled AI Deep Learning Monster Rig (Dual GPU Cyan RGB)
+          drawLegitPCTower2D(ctx, d.x + 130, d.y + 8, 18, 38, frame, 'cyan');
+
+          // A. Small potted succulent in orange pot on far left
+          const potX = d.x + 8;
+          const potY = d.y + 12;
+          ctx.fillStyle = '#ea580c';
+          ctx.fillRect(potX + 2, potY + 16, 16, 14);
+          ctx.fillStyle = '#f97316';
+          ctx.fillRect(potX, potY + 14, 20, 4);
+          ctx.fillStyle = '#c2410c';
+          ctx.fillRect(potX + 3, potY + 28, 14, 2);
+          ctx.fillStyle = '#451a03';
+          ctx.fillRect(potX + 2, potY + 14, 16, 2);
+          // Pointed succulent leaves
+          ctx.fillStyle = '#15803d';
+          ctx.beginPath();
+          ctx.moveTo(potX + 4, potY + 14); ctx.lineTo(potX - 1, potY + 6); ctx.lineTo(potX + 6, potY + 14);
+          ctx.moveTo(potX + 16, potY + 14); ctx.lineTo(potX + 21, potY + 6); ctx.lineTo(potX + 14, potY + 14);
+          ctx.fill();
+          ctx.fillStyle = '#22c55e';
+          ctx.beginPath();
+          ctx.moveTo(potX + 6, potY + 14); ctx.lineTo(potX + 3, potY + 2); ctx.lineTo(potX + 9, potY + 14);
+          ctx.moveTo(potX + 14, potY + 14); ctx.lineTo(potX + 17, potY + 2); ctx.lineTo(potX + 11, potY + 14);
+          ctx.fill();
+
+          // B. High-End 32" Curved AI Research Display (Stepped Loss Curve & Epoch Progress)
+          const mAiX = d.x + 32;
+          const mAiY = d.y + 6;
+          const mAiW = 46;
+          const mAiH = 26;
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(mAiX + mAiW / 2 - 5, mAiY + mAiH, 10, 5);
+          ctx.fillStyle = '#090d16';
+          ctx.fillRect(mAiX, mAiY, mAiW, mAiH);
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(mAiX, mAiY, mAiW, mAiH);
+
+          // Screen Content: TensorBoard / Deep Learning Terminal
+          ctx.fillStyle = '#050c18';
+          ctx.fillRect(mAiX + 1, mAiY + 1, mAiW - 2, mAiH - 2);
+
+          // 1. Stepped Loss Descent Curve (Cyan Polyline flattening down)
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(mAiX + 4, mAiY + 6);
+          ctx.lineTo(mAiX + 9, mAiY + 12);
+          ctx.lineTo(mAiX + 15, mAiY + 15);
+          ctx.lineTo(mAiX + 22, mAiY + 16);
+          ctx.lineTo(mAiX + 28, mAiY + 17);
+          ctx.stroke();
+
+          // 2. Dynamic Filling Epoch Training Progress Bar
+          const epochProg = Math.floor(((frame * 0.4) % 100) / 100 * 24);
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(mAiX + 4, mAiY + 19, 24, 3);
+          ctx.fillStyle = '#10b981';
+          ctx.fillRect(mAiX + 4, mAiY + 19, epochProg, 3);
+
+          // 3. 3x3 Self-Attention Heatmap Weights
+          for (let hy = 0; hy < 3; hy++) {
+            for (let hx = 0; hx < 3; hx++) {
+              const weightVal = (Math.sin(frame * 0.08 + hx * 1.5 + hy * 2.1) + 1) * 0.5;
+              ctx.fillStyle = weightVal > 0.6 ? '#00f0ff' : (weightVal > 0.3 ? '#0284c7' : '#0f172a');
+              ctx.fillRect(mAiX + 31 + hx * 4, mAiY + 5 + hy * 4, 3, 3);
+            }
+          }
+
+          // Blinking Terminal Prompt Cursor
+          if (frame % 24 < 12) {
+            ctx.fillStyle = '#22c55e';
+            ctx.fillRect(mAiX + 4, mAiY + 23, 3, 1);
+          }
+
+          // C. Open Apple Silver MacBook Pro (Ray's Laptop)
+          const rayLap = LAPTOP_STYLES_2D.ray;
+          const rlX = d.x + 84;
+          const rlY = d.y + 12;
+          ctx.fillStyle = rayLap.baseColor;
+          ctx.fillRect(rlX, rlY, 20, 11);
+          ctx.fillStyle = rayLap.kbColor;
+          ctx.fillRect(rlX + 2, rlY + 1, 16, 6);
+          ctx.fillStyle = rayLap.trackpadColor;
+          ctx.fillRect(rlX + 7, rlY + 8, 6, 2);
+          // Upright lid facing Ray
+          ctx.fillStyle = rayLap.lidColor;
+          ctx.fillRect(rlX, rlY - 9, 20, 10);
+          ctx.fillStyle = rayLap.screenBg;
+          ctx.fillRect(rlX + 1, rlY - 8, 18, 8);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(rlX + 9, rlY - 5, 2, 2); // Glowing Apple Logo
+          // Live cyan neural network streams on laptop screen
+          ctx.fillStyle = '#00f0ff';
+          ctx.fillRect(rlX + 3, rlY - 7, 10, 1);
+          ctx.fillRect(rlX + 3, rlY - 5, 14, 1);
+          ctx.fillRect(rlX + 3, rlY - 3, 8, 1);
+
+          // D. Mechanical Keyboard & Mouse
+          const rkbX = d.x + 36;
+          const rkbY = d.y + 36;
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(rkbX, rkbY, 32, 10);
+          ctx.strokeStyle = '#00f0ff';
+          ctx.lineWidth = 1;
+          ctx.strokeRect(rkbX, rkbY, 32, 10);
+          ctx.fillStyle = '#00f0ff';
+          ctx.fillRect(rkbX + 2, rkbY + 2, 28, 2);
+          ctx.fillRect(rkbX + 2, rkbY + 5, 28, 2);
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(d.x + 72, d.y + 37, 6, 8);
+
+          // C. Retro-style table lamp with warm yellow glow on far right
+          const lmpX = d.x + 120;
+          const lmpY = d.y + 6;
+          // Ambient warm glow radiating onto desk
+          ctx.fillStyle = 'rgba(251, 191, 36, 0.22)';
+          ctx.beginPath();
+          ctx.arc(lmpX + 12, lmpY + 16, 22, 0, Math.PI * 2);
+          ctx.fill();
+          // Turned wooden base
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(lmpX + 7, lmpY + 30, 10, 4);
+          ctx.fillStyle = '#92400e';
+          ctx.fillRect(lmpX + 9, lmpY + 20, 6, 10);
+          // Pleated amber lampshade
+          ctx.fillStyle = '#fbbf24';
+          ctx.beginPath();
+          ctx.moveTo(lmpX + 6, lmpY + 20);
+          ctx.lineTo(lmpX + 18, lmpY + 20);
+          ctx.lineTo(lmpX + 22, lmpY + 6);
+          ctx.lineTo(lmpX + 2, lmpY + 6);
+          ctx.closePath();
+          ctx.fill();
+          ctx.strokeStyle = '#d97706';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          ctx.fillStyle = '#fef08a';
+          ctx.fillRect(lmpX + 8, lmpY + 7, 2, 12);
+          ctx.fillRect(lmpX + 14, lmpY + 7, 2, 12);
+          ctx.fillStyle = '#78350f';
+          ctx.fillRect(lmpX + 11, lmpY + 3, 2, 3);
+
+          // D. Green backpack / luggage on the floor on the left side of this desk
+          const bpX = d.x + 4;
+          const bpY = d.y + 54;
+          const bpW = 20;
+          const bpH = 28;
+          ctx.fillStyle = 'rgba(0, 0, 0, 0.25)';
+          ctx.fillRect(bpX + 2, bpY + 2, bpW, bpH);
+          ctx.fillStyle = '#22c55e';
+          ctx.beginPath();
+          ctx.roundRect(bpX, bpY, bpW, bpH, 4);
+          ctx.fill();
+          ctx.strokeStyle = '#15803d';
+          ctx.lineWidth = 1;
+          ctx.stroke();
+          // Luggage handle
+          ctx.fillStyle = '#14532d';
+          ctx.fillRect(bpX + 6, bpY - 4, 8, 4);
+          ctx.fillStyle = '#16a34a';
+          ctx.fillRect(bpX + 7, bpY - 3, 6, 2);
+          // Front pocket & zipper
+          ctx.fillStyle = '#16a34a';
+          ctx.fillRect(bpX + 3, bpY + 8, bpW - 6, 14);
+          ctx.strokeStyle = '#14532d';
+          ctx.strokeRect(bpX + 3, bpY + 8, bpW - 6, 14);
+          ctx.fillStyle = '#e2e8f0';
+          ctx.fillRect(bpX + bpW / 2 - 2, bpY + 10, 4, 2);
+        }
+      });
+
+      // ROW 2: MARKETING CREATIVE SUITE (Wendy)
+      const row2Desks = [
+        { id: 'wendy', x: 474, y: 160, w: 140, h: 50 },
+      ];
+
+      row2Desks.forEach((d) => {
+        const w = d.w;
+        const h = d.h;
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.22)';
         ctx.fillRect(d.x + 4, d.y + 6, w, h);
         ctx.fillStyle = '#ffffff';
         ctx.fillRect(d.x, d.y, w, h);
         ctx.fillStyle = '#334155';
         ctx.fillRect(d.x, d.y + h - 5, w, 5);
 
-        // Extended desk pad with role-tailored color
-        const padColors: Record<string, string> = {
-          ray: '#083344',
-          maya: '#500724',
-          alex: '#431407',
-          wendy: '#0f172a',
-          zane: '#052e16',
-        };
-        ctx.fillStyle = padColors[d.id] || '#0f172a';
+        // Extended desk pad
+        ctx.fillStyle = '#0f172a';
         ctx.fillRect(d.x + 20, d.y + 10, 98, 36);
 
         // Herman Miller Ergonomic Aeron Chair behind desk
@@ -2256,203 +4290,505 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
         ctx.fillRect(d.x + w / 2 - 14, d.y + h + 4, 3, 8);
         ctx.fillRect(d.x + w / 2 + 11, d.y + h + 4, 3, 8);
 
-        // --------------------------------------------------------------------
-        // DISTINCT WORKSTATION HARDWARE CONFIGURATIONS (Dual, Single, Laptop)
-        // --------------------------------------------------------------------
-        if (d.id === 'alex' || d.id === 'ray') {
-          // 1. DUAL 27" MONITORS (Desktop Developer / Researcher - NO LAPTOP)
-          // Monitor 1 (Left)
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 22, d.y + 4, 38, 24);
-          // Monitor 2 (Right)
-          ctx.fillRect(d.x + 64, d.y + 4, 38, 24);
+        // Elevated Aluminum Laptop Stand
+        ctx.fillStyle = '#64748b';
+        ctx.fillRect(d.x + 48, d.y + 8, 44, 20);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(d.x + 50, d.y + 10, 40, 16);
 
-          if (d.id === 'alex') {
-            // Alex: Dark VSCode with orange syntax + Terminal
-            ctx.fillStyle = '#f97316';
-            ctx.fillRect(d.x + 26, d.y + 8, 14, 2);
-            ctx.fillStyle = '#fbbf24';
-            ctx.fillRect(d.x + 42, d.y + 8, 12, 2);
-            ctx.fillStyle = '#34d399';
-            ctx.fillRect(d.x + 26, d.y + 14, 26, 2);
-            ctx.fillStyle = '#00f0ff';
-            ctx.fillRect(d.x + 68, d.y + 8, 22, 2);
-            ctx.fillStyle = '#ffffff';
-            ctx.fillRect(d.x + 68, d.y + 14, 26, 2);
-            // Insulated orange flask
-            ctx.fillStyle = '#ea580c';
-            ctx.fillRect(d.x + 106, d.y + 16, 8, 14);
-          } else {
-            // Ray: PyTorch Research paper + Loss graph
-            ctx.fillStyle = '#38bdf8';
-            ctx.fillRect(d.x + 26, d.y + 8, 28, 2);
-            ctx.fillRect(d.x + 26, d.y + 14, 20, 2);
-            ctx.strokeStyle = '#00f59b';
-            ctx.lineWidth = 1.5;
-            ctx.beginPath();
-            ctx.moveTo(d.x + 66, d.y + 22);
-            ctx.lineTo(d.x + 74, d.y + 15);
-            ctx.lineTo(d.x + 84, d.y + 19);
-            ctx.lineTo(d.x + 94, d.y + 10);
-            ctx.stroke();
-            // Research notebook & white mug
-            ctx.fillStyle = '#f8fafc';
-            ctx.fillRect(d.x + 104, d.y + 18, 14, 16);
-            ctx.fillStyle = '#e2e8f0';
-            ctx.fillRect(d.x + 106, d.y + 36, 8, 8);
-          }
+        // Open 16" Apple Midnight Deep Blue MacBook Pro
+        const wenLap = LAPTOP_STYLES_2D.wendy;
+        ctx.fillStyle = wenLap.baseColor;
+        ctx.fillRect(d.x + 48, d.y + 6, 44, 18);
+        ctx.fillStyle = wenLap.screenBg;
+        ctx.fillRect(d.x + 50, d.y + 8, 40, 14);
 
-          // RGB Tower PC on right side
-          const towerRgb = d.id === 'alex' ? '#f97316' : '#00f0ff';
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 120, d.y + 8, 16, 32);
-          ctx.fillStyle = towerRgb;
-          ctx.fillRect(d.x + 123, d.y + 14, 3, 20);
+        // Active Marketing Conversion Funnel on Screen
+        // Stage 1: Impressions / Top of funnel (Emerald)
+        ctx.fillStyle = '#10b981';
+        ctx.fillRect(d.x + 53, d.y + 10, 34, 2);
+        // Stage 2: Click-throughs / Consideration (Cyan)
+        ctx.fillStyle = '#00f0ff';
+        ctx.fillRect(d.x + 56, d.y + 13, 28, 2);
+        // Stage 3: Signups / Conversions (Amber)
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(d.x + 59, d.y + 16, 22, 2);
+        // Stage 4: Retention / MRR (Rose)
+        ctx.fillStyle = '#fb7185';
+        ctx.fillRect(d.x + 63, d.y + 19, 14, 2);
 
-          // Mechanical Keyboard & Mouse
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 44, d.y + 34, 32, 8);
-          ctx.fillRect(d.x + 80, d.y + 34, 6, 6);
-
-
-
-        } else if (d.id === 'wendy') {
-          // 3. LAPTOP-ONLY WORKSTATION (Marketing Strategist - NO BIG DESKTOP MONITORS!)
-          // Elevated Aluminum Laptop Stand
-          ctx.fillStyle = '#94a3b8';
-          ctx.fillRect(d.x + 48, d.y + 8, 44, 20);
-          ctx.fillStyle = '#cbd5e1';
-          ctx.fillRect(d.x + 50, d.y + 10, 40, 16);
-
-          // Open 16" MacBook Pro resting on stand - SCREEN FACING WENDY (downwards)!
-          // Upright screen lid at top (screen faces south/down towards Wendy)
-          ctx.fillStyle = '#e2e8f0';
-          ctx.fillRect(d.x + 48, d.y + 6, 44, 18);
-          // Glowing screen with green marketing copy text
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 50, d.y + 8, 40, 14);
+        // Blinking KPI Growth Ticker
+        if (frame % 28 < 14) {
           ctx.fillStyle = '#34d399';
-          ctx.fillRect(d.x + 53, d.y + 11, 28, 2);
-          ctx.fillRect(d.x + 53, d.y + 15, 34, 2);
-          ctx.fillRect(d.x + 53, d.y + 19, 22, 2);
-
-          // Keyboard base on stand in front of screen
-          ctx.fillStyle = '#cbd5e1';
-          ctx.fillRect(d.x + 48, d.y + 24, 44, 10);
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 51, d.y + 25, 38, 5);
-          ctx.fillStyle = '#94a3b8';
-          ctx.fillRect(d.x + 65, d.y + 31, 10, 2); // Trackpad
-
-          // Wireless Magic Keyboard & Mouse on desk in front of stand
-          ctx.fillStyle = '#e2e8f0';
-          ctx.fillRect(d.x + 48, d.y + 38, 32, 6);
-          ctx.fillRect(d.x + 84, d.y + 38, 5, 6);
-
-          // Iconic yellow debugging duck & coffee mug
-          ctx.fillStyle = '#facc15';
-          ctx.beginPath();
-          ctx.arc(d.x + 104, d.y + 20, 5, 0, Math.PI * 2);
-          ctx.fill();
-          ctx.fillStyle = '#f97316';
-          ctx.fillRect(d.x + 107, d.y + 19, 3, 2); // Duck beak
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(d.x + 104, d.y + 32, 8, 10);
-
-        } else if (d.id === 'maya') {
-          // 4. SINGLE 32" 4K MONITOR + OPEN MACBOOK ON LEFT (UI/UX Designer)
-          // Center 32" 4K Figma Canvas Display
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 44, d.y + 4, 48, 24);
-          ctx.fillStyle = '#ec4899';
-          ctx.fillRect(d.x + 48, d.y + 8, 18, 16);
-          ctx.fillStyle = '#38bdf8';
-          ctx.fillRect(d.x + 70, d.y + 8, 18, 16);
-
-          // Open 16" MacBook Pro on Left Side - SCREEN FACING MAYA (downwards)!
-          // Display lid (bezel + glowing mobile design preview)
-          ctx.fillStyle = '#cbd5e1';
-          ctx.fillRect(d.x + 8, d.y + 14, 22, 12);
-          ctx.fillStyle = '#ec4899';
-          ctx.fillRect(d.x + 10, d.y + 16, 18, 8);
-          // Keyboard base in front of screen
-          ctx.fillStyle = '#94a3b8';
-          ctx.fillRect(d.x + 8, d.y + 26, 22, 10);
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 10, d.y + 27, 18, 5);
-          ctx.fillStyle = '#cbd5e1';
-          ctx.fillRect(d.x + 16, d.y + 33, 6, 2); // Trackpad
-
-          // Wacom Intuos Drawing Tablet & Pantone tokens
-          ctx.fillStyle = '#1e1b4b';
-          ctx.fillRect(d.x + 98, d.y + 18, 16, 18);
-          ctx.fillStyle = '#ec4899';
-          ctx.fillRect(d.x + 100, d.y + 20, 12, 14);
-          const swatches = ['#ec4899', '#8b5cf6', '#3b82f6', '#10b981'];
-          for (let si = 0; si < 4; si++) {
-            ctx.fillStyle = swatches[si];
-            ctx.fillRect(d.x + 98 + si * 4, d.y + 10, 3, 4);
-          }
-
-          // Pink RGB Tower PC
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 120, d.y + 8, 16, 32);
-          ctx.fillStyle = '#ec4899';
-          ctx.fillRect(d.x + 123, d.y + 14, 3, 20);
-
-          // Keyboard & Mouse
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 48, d.y + 34, 30, 8);
-          ctx.fillRect(d.x + 82, d.y + 34, 6, 6);
-
-        } else if (d.id === 'zane') {
-          // 5. SINGLE 32" SECURITY SOC DISPLAY + THINKPAD ON LEFT (Cybersecurity)
-          // Center Security Display: Threat Radar
-          ctx.fillStyle = '#052e16';
-          ctx.fillRect(d.x + 44, d.y + 4, 48, 24);
-          ctx.strokeStyle = '#22c55e';
-          ctx.lineWidth = 1.5;
-          ctx.beginPath();
-          ctx.arc(d.x + 68, d.y + 16, 9, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.fillStyle = '#22c55e';
-          ctx.fillRect(d.x + 67, d.y + 15, 2, 2);
-
-          // Open ThinkPad Stealth Security Laptop on Left Side - SCREEN FACING ZANE (downwards)!
-          // Display lid with Matrix green firewall log
-          ctx.fillStyle = '#1e293b';
-          ctx.fillRect(d.x + 8, d.y + 14, 22, 12);
-          ctx.fillStyle = '#052e16';
-          ctx.fillRect(d.x + 10, d.y + 16, 18, 8);
-          ctx.fillStyle = '#22c55e';
-          ctx.fillRect(d.x + 12, d.y + 18, 14, 2);
-          ctx.fillRect(d.x + 12, d.y + 21, 10, 2);
-          // Keyboard base in front of screen
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 8, d.y + 26, 22, 10);
-          ctx.fillStyle = '#1e293b';
-          ctx.fillRect(d.x + 10, d.y + 27, 18, 5);
-          ctx.fillStyle = '#ef4444'; // Red TrackPoint
-          ctx.fillRect(d.x + 18, d.y + 29, 2, 2);
-
-          // Hardware YubiKey USB token + Tumbler
-          ctx.fillStyle = '#16a34a';
-          ctx.fillRect(d.x + 104, d.y + 18, 6, 10);
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 104, d.y + 32, 8, 12);
-
-          // Stealth Green RGB Tower PC
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 120, d.y + 8, 16, 32);
-          ctx.fillStyle = '#22c55e';
-          ctx.fillRect(d.x + 123, d.y + 14, 3, 20);
-
-          // Keyboard & Mouse
-          ctx.fillStyle = '#0f172a';
-          ctx.fillRect(d.x + 48, d.y + 34, 30, 8);
-          ctx.fillRect(d.x + 82, d.y + 34, 6, 6);
+          ctx.fillRect(d.x + 80, d.y + 19, 7, 2);
         }
+
+        // Keyboard base on stand in front of screen
+        ctx.fillStyle = wenLap.baseColor;
+        ctx.fillRect(d.x + 48, d.y + 24, 44, 10);
+        ctx.fillStyle = wenLap.kbColor;
+        ctx.fillRect(d.x + 51, d.y + 25, 38, 5);
+        ctx.fillStyle = wenLap.trackpadColor;
+        ctx.fillRect(d.x + 65, d.y + 31, 10, 2);
+
+        // Wireless Silver Magic Keyboard & Mouse
+        ctx.fillStyle = '#e2e8f0';
+        ctx.fillRect(d.x + 48, d.y + 38, 32, 6);
+        ctx.fillStyle = '#94a3b8';
+        ctx.fillRect(d.x + 50, d.y + 39, 28, 4);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(d.x + 84, d.y + 38, 6, 7);
+
+        // Yellow rubber duck
+        ctx.fillStyle = '#facc15';
+        ctx.beginPath();
+        ctx.arc(d.x + 104, d.y + 20, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.fillStyle = '#f97316';
+        ctx.fillRect(d.x + 107, d.y + 19, 3, 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(d.x + 104, d.y + 32, 8, 10);
       });
+
+      // ======================================================================
+      // ZONE 6: ENTERPRISE SERVER VAULT & CYBER SECURITY COMMAND EQUIPMENT
+      // ======================================================================
+
+      // 1. 4x Enterprise 42U Server Cabinets (Along North Wall: x: 848..1020, y: 22..70)
+      const srvRacks = [
+        { id: 'rack1', name: 'DB-PROD', x: 852, y: 22, w: 38, h: 48 },
+        { id: 'rack2', name: 'GPU-AI', x: 896, y: 22, w: 38, h: 48 },
+        { id: 'rack3', name: 'FIREWALL', x: 940, y: 22, w: 38, h: 48 },
+        { id: 'rack4', name: 'ZERO-TRUST', x: 984, y: 22, w: 38, h: 48 },
+      ];
+
+      srvRacks.forEach((rack, rIdx) => {
+        // Shadow & Black Matte Steel Chassis
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
+        ctx.fillRect(rack.x + 3, rack.y + 3, rack.w, rack.h);
+        ctx.fillStyle = '#0b0f17';
+        ctx.fillRect(rack.x, rack.y, rack.w, rack.h);
+        ctx.strokeStyle = '#1e293b';
+        ctx.lineWidth = 1;
+        ctx.strokeRect(rack.x, rack.y, rack.w, rack.h);
+
+        // Smoked Glass Door Interior Panel
+        ctx.fillStyle = '#111827';
+        ctx.fillRect(rack.x + 3, rack.y + 6, rack.w - 6, rack.h - 8);
+
+        // 4 Individual 2U Server Blades inside rack
+        for (let b = 0; b < 4; b++) {
+          const by = rack.y + 8 + b * 9;
+          ctx.fillStyle = '#090d16';
+          ctx.fillRect(rack.x + 5, by, rack.w - 10, 7);
+          ctx.strokeStyle = '#1e293b';
+          ctx.lineWidth = 0.5;
+          ctx.strokeRect(rack.x + 5, by, rack.w - 10, 7);
+
+          // Intake vents
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(rack.x + 7, by + 2, 10, 3);
+
+          // Dynamic Blinking Server Activity LEDs
+          const blinkSeed = (frame + rIdx * 8 + b * 6) % 36;
+          const led1 = blinkSeed < 24 ? '#00f59b' : '#052e16'; // Active green
+          const led2 = blinkSeed % 8 < 5 ? '#00f0ff' : '#083344'; // Sync cyan
+          const led3 = (rIdx === 2 && b === 3) ? '#f59e0b' : (blinkSeed < 18 ? '#00f59b' : '#021e0e');
+
+          ctx.fillStyle = led1;
+          ctx.fillRect(rack.x + 20, by + 2, 2, 2);
+          ctx.fillStyle = led2;
+          ctx.fillRect(rack.x + 24, by + 2, 2, 2);
+          ctx.fillStyle = led3;
+          ctx.fillRect(rack.x + 28, by + 2, 2, 2);
+        }
+
+        // Top Illuminated Server Name Label
+        ctx.fillStyle = '#021e0e';
+        ctx.fillRect(rack.x + 4, rack.y + 2, rack.w - 8, 4);
+        ctx.fillStyle = '#00f59b';
+        ctx.font = 'bold 4px monospace';
+        ctx.textAlign = 'center';
+        ctx.fillText(rack.name, rack.x + rack.w / 2, rack.y + 5.5);
+      });
+
+      // 2. Overhead Metallic Cable Tray across Server Racks (y = 16)
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(848, 16, 176, 5);
+      ctx.strokeStyle = '#334155';
+      ctx.lineWidth = 0.5;
+      ctx.strokeRect(848, 16, 176, 5);
+      // Glowing Cyan & Emerald Fiber Optic Network Bundles
+      ctx.fillStyle = '#00f0ff';
+      ctx.fillRect(850, 17, 172, 1.5);
+      ctx.fillStyle = '#00f59b';
+      ctx.fillRect(850, 19, 172, 1.5);
+
+      // 3. Massive SOC Cyber Threat Map Wall Display (x = 886, y = 84, w = 114, h = 46)
+      const tmW = 114;
+      const tmH = 46;
+      const tmX = 886;
+      const tmY = 84;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.4)';
+      ctx.fillRect(tmX + 3, tmY + 3, tmW, tmH);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(tmX, tmY, tmW, tmH);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(tmX, tmY, tmW, tmH);
+
+      // Dark Matrix Screen
+      ctx.fillStyle = '#021e0e';
+      ctx.fillRect(tmX + 2, tmY + 2, tmW - 4, tmH - 4);
+
+      // Vector Continents (Emerald glowing pixel shapes)
+      ctx.fillStyle = 'rgba(34, 197, 94, 0.35)';
+      ctx.fillRect(tmX + 10, tmY + 12, 22, 12); // America
+      ctx.fillRect(tmX + 16, tmY + 26, 14, 12);
+      ctx.fillRect(tmX + 44, tmY + 10, 18, 10); // Europe
+      ctx.fillRect(tmX + 46, tmY + 22, 16, 14); // Africa
+      ctx.fillRect(tmX + 68, tmY + 8, 30, 16);  // Asia
+      ctx.fillRect(tmX + 80, tmY + 28, 18, 10); // Oceania
+
+      // Red Attack Vector Arc Lines & Shield Defense Node
+      ctx.strokeStyle = '#ef4444';
+      ctx.lineWidth = 1;
+      ctx.setLineDash([2, 2]);
+      ctx.beginPath();
+      ctx.moveTo(tmX + 22, tmY + 18);
+      ctx.lineTo(tmX + 54, tmY + 22);
+      ctx.lineTo(tmX + 78, tmY + 18);
+      ctx.stroke();
+      ctx.setLineDash([]); // Reset line dash
+
+      // Target Enterprise Shield Node at center
+      ctx.fillStyle = '#00f59b';
+      ctx.beginPath();
+      ctx.arc(tmX + 56, tmY + 22, 4, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Top Status HUD Text
+      ctx.fillStyle = '#00f59b';
+      ctx.font = 'bold 5px monospace';
+      ctx.textAlign = 'center';
+      ctx.fillText('GLOBAL SOC THREAT TELEMETRY • ACTIVE SHIELD', tmX + tmW / 2, tmY + 8);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillText('INTRUSIONS BLOCKED: 1,420 • UPTIME: 99.99%', tmX + tmW / 2, tmY + tmH - 4);
+
+      // 4. Mobile Diagnostic Crash Cart (x = 850, y = 96, w = 26, h = 34)
+      const ccX = 850;
+      const ccY = 96;
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.fillRect(ccX + 2, ccY + 2, 26, 34);
+      // Stainless steel frame
+      ctx.fillStyle = '#475569';
+      ctx.fillRect(ccX, ccY + 6, 26, 28);
+      ctx.fillStyle = '#334155';
+      ctx.fillRect(ccX + 2, ccY + 8, 22, 24);
+      // Wheels
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(ccX + 1, ccY + 34, 4, 4);
+      ctx.fillRect(ccX + 21, ccY + 34, 4, 4);
+      // Diagnostic Terminal CRT Screen
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(ccX + 3, ccY, 20, 16);
+      ctx.fillStyle = '#00f59b';
+      ctx.fillRect(ccX + 5, ccY + 2, 16, 12);
+      ctx.fillStyle = '#021e0e';
+      ctx.fillRect(ccX + 6, ccY + 4, 14, 2);
+      ctx.fillRect(ccX + 6, ccY + 7, 10, 2);
+      ctx.fillRect(ccX + 6, ccY + 10, 12, 2);
+      // Yellow caution diagnostic cable to Rack 1
+      ctx.strokeStyle = '#f59e0b';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(ccX + 12, ccY);
+      ctx.lineTo(868, 70);
+      ctx.stroke();
+
+      // 5. Zone 6: High-Tech Cyber Security & Server Vault (Alex Fullstack + Zane Cybersec Together!)
+      // A. Alex's Lead Fullstack Developer Station (x = 852, y = 176, w = 70, h = 48)
+      const adX = 852;
+      const adY = 176;
+      const adW = 70;
+      const adH = 48;
+
+      // Desk Shadow & Surface
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fillRect(adX + 3, adY + 5, adW, adH);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(adX, adY, adW, adH);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(adX + 2, adY + 2, adW - 4, adH - 6);
+      ctx.fillStyle = '#431407'; // Deep warm orange desk mat
+      ctx.fillRect(adX + 8, adY + 8, adW - 16, adH - 16);
+      ctx.strokeStyle = '#ea580c';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(adX + 8, adY + 8, adW - 16, adH - 16);
+
+      // Herman Miller Ergonomic Aeron Chair behind Alex's desk (Facing up)
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(adX + adW / 2 - 12, adY + adH + 14, 24, 3);
+      ctx.fillRect(adX + adW / 2 - 14, adY + adH + 15, 3, 3);
+      ctx.fillRect(adX + adW / 2 + 11, adY + adH + 15, 3, 3);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(adX + adW / 2 - 10, adY + adH + 2, 20, 12);
+      ctx.strokeStyle = '#ea580c';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(adX + adW / 2 - 8, adY + adH + 4, 16, 8);
+
+      // Alex's Legit Liquid-Cooled Fullstack Battle-Station Tower (Neon Orange/Violet RGB)
+      drawLegitPCTower2D(ctx, adX + adW - 19, adY + 6, 18, 38, frame, 'orange');
+
+      // Alex's Open Space Gray Titanium Blade Laptop on Left Desk Corner
+      const alxLap = LAPTOP_STYLES_2D.alex;
+      const alX = adX + 6;
+      const alY = adY + 22;
+      ctx.fillStyle = alxLap.baseColor;
+      ctx.fillRect(alX, alY, 16, 9);
+      ctx.fillStyle = alxLap.kbColor;
+      ctx.fillRect(alX + 1, alY + 1, 14, 5);
+      ctx.fillStyle = alxLap.trackpadColor;
+      ctx.fillRect(alX + 5, alY + 6, 5, 2);
+      // Upright lid facing Alex
+      ctx.fillStyle = alxLap.lidColor;
+      ctx.fillRect(alX, alY - 7, 16, 8);
+      ctx.fillStyle = alxLap.screenBg;
+      ctx.fillRect(alX + 1, alY - 6, 14, 6);
+      ctx.fillStyle = alxLap.logoColor;
+      ctx.fillRect(alX + 7, alY - 4, 2, 2); // Glowing Blade Logo
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(alX + 2, alY - 5, 8, 1);
+      ctx.fillRect(alX + 2, alY - 3, 10, 1);
+
+      // Alex's Dual Monitors (VS Code Fullstack IDE + Active Streaming Server Terminal)
+      // Monitor 1: Synthwave VS Code IDE (w = 26, h = 18)
+      const am1X = adX + 8;
+      const am1Y = adY + 2;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(am1X - 1, am1Y - 1, 28, 18);
+      ctx.fillStyle = '#111827';
+      ctx.fillRect(am1X, am1Y, 26, 16);
+      ctx.strokeStyle = '#f97316';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(am1X, am1Y, 26, 16);
+
+      // VS Code Syntax Highlighted Code Lines
+      ctx.fillStyle = '#f43f5e'; ctx.fillRect(am1X + 2, am1Y + 2, 8, 2);  // import / keyword
+      ctx.fillStyle = '#38bdf8'; ctx.fillRect(am1X + 11, am1Y + 2, 8, 2); // module name
+      ctx.fillStyle = '#c084fc'; ctx.fillRect(am1X + 4, am1Y + 5, 10, 2); // function async
+      ctx.fillStyle = '#22c55e'; ctx.fillRect(am1X + 4, am1Y + 8, 14, 2); // stream response
+      ctx.fillStyle = '#fbbf24'; ctx.fillRect(am1X + 6, am1Y + 11, 8, 2); // return json
+      // Active Blinking Cursor on current code line
+      if (frame % 24 < 12) {
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(am1X + 15, am1Y + 11, 2, 2);
+      }
+      // Right code minimap bar
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(am1X + 22, am1Y + 2, 3, 12);
+
+      // Monitor 2: Live Server Cluster Logs & Express/Next.js Port 3000
+      const am2X = adX + 36;
+      const am2Y = adY + 2;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(am2X - 1, am2Y - 1, 24, 18);
+      ctx.fillStyle = '#090d16';
+      ctx.fillRect(am2X, am2Y, 22, 16);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(am2X, am2Y, 22, 16);
+
+      // Streaming Server HTTP Log Lines
+      const logScroll = (frame * 0.4) % 6;
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(am2X + 2, am2Y + 2, 14, 2);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(am2X + 2, am2Y + 5, 16, 2);
+      ctx.fillStyle = '#a855f7';
+      ctx.fillRect(am2X + 2, am2Y + 8, 12, 2);
+      // Green "PORT 3000 READY" pill badge
+      ctx.fillStyle = '#052e16';
+      ctx.fillRect(am2X + 2, am2Y + 11, 18, 4);
+      ctx.fillStyle = '#22c55e';
+      ctx.fillRect(am2X + 3, am2Y + 12, 3, 2);
+      ctx.fillStyle = '#86efac';
+      ctx.fillRect(am2X + 7, am2Y + 12, 11, 2);
+
+      // Alex's RGB Mechanical Keyboard & Mouse
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(adX + 22, adY + 26, 22, 8);
+      ctx.fillStyle = '#f97316';
+      ctx.fillRect(adX + 23, adY + 28, 20, 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(adX + 46, adY + 27, 5, 7);
+
+      // B. Central 100GbE Fiber Switch & Patch Bridge Console (x = 924, y = 176, w = 12, h = 48)
+      const fbX = 924;
+      const fbY = 176;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(fbX, fbY, 12, 48);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(fbX + 1, fbY + 2, 10, 44);
+      // Pulsing fiber switch LEDs
+      ctx.fillStyle = '#22c55e'; ctx.fillRect(fbX + 3, fbY + 8, 6, 2);
+      ctx.fillStyle = '#00f0ff'; ctx.fillRect(fbX + 3, fbY + 14, 6, 2);
+      ctx.fillStyle = '#f59e0b'; ctx.fillRect(fbX + 3, fbY + 20, 6, 2);
+      ctx.fillStyle = '#00f0ff'; ctx.fillRect(fbX + 3, fbY + 26, 6, 2);
+
+      // Glowing fiber optic conduit running to top racks
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(fbX + 6, fbY);
+      ctx.lineTo(fbX + 6, 68);
+      ctx.stroke();
+
+      // C. Zane's Cyber Security SOC Command Station (x = 938, y = 176, w = 76, h = 48)
+      const zdX = 938;
+      const zdY = 176;
+      const zdW = 76;
+      const zdH = 48;
+
+      // Desk Shadow & Surface
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+      ctx.fillRect(zdX + 3, zdY + 5, zdW, zdH);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(zdX, zdY, zdW, zdH);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(zdX + 2, zdY + 2, zdW - 4, zdH - 6);
+      ctx.fillStyle = '#052e16'; // Deep emerald desk mat
+      ctx.fillRect(zdX + 8, zdY + 8, zdW - 16, zdH - 16);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(zdX + 8, zdY + 8, zdW - 16, zdH - 16);
+
+      // Zane's Legit Liquid-Cooled SOC Cyber Fortress PC Tower (Stealth Black / Emerald RGB)
+      drawLegitPCTower2D(ctx, zdX + zdW - 19, zdY + 6, 18, 38, frame, 'emerald');
+
+      // Herman Miller Ergonomic Aeron Chair behind desk (Facing up)
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(zdX + zdW / 2 - 12, zdY + zdH + 14, 24, 3);
+      ctx.fillRect(zdX + zdW / 2 - 14, zdY + zdH + 15, 3, 3);
+      ctx.fillRect(zdX + zdW / 2 + 11, zdY + zdH + 15, 3, 3);
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(zdX + zdW / 2 - 10, zdY + zdH + 2, 20, 12);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(zdX + zdW / 2 - 8, zdY + zdH + 4, 16, 8);
+
+      // Triple Curved Cyber Security Display Array
+      // Center Display: 34" Ultrawide IDS Radar with Range Rings & Blinking Threat Blips
+      const cDispX = zdX + zdW / 2 - 17;
+      const cDispY = zdY + 2;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(cDispX - 1, cDispY - 1, 34, 16);
+      ctx.fillStyle = '#021e0e';
+      ctx.fillRect(cDispX, cDispY, 32, 14);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(cDispX, cDispY, 32, 14);
+
+      // Concentric Radar Rings
+      ctx.strokeStyle = '#15803d';
+      ctx.beginPath();
+      ctx.arc(cDispX + 16, cDispY + 7, 6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.strokeStyle = '#166534';
+      ctx.beginPath();
+      ctx.arc(cDispX + 16, cDispY + 7, 3, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Sweeping radar scan line animated with frame
+      const scanAngle = frame * 0.08;
+      ctx.strokeStyle = '#4ade80';
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.moveTo(cDispX + 16, cDispY + 7);
+      ctx.lineTo(cDispX + 16 + Math.cos(scanAngle) * 6, cDispY + 7 + Math.sin(scanAngle) * 6);
+      ctx.stroke();
+
+      // Blinking Red Threat Intercept Blips
+      if (frame % 36 < 20) {
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(cDispX + 21, cDispY + 4, 2, 2);
+        ctx.fillRect(cDispX + 11, cDispY + 9, 2, 2);
+      }
+
+      // Left Display: Cascading Matrix Waterfall Code Stream (w = 11, h = 18)
+      const lDispX = zdX + 6;
+      const lDispY = zdY + 1;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(lDispX - 1, lDispY - 1, 13, 18);
+      ctx.fillStyle = '#021e0e';
+      ctx.fillRect(lDispX, lDispY, 11, 16);
+      ctx.strokeStyle = '#22c55e';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(lDispX, lDispY, 11, 16);
+
+      // Animated cascading matrix glyphs
+      const mOffset = (frame * 0.5) % 8;
+      ctx.fillStyle = '#4ade80'; ctx.fillRect(lDispX + 2, lDispY + 2 + mOffset, 2, 2);
+      ctx.fillStyle = '#22c55e'; ctx.fillRect(lDispX + 5, lDispY + 6 - mOffset / 2, 2, 2);
+      ctx.fillStyle = '#86efac'; ctx.fillRect(lDispX + 7, lDispY + 10 - mOffset, 2, 2);
+
+      // Right Display: Server Cluster Telemetry & DDoS Mitigation (w = 12, h = 18)
+      const rDispX = zdX + 44;
+      const rDispY = zdY + 1;
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(rDispX - 1, rDispY - 1, 14, 18);
+      ctx.fillStyle = '#083344';
+      ctx.fillRect(rDispX, rDispY, 12, 16);
+      ctx.strokeStyle = '#00f0ff';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(rDispX, rDispY, 12, 16);
+      // DDoS Throughput packet bars fluctuating
+      const ddBar1 = 4 + Math.floor((Math.sin(frame * 0.08) + 1) * 3);
+      ctx.fillStyle = '#00f0ff'; ctx.fillRect(rDispX + 2, rDispY + 3, ddBar1, 2);
+      const ddBar2 = 3 + Math.floor((Math.cos(frame * 0.07) + 1) * 3);
+      ctx.fillStyle = '#38bdf8'; ctx.fillRect(rDispX + 2, rDispY + 7, ddBar2, 2);
+      ctx.fillStyle = '#ef4444'; ctx.fillRect(rDispX + 2, rDispY + 11, 7, 2);
+
+      // Open Lenovo ThinkPad X1 Carbon Stealth Cyber Laptop on Desk
+      const znLap = LAPTOP_STYLES_2D.zane;
+      const zLapX = zdX + 6;
+      const zLapY = zdY + 22;
+      ctx.fillStyle = znLap.baseColor;
+      ctx.fillRect(zLapX, zLapY, 18, 10);
+      ctx.fillStyle = znLap.kbColor;
+      ctx.fillRect(zLapX + 1, zLapY + 1, 16, 5);
+      // Iconic Red TrackPoint Nub in center of keyboard!
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(zLapX + 8, zLapY + 3, 2, 2);
+      // Trackpad
+      ctx.fillStyle = znLap.trackpadColor;
+      ctx.fillRect(zLapX + 6, zLapY + 7, 6, 2);
+      // Upright lid facing Zane
+      ctx.fillStyle = znLap.lidColor;
+      ctx.fillRect(zLapX, zLapY - 8, 18, 9);
+      ctx.fillStyle = znLap.screenBg;
+      ctx.fillRect(zLapX + 1, zLapY - 7, 16, 7);
+      // ThinkPad diagonal red LED logo on top corner
+      ctx.fillStyle = '#ef4444';
+      ctx.fillRect(zLapX + 14, zLapY - 6, 2, 2);
+      // Live green matrix code stream on ThinkPad screen
+      ctx.fillStyle = '#00f59b';
+      ctx.fillRect(zLapX + 3, zLapY - 5, 10, 1);
+      ctx.fillRect(zLapX + 3, zLapY - 3, 12, 1);
+
+      // RGB Cyber Mechanical Keyboard & Mouse
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(zdX + 26, zdY + 26, 22, 8);
+      ctx.fillStyle = '#00f59b';
+      ctx.fillRect(zdX + 28, zdY + 28, 18, 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(zdX + 50, zdY + 27, 5, 7);
+
+      // Hardware YubiKey Security Dongle on Desk
+      ctx.fillStyle = '#16a34a';
+      ctx.fillRect(zdX + 32, zdY + 36, 5, 3);
+      ctx.fillStyle = '#f59e0b';
+      ctx.fillRect(zdX + 39, zdY + 36, 2, 3);
 
       // ======================================================================
       // 4. CLICK RIPPLE TARGET ANIMATION
@@ -2492,86 +4828,513 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
           ctx.stroke();
         }
 
-        // Character-Tailored Shoes & Soles for Clear Stepping Animation
-        const shoeColor =
-          char.id === 'dylan'
-            ? '#9a3412' // Cognac leather
-            : char.id === 'ray'
-            ? '#ffffff' // Crisp white sneakers
-            : char.id === 'maya'
-            ? '#ec4899' // Pink designer sneakers
-            : char.id === 'alex'
-            ? '#ea580c' // Orange skate sneakers
-            : char.id === 'zane'
-            ? '#15803d' // Tactical boots
-            : '#b45309'; // Caramel leather
-        const soleColor =
-          char.id === 'dylan'
-            ? '#fef3c7'
-            : char.id === 'maya'
-            ? '#fdf2f8'
-            : char.id === 'alex'
-            ? '#fff7ed'
-            : char.id === 'zane'
-            ? '#0f172a'
-            : '#ffffff';
+        // --------------------------------------------------------------------
+        // AUTHENTIC 16-BIT RPG SPRITE ENGINE (4 Directions, 3-Frame Stride Cycles)
+        // --------------------------------------------------------------------
+        const palette = CHARACTER_SPRITE_PALETTES[char.id] || {
+          hairBase: char.hairColor || '#451a03',
+          hairLight: '#8d532a',
+          hairDark: '#271406',
+          skinBase: '#ffdfba',
+          skinDark: '#e2b892',
+          eyeColor: '#1e293b',
+          shirtBase: char.shirtColor || '#2563eb',
+          shirtLight: '#60a5fa',
+          shirtDark: '#1d4ed8',
+          pantsBase: '#1e293b',
+          pantsDark: '#0f172a',
+          shoeColor: '#9a3412',
+          soleColor: '#ffffff',
+        };
 
-        // Animated Walking Legs & Shoes (Active whenever moving)
-        if (char.isWalking) {
-          const legSwing = Math.sin(frame * 0.45) * 6;
-          const leftLift = Math.max(0, legSwing) * 0.5;
-          const rightLift = Math.max(0, -legSwing) * 0.5;
+        // 4-Phase Walk Cycle (0: Left Step -> 1: Neutral Standing -> 2: Right Step -> 1: Neutral Standing)
+        const rawStep = Math.floor((frame * 0.22) % 4);
+        const walkStep = char.isWalking ? (rawStep === 3 ? 1 : rawStep) : 1;
+        const stepBob = char.isWalking && (walkStep === 0 || walkStep === 2) ? 1 : 0;
+        const sY = drawY + stepBob;
 
-          // Left Leg & Stepping Shoe
-          ctx.fillStyle = '#1e293b';
-          ctx.fillRect(drawX - 6, drawY + 9 + legSwing - leftLift, 4, 7);
-          ctx.fillStyle = shoeColor;
-          ctx.fillRect(drawX - 7, drawY + 16 + legSwing - leftLift, 6, 3);
-          ctx.fillStyle = soleColor;
-          ctx.fillRect(drawX - 7, drawY + 19 + legSwing - leftLift, 6, 1);
-
-          // Right Leg & Stepping Shoe
-          ctx.fillStyle = '#1e293b';
-          ctx.fillRect(drawX + 2, drawY + 9 - legSwing - rightLift, 4, 7);
-          ctx.fillStyle = shoeColor;
-          ctx.fillRect(drawX + 1, drawY + 16 - legSwing - rightLift, 6, 3);
-          ctx.fillStyle = soleColor;
-          ctx.fillRect(drawX + 1, drawY + 19 - legSwing - rightLift, 6, 1);
-        } else if (!char.isSeated) {
-          // Standing idle legs & shoes firmly planted
-          ctx.fillStyle = '#1e293b';
-          ctx.fillRect(drawX - 6, drawY + 9, 4, 7);
-          ctx.fillRect(drawX + 2, drawY + 9, 4, 7);
-
-          // Shoes with contrasting soles
-          ctx.fillStyle = shoeColor;
-          ctx.fillRect(drawX - 7, drawY + 16, 6, 3);
-          ctx.fillRect(drawX + 1, drawY + 16, 6, 3);
-          ctx.fillStyle = soleColor;
-          ctx.fillRect(drawX - 7, drawY + 19, 6, 1);
-          ctx.fillRect(drawX + 1, drawY + 19, 6, 1);
+        // Grounding Drop Shadow (Matching 16-bit RPG sprite reference - only when standing/walking!)
+        if (!char.isSeated) {
+          ctx.fillStyle = 'rgba(15, 23, 42, 0.28)';
+          ctx.beginPath();
+          ctx.ellipse(drawX, drawY + 17, 9, 3.5, 0, 0, Math.PI * 2);
+          ctx.fill();
         }
 
-        // Character Torso
-        ctx.fillStyle = char.shirtColor;
-        ctx.fillRect(drawX - 9, drawY + 2, 18, 10);
+        // Direction Handling: 'left' uses horizontal mirror of 'right' profile
+        const isFacingLeft = char.facing === 'left';
+        const facingDir = isFacingLeft ? 'right' : (char.facing || 'down');
 
-        // Character Head & Hair
-        ctx.fillStyle = char.hairColor;
-        ctx.beginPath();
-        ctx.arc(drawX, drawY - 4, 8, 0, Math.PI * 2);
-        ctx.fill();
-
-        // Directional Facing indicator
-        if (char.facing === 'down') {
-          ctx.fillStyle = '#ffdfba'; // Face showing
-          ctx.fillRect(drawX - 5, drawY - 3, 10, 6);
+        if (isFacingLeft) {
+          ctx.save();
+          ctx.translate(drawX, 0);
+          ctx.scale(-1, 1);
+          ctx.translate(-drawX, 0);
         }
 
-        // Dylan Founder Accent
+        if (facingDir === 'up') {
+          // ==================================================================
+          // DIRECTION: UP (Full Back View - Row 1 of Reference Sheet)
+          // ==================================================================
+          // 1. Legs & Pants (Back View)
+          if (char.isWalking) {
+            if (walkStep === 0) {
+              // Left leg forward / raised, right leg grounded back
+              ctx.fillStyle = palette.pantsBase;
+              ctx.fillRect(drawX - 5, sY + 7, 4, 8);
+              ctx.fillRect(drawX + 1, sY + 8, 4, 8);
+              ctx.fillStyle = palette.pantsDark;
+              ctx.fillRect(drawX - 1, sY + 7, 2, 7);
+              // Shoes
+              ctx.fillStyle = palette.shoeColor;
+              ctx.fillRect(drawX - 6, sY + 14, 5, 2);
+              ctx.fillRect(drawX + 1, sY + 16, 5, 2);
+              ctx.fillStyle = palette.soleColor;
+              ctx.fillRect(drawX - 6, sY + 16, 5, 1);
+              ctx.fillRect(drawX + 1, sY + 18, 5, 1);
+            } else if (walkStep === 2) {
+              // Right leg forward / raised, left leg grounded back
+              ctx.fillStyle = palette.pantsBase;
+              ctx.fillRect(drawX - 5, sY + 8, 4, 8);
+              ctx.fillRect(drawX + 1, sY + 7, 4, 8);
+              ctx.fillStyle = palette.pantsDark;
+              ctx.fillRect(drawX - 1, sY + 7, 2, 7);
+              // Shoes
+              ctx.fillStyle = palette.shoeColor;
+              ctx.fillRect(drawX - 6, sY + 16, 5, 2);
+              ctx.fillRect(drawX + 1, sY + 14, 5, 2);
+              ctx.fillStyle = palette.soleColor;
+              ctx.fillRect(drawX - 6, sY + 18, 5, 1);
+              ctx.fillRect(drawX + 1, sY + 16, 5, 1);
+            } else {
+              // Neutral back standing
+              ctx.fillStyle = palette.pantsBase;
+              ctx.fillRect(drawX - 5, sY + 8, 4, 8);
+              ctx.fillRect(drawX + 1, sY + 8, 4, 8);
+              ctx.fillStyle = palette.pantsDark;
+              ctx.fillRect(drawX - 1, sY + 8, 2, 7);
+              ctx.fillStyle = palette.shoeColor;
+              ctx.fillRect(drawX - 6, sY + 16, 5, 2);
+              ctx.fillRect(drawX + 1, sY + 16, 5, 2);
+              ctx.fillStyle = palette.soleColor;
+              ctx.fillRect(drawX - 6, sY + 18, 5, 1);
+              ctx.fillRect(drawX + 1, sY + 18, 5, 1);
+            }
+          } else if (!char.isSeated) {
+            // Standing idle legs & shoes firmly planted
+            ctx.fillStyle = palette.pantsBase;
+            ctx.fillRect(drawX - 5, sY + 8, 4, 8);
+            ctx.fillRect(drawX + 1, sY + 8, 4, 8);
+            ctx.fillStyle = palette.pantsDark;
+            ctx.fillRect(drawX - 1, sY + 8, 2, 7);
+            ctx.fillStyle = palette.shoeColor;
+            ctx.fillRect(drawX - 6, sY + 16, 5, 2);
+            ctx.fillRect(drawX + 1, sY + 16, 5, 2);
+            ctx.fillStyle = palette.soleColor;
+            ctx.fillRect(drawX - 6, sY + 18, 5, 1);
+            ctx.fillRect(drawX + 1, sY + 18, 5, 1);
+          } else {
+            // Seated facing up (e.g. at desk workstation or bottom lounge booth)
+            // Cushion contact grounding shadow
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+            ctx.beginPath();
+            ctx.ellipse(drawX, sY + 9, 8, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Firmly grounded pants base resting on seat
+            ctx.fillStyle = palette.pantsBase;
+            ctx.fillRect(drawX - 5, sY + 7, 10, 4);
+            ctx.fillStyle = palette.pantsDark;
+            ctx.fillRect(drawX - 5, sY + 9, 10, 2);
+            // Tucked shoe heels at cushion base
+            ctx.fillStyle = palette.shoeColor;
+            ctx.fillRect(drawX - 5, sY + 10, 3, 2);
+            ctx.fillRect(drawX + 2, sY + 10, 3, 2);
+          }
+
+          // 2. Torso & Arms (Back View)
+          ctx.fillStyle = palette.shirtBase;
+          ctx.fillRect(drawX - 6, sY + 1, 12, 8);
+          // Shoulder highlight band
+          ctx.fillStyle = palette.shirtLight;
+          ctx.fillRect(drawX - 6, sY + 1, 12, 2);
+          // Lower hem shadow
+          ctx.fillStyle = palette.shirtDark;
+          ctx.fillRect(drawX - 6, sY + 8, 12, 1);
+          // Back collar opening hint
+          ctx.fillStyle = palette.skinDark;
+          ctx.fillRect(drawX - 2, sY, 4, 1);
+
+          // Arms at sides swinging in counter-rhythm
+          const armSwing = char.isWalking ? (walkStep === 0 ? 1 : walkStep === 2 ? -1 : 0) : 0;
+          ctx.fillStyle = palette.shirtBase;
+          ctx.fillRect(drawX - 8, sY + 2 + armSwing, 2, 5);
+          ctx.fillRect(drawX + 6, sY + 2 - armSwing, 2, 5);
+          ctx.fillStyle = palette.skinBase;
+          ctx.fillRect(drawX - 8, sY + 7 + armSwing, 2, 2);
+          ctx.fillRect(drawX + 6, sY + 7 - armSwing, 2, 2);
+
+          // 3. Volumetric Head & Hair (Full Back of Head with Highlights)
+          ctx.fillStyle = palette.hairBase;
+          ctx.fillRect(drawX - 6, sY - 12, 12, 4); // Crown top
+          ctx.fillStyle = palette.hairLight;
+          ctx.fillRect(drawX - 5, sY - 12, 10, 2); // Crown light band
+          ctx.fillStyle = palette.hairBase;
+          ctx.fillRect(drawX - 7, sY - 9, 14, 8); // Full back dome
+          ctx.fillStyle = palette.hairDark;
+          ctx.fillRect(drawX - 5, sY - 1, 10, 2); // Nape shadow
+
+          // Eah Special: Cascading Silk Hair Down Back & Rose Clip
+          if (char.id === 'eah') {
+            ctx.fillStyle = palette.hairBase;
+            ctx.fillRect(drawX - 6, sY - 1, 12, 11);
+            ctx.fillStyle = palette.hairLight;
+            ctx.fillRect(drawX - 4, sY + 2, 8, 2);
+            // Rose clip
+            ctx.fillStyle = '#f43f5e';
+            ctx.fillRect(drawX + 3, sY - 11, 4, 3);
+            ctx.fillStyle = '#fff1f2';
+            ctx.fillRect(drawX + 4, sY - 10, 2, 1);
+          }
+
+        } else if (facingDir === 'right') {
+          // ==================================================================
+          // DIRECTION: RIGHT (Side Profile - Rows 2 & 4 of Reference Sheet)
+          // ==================================================================
+          // 1. Legs & Shoes (Side Profile Stride)
+          if (char.isWalking) {
+            if (walkStep === 0) {
+              // Stride: Front leg forward, rear leg trailing back
+              ctx.fillStyle = palette.pantsBase;
+              ctx.fillRect(drawX, sY + 8, 4, 8);
+              ctx.fillRect(drawX - 5, sY + 7, 4, 7);
+              // Shoes
+              ctx.fillStyle = palette.shoeColor;
+              ctx.fillRect(drawX, sY + 16, 6, 2);
+              ctx.fillRect(drawX - 5, sY + 14, 5, 2);
+              ctx.fillStyle = palette.soleColor;
+              ctx.fillRect(drawX, sY + 18, 6, 1);
+              ctx.fillRect(drawX - 5, sY + 16, 5, 1);
+            } else if (walkStep === 2) {
+              // Stride reversed
+              ctx.fillStyle = palette.pantsBase;
+              ctx.fillRect(drawX, sY + 7, 4, 7);
+              ctx.fillRect(drawX - 5, sY + 8, 4, 8);
+              // Shoes
+              ctx.fillStyle = palette.shoeColor;
+              ctx.fillRect(drawX, sY + 14, 6, 2);
+              ctx.fillRect(drawX - 5, sY + 16, 5, 2);
+              ctx.fillStyle = palette.soleColor;
+              ctx.fillRect(drawX, sY + 16, 6, 1);
+              ctx.fillRect(drawX - 5, sY + 18, 5, 1);
+            } else {
+              // Neutral side standing
+              ctx.fillStyle = palette.pantsBase;
+              ctx.fillRect(drawX - 2, sY + 8, 5, 8);
+              ctx.fillStyle = palette.shoeColor;
+              ctx.fillRect(drawX - 2, sY + 16, 6, 2);
+              ctx.fillStyle = palette.soleColor;
+              ctx.fillRect(drawX - 2, sY + 18, 6, 1);
+            }
+          } else if (!char.isSeated) {
+            // Standing idle side profile
+            ctx.fillStyle = palette.pantsBase;
+            ctx.fillRect(drawX - 2, sY + 8, 5, 8);
+            ctx.fillStyle = palette.shoeColor;
+            ctx.fillRect(drawX - 2, sY + 16, 6, 2);
+            ctx.fillStyle = palette.soleColor;
+            ctx.fillRect(drawX - 2, sY + 18, 6, 1);
+          } else {
+            // Seated profile (e.g. espresso barstool / side sofa)
+            // Cushion/seat contact grounding shadow
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+            ctx.beginPath();
+            ctx.ellipse(drawX + 1, sY + 9, 6, 2.5, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Thigh bent forward horizontally on seat
+            ctx.fillStyle = palette.pantsBase;
+            ctx.fillRect(drawX - 2, sY + 8, 6, 4);
+            ctx.fillStyle = palette.pantsDark;
+            ctx.fillRect(drawX - 2, sY + 10, 6, 2);
+            // Lower leg dropping down vertically
+            ctx.fillStyle = palette.pantsBase;
+            ctx.fillRect(drawX + 2, sY + 11, 3, 4);
+            // Shoe planted on footrest / floor
+            ctx.fillStyle = palette.shoeColor;
+            ctx.fillRect(drawX + 2, sY + 15, 5, 2);
+            ctx.fillStyle = palette.soleColor;
+            ctx.fillRect(drawX + 2, sY + 16, 5, 1);
+          }
+
+          // 2. Torso & Arm (Side Profile)
+          ctx.fillStyle = palette.shirtBase;
+          ctx.fillRect(drawX - 4, sY + 1, 8, 8);
+          ctx.fillStyle = palette.shirtLight;
+          ctx.fillRect(drawX - 4, sY + 1, 7, 2);
+          ctx.fillStyle = palette.shirtDark;
+          ctx.fillRect(drawX - 4, sY + 8, 8, 1);
+
+          // Side arm swinging
+          const sideArmShift = char.isWalking ? (walkStep === 0 ? 1 : walkStep === 2 ? -1 : 0) : 0;
+          ctx.fillStyle = palette.shirtBase;
+          ctx.fillRect(drawX - 2 + sideArmShift, sY + 2, 3, 5);
+          ctx.fillStyle = palette.skinBase;
+          ctx.fillRect(drawX - 1 + sideArmShift, sY + 7, 2, 2);
+
+          // 3. Head & Face (Side Profile Silhouette with Nose & Anime Eye)
+          ctx.fillStyle = palette.skinBase;
+          ctx.fillRect(drawX - 4, sY - 8, 8, 7); // Base skull
+          ctx.fillRect(drawX + 4, sY - 6, 2, 2); // 16-bit Nose tip protrusion!
+          ctx.fillRect(drawX + 2, sY - 3, 3, 2); // Chin contour
+          ctx.fillStyle = palette.skinDark;
+          ctx.fillRect(drawX - 2, sY - 5, 2, 3); // Ear
+
+          // Single Expressive Profile Anime Eye
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(drawX + 1, sY - 5, 3, 1); // Upper lash
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(drawX + 1, sY - 4, 3, 2); // Sclera
+          ctx.fillStyle = palette.eyeColor;
+          ctx.fillRect(drawX + 2, sY - 4, 2, 2); // Iris
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(drawX + 2, sY - 4, 1, 1); // Sparkle highlight!
+
+          // Side Blush
+          if (palette.blushColor) {
+            ctx.fillStyle = palette.blushColor;
+            ctx.fillRect(drawX + 1, sY - 2, 3, 1);
+          }
+
+          // Side Hair Volume & Bangs
+          ctx.fillStyle = palette.hairBase;
+          ctx.fillRect(drawX - 6, sY - 12, 10, 4); // Crown top
+          ctx.fillStyle = palette.hairLight;
+          ctx.fillRect(drawX - 5, sY - 12, 8, 2); // Crown light
+          ctx.fillStyle = palette.hairBase;
+          ctx.fillRect(drawX - 6, sY - 9, 4, 8); // Back of head
+          ctx.fillStyle = palette.hairDark;
+          ctx.fillRect(drawX - 5, sY - 2, 3, 2); // Nape
+          // Bangs sweeping across forehead
+          ctx.fillStyle = palette.hairBase;
+          ctx.fillRect(drawX - 2, sY - 10, 5, 4);
+          ctx.fillStyle = palette.hairLight;
+          ctx.fillRect(drawX + 2, sY - 8, 2, 2);
+
+          // Eah Special Hair Mane & Rose Clip
+          if (char.id === 'eah') {
+            ctx.fillStyle = palette.hairBase;
+            ctx.fillRect(drawX - 6, sY - 3, 4, 13);
+            ctx.fillStyle = palette.hairLight;
+            ctx.fillRect(drawX - 5, sY, 2, 9);
+            // Rose clip
+            ctx.fillStyle = '#f43f5e';
+            ctx.fillRect(drawX + 1, sY - 11, 4, 3);
+            ctx.fillStyle = '#fff1f2';
+            ctx.fillRect(drawX + 2, sY - 10, 2, 1);
+          }
+
+        } else {
+          // ==================================================================
+          // DIRECTION: DOWN (Front View - Row 3 of Reference Sheet)
+          // ==================================================================
+          // 1. Legs & Shoes (Front View Stride)
+          if (char.isWalking) {
+            if (walkStep === 0) {
+              // Left leg forward, right leg back
+              ctx.fillStyle = palette.pantsBase;
+              ctx.fillRect(drawX - 5, sY + 8, 4, 8);
+              ctx.fillRect(drawX + 1, sY + 7, 4, 7);
+              ctx.fillStyle = palette.pantsDark;
+              ctx.fillRect(drawX - 1, sY + 7, 2, 7);
+              // Shoes
+              ctx.fillStyle = palette.shoeColor;
+              ctx.fillRect(drawX - 6, sY + 16, 5, 2);
+              ctx.fillRect(drawX + 1, sY + 14, 5, 2);
+              ctx.fillStyle = palette.soleColor;
+              ctx.fillRect(drawX - 6, sY + 18, 5, 1);
+              ctx.fillRect(drawX + 1, sY + 16, 5, 1);
+            } else if (walkStep === 2) {
+              // Right leg forward, left leg back
+              ctx.fillStyle = palette.pantsBase;
+              ctx.fillRect(drawX - 5, sY + 7, 4, 7);
+              ctx.fillRect(drawX + 1, sY + 8, 4, 8);
+              ctx.fillStyle = palette.pantsDark;
+              ctx.fillRect(drawX - 1, sY + 7, 2, 7);
+              // Shoes
+              ctx.fillStyle = palette.shoeColor;
+              ctx.fillRect(drawX - 6, sY + 14, 5, 2);
+              ctx.fillRect(drawX + 1, sY + 16, 5, 2);
+              ctx.fillStyle = palette.soleColor;
+              ctx.fillRect(drawX - 6, sY + 16, 5, 1);
+              ctx.fillRect(drawX + 1, sY + 18, 5, 1);
+            } else {
+              // Neutral front standing
+              ctx.fillStyle = palette.pantsBase;
+              ctx.fillRect(drawX - 5, sY + 8, 4, 8);
+              ctx.fillRect(drawX + 1, sY + 8, 4, 8);
+              ctx.fillStyle = palette.pantsDark;
+              ctx.fillRect(drawX - 1, sY + 8, 2, 7);
+              ctx.fillStyle = palette.shoeColor;
+              ctx.fillRect(drawX - 6, sY + 16, 5, 2);
+              ctx.fillRect(drawX + 1, sY + 16, 5, 2);
+              ctx.fillStyle = palette.soleColor;
+              ctx.fillRect(drawX - 6, sY + 18, 5, 1);
+              ctx.fillRect(drawX + 1, sY + 18, 5, 1);
+            }
+          } else if (!char.isSeated) {
+            // Standing idle front view
+            ctx.fillStyle = palette.pantsBase;
+            ctx.fillRect(drawX - 5, sY + 8, 4, 8);
+            ctx.fillRect(drawX + 1, sY + 8, 4, 8);
+            ctx.fillStyle = palette.pantsDark;
+            ctx.fillRect(drawX - 1, sY + 8, 2, 7);
+            ctx.fillStyle = palette.shoeColor;
+            ctx.fillRect(drawX - 6, sY + 16, 5, 2);
+            ctx.fillRect(drawX + 1, sY + 16, 5, 2);
+            ctx.fillStyle = palette.soleColor;
+            ctx.fillRect(drawX - 6, sY + 18, 5, 1);
+            ctx.fillRect(drawX + 1, sY + 18, 5, 1);
+          } else {
+            // Seated facing down (front view, e.g. top sofa booth)
+            // Cushion contact grounding shadow
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+            ctx.beginPath();
+            ctx.ellipse(drawX, sY + 9, 8, 3, 0, 0, Math.PI * 2);
+            ctx.fill();
+            // Folded thighs resting comfortably on cushion
+            ctx.fillStyle = palette.pantsBase;
+            ctx.fillRect(drawX - 5, sY + 8, 4, 4);
+            ctx.fillRect(drawX + 1, sY + 8, 4, 4);
+            ctx.fillStyle = palette.pantsDark;
+            ctx.fillRect(drawX - 1, sY + 8, 2, 4);
+            // Lower legs dropping down over cushion edge
+            ctx.fillStyle = palette.pantsDark;
+            ctx.fillRect(drawX - 5, sY + 11, 4, 3);
+            ctx.fillRect(drawX + 1, sY + 11, 4, 3);
+            // Shoes resting naturally on floor
+            ctx.fillStyle = palette.shoeColor;
+            ctx.fillRect(drawX - 5, sY + 14, 4, 2);
+            ctx.fillRect(drawX + 1, sY + 14, 4, 2);
+            ctx.fillStyle = palette.soleColor;
+            ctx.fillRect(drawX - 5, sY + 15, 4, 1);
+            ctx.fillRect(drawX + 1, sY + 15, 4, 1);
+          }
+
+          // 2. Torso & Arms (Front View)
+          ctx.fillStyle = palette.shirtBase;
+          ctx.fillRect(drawX - 6, sY + 1, 12, 8);
+          // Shoulder highlight band
+          ctx.fillStyle = palette.shirtLight;
+          ctx.fillRect(drawX - 6, sY + 1, 12, 2);
+          // Lower hem shadow
+          ctx.fillStyle = palette.shirtDark;
+          ctx.fillRect(drawX - 6, sY + 8, 12, 1);
+          // Front collar notch
+          ctx.fillStyle = palette.skinBase;
+          ctx.fillRect(drawX - 2, sY + 1, 4, 2);
+
+          // Arms at sides swinging in counter-rhythm
+          const armSwing = char.isWalking ? (walkStep === 0 ? 1 : walkStep === 2 ? -1 : 0) : 0;
+          ctx.fillStyle = palette.shirtBase;
+          ctx.fillRect(drawX - 8, sY + 2 + armSwing, 2, 5);
+          ctx.fillRect(drawX + 6, sY + 2 - armSwing, 2, 5);
+          ctx.fillStyle = palette.skinBase;
+          ctx.fillRect(drawX - 8, sY + 7 + armSwing, 2, 2);
+          ctx.fillRect(drawX + 6, sY + 7 - armSwing, 2, 2);
+
+          // 3. Head & Face (Front View - Expressive Anime Eyes)
+          ctx.fillStyle = palette.skinBase;
+          ctx.fillRect(drawX - 5, sY - 8, 10, 8); // Face area
+          ctx.fillRect(drawX - 6, sY - 6, 12, 5); // Cheeks
+          ctx.fillStyle = palette.skinDark;
+          ctx.fillRect(drawX - 7, sY - 5, 1, 3); // Left ear
+          ctx.fillRect(drawX + 6, sY - 5, 1, 3); // Right ear
+
+          // Left Expressive Eye
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(drawX - 4, sY - 4, 3, 1); // Lash
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(drawX - 4, sY - 3, 3, 2); // Sclera
+          ctx.fillStyle = palette.eyeColor;
+          ctx.fillRect(drawX - 4, sY - 3, 2, 2); // Iris
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(drawX - 4, sY - 2, 1, 1); // Pupil
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(drawX - 3, sY - 3, 1, 1); // Sparkle highlight
+
+          // Right Expressive Eye
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(drawX + 1, sY - 4, 3, 1); // Lash
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(drawX + 1, sY - 3, 3, 2); // Sclera
+          ctx.fillStyle = palette.eyeColor;
+          ctx.fillRect(drawX + 2, sY - 3, 2, 2); // Iris
+          ctx.fillStyle = '#0f172a';
+          ctx.fillRect(drawX + 3, sY - 2, 1, 1); // Pupil
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(drawX + 2, sY - 3, 1, 1); // Sparkle highlight
+
+          // Cute Cheek Blush
+          if (palette.blushColor) {
+            ctx.fillStyle = palette.blushColor;
+            ctx.fillRect(drawX - 5, sY - 1, 2, 1);
+            ctx.fillRect(drawX + 3, sY - 1, 2, 1);
+          }
+
+          // Hair (Crown, Sides, and Bangs)
+          ctx.fillStyle = palette.hairBase;
+          ctx.fillRect(drawX - 6, sY - 12, 12, 4); // Top crown
+          ctx.fillStyle = palette.hairLight;
+          ctx.fillRect(drawX - 5, sY - 12, 10, 2); // Crown light
+          ctx.fillStyle = palette.hairBase;
+          ctx.fillRect(drawX - 7, sY - 10, 2, 5); // Left temple
+          ctx.fillRect(drawX + 5, sY - 10, 2, 5); // Right temple
+          ctx.fillRect(drawX - 5, sY - 9, 10, 4); // Forehead bangs
+          // Center bangs notch exposing forehead
+          ctx.fillStyle = palette.skinBase;
+          ctx.fillRect(drawX - 1, sY - 6, 2, 1);
+
+          // Eah Special: Flowing Twin Hair Locks & Rose Hairclip
+          if (char.id === 'eah') {
+            ctx.fillStyle = palette.hairBase;
+            ctx.fillRect(drawX - 8, sY - 4, 3, 14); // Left flowing lock
+            ctx.fillRect(drawX + 5, sY - 4, 3, 14); // Right flowing lock
+            ctx.fillStyle = palette.hairLight;
+            ctx.fillRect(drawX - 7, sY - 2, 1, 11);
+            ctx.fillRect(drawX + 6, sY - 2, 1, 11);
+            // Rose clip
+            ctx.fillStyle = '#f43f5e';
+            ctx.fillRect(drawX + 3, sY - 11, 4, 3);
+            ctx.fillStyle = '#fff1f2';
+            ctx.fillRect(drawX + 4, sY - 10, 2, 1);
+            // Extra blush glow
+            ctx.fillStyle = 'rgba(244, 63, 94, 0.45)';
+            ctx.fillRect(drawX - 4, sY - 1, 3, 2);
+            ctx.fillRect(drawX + 1, sY - 1, 3, 2);
+          }
+        }
+
+        // Character Signature Highlights (Dylan Founder Pin, Alex Hoodie, Zane Undercut)
         if (char.id === 'dylan') {
-          ctx.fillStyle = '#5c3a21';
-          ctx.fillRect(drawX - 4, drawY - 14, 8, 4);
+          // Executive hair styling accent
+          ctx.fillStyle = palette.hairLight;
+          ctx.fillRect(drawX - 2, sY - 13, 5, 2);
+          // Gold CEO pin on lapel
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillRect(drawX - 4, sY + 3, 2, 2);
+        } else if (char.id === 'alex') {
+          // Tech hoodie drawstrings
+          ctx.fillStyle = '#fed7aa';
+          ctx.fillRect(drawX - 1, sY + 4, 2, 3);
+        } else if (char.id === 'zane') {
+          // Tactical stealth side fade
+          ctx.fillStyle = '#020617';
+          ctx.fillRect(drawX - 6, sY - 6, 1, 3);
+          ctx.fillRect(drawX + 5, sY - 6, 1, 3);
+        }
+
+        // Restore context if horizontally flipped for left-facing
+        if (isFacingLeft) {
+          ctx.restore();
         }
 
         // ====================================================================
@@ -2579,45 +5342,244 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
         // ====================================================================
         const isAtKitchen = drawX <= 220 && drawY >= 280 && drawY <= 398 && !char.isWalking;
         const isAtGarden = drawX <= 220 && drawY > 398 && drawY <= 504 && !char.isWalking;
-        const isAtArcade = drawX >= 772 && drawX <= 812 && drawY >= 335 && drawY <= 380 && !char.isWalking;
-        const isAtSofa = drawX >= 660 && drawX <= 785 && drawY >= 340 && drawY <= 375 && !char.isWalking;
+        const isAtArcade = drawX >= 230 && drawX <= 280 && drawY >= 310 && drawY <= 365 && !char.isWalking;
+        const isAtSofa = drawX >= 270 && drawX <= 490 && drawY >= 320 && drawY <= 470 && !char.isWalking;
         const isAtWater = drawX >= 760 && drawX <= 820 && drawY >= 100 && drawY <= 150 && !char.isWalking;
-        const isAtCoffee = drawX >= 600 && drawX <= 648 && drawY >= 415 && drawY <= 480 && !char.isWalking;
-        const isAtWorkBench = drawX >= 660 && drawX <= 785 && drawY >= 430 && drawY <= 468 && !char.isWalking;
-        const isNearBoardroomSeat = Math.hypot(char.currentX - char.seatX, char.currentY - char.seatY) < 24 && (char.seatX >= 230 && char.seatX <= 530 && char.seatY >= 370 && char.seatY <= 470);
-        const isAtBoardroom = (!char.isWalking && (isNearBoardroomSeat || (drawX >= 230 && drawX <= 585 && drawY >= 360 && drawY <= 495))) || char.isMeeting;
-        const isInLoungeArea = drawX >= 596 && drawY >= 310;
+        const isAtCoffee = drawX >= 230 && drawX <= 290 && drawY >= 410 && drawY <= 475 && !char.isWalking;
+        const isAtWorkBench = drawX >= 390 && drawX <= 490 && drawY >= 430 && drawY <= 475 && !char.isWalking;
+        const isNearBoardroomSeat = Math.hypot(char.currentX - char.seatX, char.currentY - char.seatY) < 32 && (char.seatX >= 640 && char.seatX <= 920 && char.seatY >= 330 && char.seatY <= 460);
+        const isAtBoardroom = (!char.isWalking && (isNearBoardroomSeat || (drawX >= 640 && drawX <= 920 && drawY >= 330 && drawY <= 465))) || char.isMeeting;
+        const isInLoungeArea = drawX > 226 && drawX <= 560 && drawY >= 280;
 
-        if (char.activity === 'kitchen_work' || isAtKitchen) {
+        if (char.id === 'eah' && (char.activity === 'eah_cooking' || (isAtKitchen && eahRoutineStepRef.current === 'cooking'))) {
+          // ================================================================
+          // EAH: SIZZLING SKILLET COOKING FOR DYLAN (Pan, Spatula, Steam, & Hearts)
+          // ================================================================
+          // Cast iron frying pan held in left hand
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(drawX - 16, drawY - 3, 14, 10);
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(drawX - 15, drawY - 2, 12, 8);
+          // Pan handle in left hand
+          ctx.fillStyle = '#64748b';
+          ctx.fillRect(drawX - 7, drawY + 1, 5, 3);
+          ctx.fillStyle = '#ffdfba';
+          ctx.fillRect(drawX - 8, drawY, 3, 4);
+
+          // Sizzling Sunny-Side Eggs & Savory Bacon in Pan
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(drawX - 14, drawY - 1, 5, 5);
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(drawX - 13, drawY, 3, 3);
+          ctx.fillStyle = '#ea580c';
+          ctx.fillRect(drawX - 12, drawY + 1, 1, 1);
+          // Crispy savory bacon strip
+          ctx.fillStyle = '#dc2626';
+          ctx.fillRect(drawX - 9, drawY, 5, 3);
+
+          // Spatula in Right Hand actively flipping
+          const spatFlip = Math.sin(frame * 0.45) * 3;
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillRect(drawX + 4, drawY - 4 + spatFlip, 2, 8);
+          ctx.fillRect(drawX + 2, drawY - 6 + spatFlip, 6, 3);
+          ctx.fillStyle = '#ffdfba';
+          ctx.fillRect(drawX + 3, drawY + 2, 4, 3);
+
+          // Steam & Sizzle particles rising
+          const sY = (frame * 0.3) % 8;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.fillRect(drawX - 13, drawY - 5 - sY, 2, 2);
+          ctx.fillRect(drawX - 9, drawY - 7 - sY, 2, 2);
+
+          // Cute cooking heart sparkle floating from pan
+          if (frame % 40 < 22) {
+            ctx.fillStyle = '#fb7185';
+            ctx.font = 'bold 8px monospace';
+            ctx.fillText('🍳💕', drawX - 16, drawY - 10);
+          }
+
+        } else if (char.id === 'eah' && (char.activity === 'eah_carrying_food' || (char.isWalking && eahRoutineStepRef.current === 'deliver_food_walk'))) {
+          // ================================================================
+          // EAH: WALKING & CARRYING GOURMET SERVING TRAY FOR DYLAN
+          // ================================================================
+          // Both arms brought forward holding silver platter
+          ctx.fillStyle = char.shirtColor;
+          ctx.fillRect(drawX - 8, drawY + 2, 3, 5);
+          ctx.fillRect(drawX + 5, drawY + 2, 3, 5);
+          ctx.fillStyle = '#ffdfba';
+          ctx.fillRect(drawX - 7, drawY + 6, 3, 3);
+          ctx.fillRect(drawX + 4, drawY + 6, 3, 3);
+
+          // Silver Platter / Serving Tray
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(drawX - 10, drawY + 5, 20, 4);
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(drawX - 9, drawY + 5, 18, 1);
+
+          // Hot Gourmet Breakfast Plate
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(drawX - 5, drawY + 2, 10, 4);
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(drawX - 4, drawY + 3, 4, 2); // Golden food
+          ctx.fillStyle = '#16a34a';
+          ctx.fillRect(drawX, drawY + 3, 2, 2); // Fresh herb garnish
+
+          // Rising steam curls
+          const sY = (frame * 0.25) % 6;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+          ctx.fillRect(drawX - 1, drawY - 1 - sY, 2, 2);
+
+          if (frame % 50 < 25) {
+            ctx.fillStyle = '#fb7185';
+            ctx.font = 'bold 7px monospace';
+            ctx.fillText('🍲💕', drawX + 8, drawY - 8);
+          }
+
+        } else if (char.id === 'eah' && (char.activity === 'eah_brewing_coffee' || (isAtCoffee && eahRoutineStepRef.current === 'brewing'))) {
+          // ================================================================
+          // EAH: BREWING ARTISANAL ESPRESSO & HEART LATTE ART AT COFFEE BAR
+          // ================================================================
+          // Holding stainless steel milk steaming pitcher in left hand
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(drawX - 9, drawY + 2, 5, 6);
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(drawX - 8, drawY + 1, 3, 2); // Foamy white milk
+          ctx.fillStyle = '#ffdfba';
+          ctx.fillRect(drawX - 6, drawY + 4, 3, 3);
+
+          // Right hand adjusting espresso group head
+          ctx.fillStyle = '#ffdfba';
+          ctx.fillRect(drawX + 3, drawY + 2, 4, 3);
+
+          // Rich coffee aroma steam curls
+          const sY = (frame * 0.28) % 8;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.fillRect(drawX - 6, drawY - 2 - sY, 2, 2);
+          ctx.fillRect(drawX + 4, drawY - 4 - sY, 2, 2);
+
+          if (frame % 40 < 22) {
+            ctx.fillStyle = '#fb7185';
+            ctx.font = 'bold 8px monospace';
+            ctx.fillText('☕💕', drawX - 2, drawY - 12);
+          }
+
+        } else if (char.id === 'eah' && (char.activity === 'eah_carrying_coffee' || (char.isWalking && eahRoutineStepRef.current === 'deliver_coffee_walk'))) {
+          // ================================================================
+          // EAH: WALKING & CARRYING STEAMING HOT COFFEE MUG FOR DYLAN
+          // ================================================================
+          // Both arms forward holding warm ceramic mug
+          ctx.fillStyle = char.shirtColor;
+          ctx.fillRect(drawX - 6, drawY + 2, 3, 5);
+          ctx.fillRect(drawX + 3, drawY + 2, 3, 5);
+          ctx.fillStyle = '#ffdfba';
+          ctx.fillRect(drawX - 5, drawY + 6, 3, 3);
+          ctx.fillRect(drawX + 2, drawY + 6, 3, 3);
+
+          // Ceramic Mug with Heart Latte Art
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(drawX - 4, drawY + 3, 8, 7);
+          ctx.fillStyle = '#fb7185';
+          ctx.fillRect(drawX - 4, drawY + 3, 8, 1); // Rose pink rim
+          ctx.fillStyle = '#3e2318';
+          ctx.fillRect(drawX - 3, drawY + 4, 6, 2); // Dark roast coffee
+          ctx.fillStyle = '#fef3c7';
+          ctx.fillRect(drawX - 1, drawY + 4, 2, 2); // Heart foam art
+          // Mug handle
+          ctx.fillStyle = '#e2e8f0';
+          ctx.fillRect(drawX + 4, drawY + 5, 2, 3);
+
+          // Rising steam curls
+          const sY = (frame * 0.28) % 7;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+          ctx.fillRect(drawX - 1, drawY + 1 - sY, 2, 2);
+
+          if (frame % 50 < 25) {
+            ctx.fillStyle = '#fb7185';
+            ctx.font = 'bold 7px monospace';
+            ctx.fillText('☕💖', drawX + 6, drawY - 8);
+          }
+
+        } else if (char.id === 'eah' && (char.activity === 'eah_serving' || eahRoutineStepRef.current === 'serving_food' || eahRoutineStepRef.current === 'serving_coffee')) {
+          // ================================================================
+          // EAH: SERVING AT DYLAN'S DESK WITH LOVING HEART BURST
+          // ================================================================
+          // Gentle forward leaning stance
+          ctx.fillStyle = char.shirtColor;
+          ctx.fillRect(drawX - 7, drawY + 2, 4, 6);
+          ctx.fillRect(drawX + 3, drawY + 2, 4, 6);
+          ctx.fillStyle = '#ffdfba';
+          ctx.fillRect(drawX - 6, drawY + 6, 3, 3);
+          ctx.fillRect(drawX + 3, drawY + 6, 3, 3);
+
+          // Glowing heart burst between Dylan and Eah
+          ctx.fillStyle = '#fb7185';
+          ctx.font = 'bold 10px monospace';
+          ctx.fillText('💖🥰', drawX + 5, drawY - 9);
+
+        } else if (char.id === 'eah' && (char.activity === 'eah_petting_dog' || eahRoutineStepRef.current === 'petting_puppy')) {
+          // ================================================================
+          // EAH: CROUCHING & PETTING THE ADORABLE OFFICE PUPPY
+          // ================================================================
+          // Lowered torso pose
+          ctx.fillStyle = char.shirtColor;
+          ctx.fillRect(drawX - 7, drawY + 5, 14, 8);
+          // Right arm reaching forward petting puppy head
+          const petMotion = Math.sin(frame * 0.3) * 2;
+          ctx.fillStyle = char.shirtColor;
+          ctx.fillRect(drawX + 4, drawY + 5, 6, 3);
+          ctx.fillStyle = '#ffdfba';
+          ctx.fillRect(drawX + 9, drawY + 5 + petMotion, 4, 3);
+
+          // Loving hearts bursting between Eah and Puppy
+          ctx.fillStyle = '#fb7185';
+          ctx.font = 'bold 9px monospace';
+          ctx.fillText('🐶💕', drawX + 7, drawY - 6);
+
+        } else if (char.activity === 'kitchen_work' || isAtKitchen) {
           // A. GOURMET KITCHEN ISLAND WORKING & SNACKING
-          const screenColors: Record<string, string> = {
-            dylan: '#00f0ff',
-            alex: '#f97316',
-            maya: '#ec4899',
-            wendy: '#10b981',
-            ray: '#38bdf8',
-            zane: '#22c55e',
-          };
-          const lapGlow = screenColors[char.id] || '#00f0ff';
+          const lStyle = LAPTOP_STYLES_2D[char.id] || LAPTOP_STYLES_2D.dylan;
+          const lapGlow = lStyle.accentGlow;
           const type = Math.sin(frame * 0.45) * 2;
 
-          // Laptop Base on marble island counter
-          ctx.fillStyle = '#cbd5e1';
+          // Character-Specific Laptop Base on marble island counter
+          ctx.fillStyle = lStyle.baseColor;
           ctx.fillRect(drawX - 9, drawY - 14, 18, 7);
-          ctx.fillStyle = '#0f172a';
+          ctx.fillStyle = lStyle.kbColor;
           ctx.fillRect(drawX - 8, drawY - 13, 16, 5);
+          ctx.fillStyle = lStyle.trackpadColor;
+          ctx.fillRect(drawX - 3, drawY - 9, 6, 2);
+
+          // ThinkPad Iconic Red TrackPoint Nub
+          if (lStyle.hasTrackPoint) {
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(drawX - 1, drawY - 12, 2, 2);
+          }
 
           // Angled glowing screen lid facing character
-          ctx.fillStyle = '#94a3b8';
+          ctx.fillStyle = lStyle.lidColor;
           ctx.fillRect(drawX - 9, drawY - 22, 18, 8);
-          ctx.fillStyle = lapGlow;
+          ctx.fillStyle = lStyle.screenBg;
           ctx.fillRect(drawX - 8, drawY - 21, 16, 6);
 
-          // Code/document lines on screen
-          ctx.fillStyle = '#ffffff';
+          // Apple Logo / Lid Logo on back
+          if (lStyle.hasAppleLogo) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(drawX - 1, drawY - 24, 2, 2);
+          } else if (lStyle.hasTrackPoint) {
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(drawX + 5, drawY - 24, 2, 2);
+          }
+
+          // Active Code / Document Telemetry on screen
+          ctx.fillStyle = lapGlow;
           ctx.fillRect(drawX - 6, drawY - 20, 10, 1);
           ctx.fillRect(drawX - 6, drawY - 18, 12, 1);
           ctx.fillRect(drawX - 6, drawY - 16, 7, 1);
+          // Blinking cursor
+          if (frame % 20 < 10) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(drawX + 2, drawY - 16, 2, 1);
+          }
 
           // Animated typing hands on keyboard
           ctx.fillStyle = '#ffdfba';
@@ -2643,33 +5605,47 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
 
         } else if (char.activity === 'garden_relax' || isAtGarden) {
           // B. OUTDOOR ZEN GARDEN PATIO WORKING & HANGING OUT ("TUMAMBAY")
-          const screenColors: Record<string, string> = {
-            dylan: '#00f0ff',
-            alex: '#f97316',
-            maya: '#ec4899',
-            wendy: '#10b981',
-            ray: '#38bdf8',
-            zane: '#22c55e',
-          };
-          const lapGlow = screenColors[char.id] || '#00f0ff';
+          const lStyle = LAPTOP_STYLES_2D[char.id] || LAPTOP_STYLES_2D.dylan;
+          const lapGlow = lStyle.accentGlow;
           const type = Math.sin(frame * 0.4) * 2;
 
-          // Laptop Base on honey teak outdoor table
-          ctx.fillStyle = '#cbd5e1';
+          // Character-Specific Laptop Base on honey teak outdoor table
+          ctx.fillStyle = lStyle.baseColor;
           ctx.fillRect(drawX - 9, drawY - 6, 18, 7);
-          ctx.fillStyle = '#0f172a';
+          ctx.fillStyle = lStyle.kbColor;
           ctx.fillRect(drawX - 8, drawY - 5, 16, 5);
+          ctx.fillStyle = lStyle.trackpadColor;
+          ctx.fillRect(drawX - 3, drawY - 2, 6, 2);
+
+          // ThinkPad Iconic Red TrackPoint Nub
+          if (lStyle.hasTrackPoint) {
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(drawX - 1, drawY - 4, 2, 2);
+          }
 
           // Angled glowing screen lid facing character
-          ctx.fillStyle = '#94a3b8';
+          ctx.fillStyle = lStyle.lidColor;
           ctx.fillRect(drawX - 9, drawY - 14, 18, 8);
-          ctx.fillStyle = lapGlow;
+          ctx.fillStyle = lStyle.screenBg;
           ctx.fillRect(drawX - 8, drawY - 13, 16, 6);
 
-          // Code lines on display
-          ctx.fillStyle = '#ffffff';
+          // Apple Logo / Lid Logo on back
+          if (lStyle.hasAppleLogo) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(drawX - 1, drawY - 16, 2, 2);
+          } else if (lStyle.hasTrackPoint) {
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(drawX + 5, drawY - 16, 2, 2);
+          }
+
+          // Active Code lines on display with blinking cursor
+          ctx.fillStyle = lapGlow;
           ctx.fillRect(drawX - 6, drawY - 12, 11, 1);
           ctx.fillRect(drawX - 6, drawY - 10, 8, 1);
+          if (frame % 20 < 10) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(drawX + 3, drawY - 10, 2, 1);
+          }
 
           // Animated typing hands on keyboard
           ctx.fillStyle = '#ffdfba';
@@ -2690,55 +5666,205 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
           ctx.fillRect(drawX + 18 + driftX, drawY - 20, 3, 2);
 
         } else if (char.activity === 'playing_arcade' || isAtArcade) {
-          // B. LEGIT RETRO ARCADE GAMING ANIMATION (Vigorous Joystick + Rapid Button Tapping + Body Bob)
+          // B. LEGIT RETRO ARCADE GAMING ANIMATION (Facing UP directly into the arcade cabinet!)
+          char.facing = 'up';
+          char.isSeated = false;
           const gameBob = Math.abs(Math.sin(frame * 0.4)) * 2;
           
+          // Both arms raised forward/up towards the arcade control deck
+          ctx.fillStyle = char.shirtColor;
+          ctx.fillRect(drawX - 8, drawY - 2 - gameBob, 3, 5); // Left arm
+          ctx.fillRect(drawX + 5, drawY - 2 - gameBob, 3, 5); // Right arm
+
           // Left hand actively steering red ball joystick
           const jX = Math.sin(frame * 0.5) * 3;
           const jY = Math.cos(frame * 0.5) * 2;
           ctx.fillStyle = '#94a3b8';
-          ctx.fillRect(drawX - 5, drawY - 4, 2, 4); // Joystick shaft
-          ctx.fillStyle = '#dc2626';
-          ctx.fillRect(drawX - 6 + jX, drawY - 7 + jY, 4, 4); // Red ball top
+          ctx.fillRect(drawX - 5, drawY - 5, 2, 4); // Joystick shaft
+          ctx.fillStyle = '#ef4444';
+          ctx.fillRect(drawX - 6 + jX, drawY - 8 + jY, 4, 4); // Red ball top
           ctx.fillStyle = '#ffdfba';
-          ctx.fillRect(drawX - 7 + jX, drawY - 6 + jY, 3, 3); // Left hand
+          ctx.fillRect(drawX - 7 + jX, drawY - 7 + jY, 3, 3); // Left hand gripping joystick
 
           // Right hand rapidly hammering arcade push-buttons
           const bTap = Math.sin(frame * 0.9) * 2;
           ctx.fillStyle = '#ffdfba';
-          ctx.fillRect(drawX + 3, drawY - 5 + bTap, 4, 3);
+          ctx.fillRect(drawX + 3, drawY - 6 + bTap, 4, 3); // Right hand tapping buttons
 
-          // Dynamic CRT screen flash reflecting on character's face & hair
-          ctx.fillStyle = frame % 16 < 8 ? 'rgba(236, 72, 153, 0.4)' : 'rgba(0, 240, 255, 0.4)';
-          ctx.fillRect(drawX - 4, drawY - 8, 8, 4);
+          // Dynamic CRT screen flash reflecting on character's back of head & shoulders
+          ctx.fillStyle = frame % 16 < 8 ? 'rgba(236, 72, 153, 0.35)' : 'rgba(0, 240, 255, 0.35)';
+          ctx.fillRect(drawX - 6, drawY - 14, 12, 4);
 
           // Retro 8-bit particle spark above head
           ctx.fillStyle = frame % 12 < 6 ? '#ffbe0b' : '#00f59b';
-          ctx.fillRect(drawX + 6, drawY - 14 - gameBob, 2, 2);
+          ctx.fillRect(drawX + 6, drawY - 18 - gameBob, 2, 2);
 
         } else if (char.activity === 'sofa_relax' || (isAtSofa && !isAtWorkBench)) {
           // C. LUXURY VELVET SOFA RELAXATION POSE
-          // Left arm draped along top of emerald sofa backrest
-          ctx.fillStyle = char.shirtColor;
-          ctx.fillRect(drawX - 12, drawY - 4, 8, 3);
-          ctx.fillStyle = '#ffdfba';
-          ctx.fillRect(drawX - 14, drawY - 4, 3, 3); // Hand resting relaxed
+          if (char.id === 'eah') {
+            // ================================================================
+            // EAH: DEDICATED APPLE IPAD / TABLET EXPERIENCE (Both Hands + Active Tapping)
+            // ================================================================
+            // Both arms brought forward, holding the iPad securely
+            // Left arm & hand holding left edge of iPad
+            ctx.fillStyle = char.shirtColor;
+            ctx.fillRect(drawX - 9, drawY + 2, 4, 6);
+            ctx.fillStyle = '#ffdfba';
+            ctx.fillRect(drawX - 8, drawY + 6, 3, 3);
 
-          // Right hand holding ceramic espresso coffee mug
-          ctx.fillStyle = '#ffffff';
-          ctx.fillRect(drawX + 5, drawY - 2, 6, 6); // White ceramic cup
-          ctx.fillStyle = '#3e2318';
-          ctx.fillRect(drawX + 6, drawY - 2, 4, 2); // Rich dark roast espresso
-          ctx.fillStyle = '#e2e8f0';
-          ctx.fillRect(drawX + 11, drawY - 1, 2, 4); // Handle
-          ctx.fillStyle = '#ffdfba';
-          ctx.fillRect(drawX + 4, drawY - 1, 3, 4); // Hand holding mug
+            // Right arm & hand holding right edge of iPad
+            ctx.fillStyle = char.shirtColor;
+            ctx.fillRect(drawX + 5, drawY + 2, 4, 6);
+            ctx.fillStyle = '#ffdfba';
+            ctx.fillRect(drawX + 5, drawY + 6, 3, 3);
 
-          // Gentle rising steam curls wafting up
-          const sY = (frame * 0.28) % 8;
-          ctx.fillStyle = 'rgba(255, 255, 255, 0.55)';
-          ctx.fillRect(drawX + 7, drawY - 4 - sY, 2, 2);
-          ctx.fillRect(drawX + 8, drawY - 7 - sY, 2, 2);
+            // Sleek Metallic Rose Gold / Silver iPad chassis on lap
+            ctx.fillStyle = '#fda4af';
+            ctx.fillRect(drawX - 8, drawY + 4, 16, 11);
+            ctx.strokeStyle = '#fb7185';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(drawX - 8, drawY + 4, 16, 11);
+
+            // Ultra-thin Dark Bezel
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(drawX - 7, drawY + 5, 14, 9);
+
+            // Liquid Retina Display (Deep dark theme with vibrant UI cards)
+            ctx.fillStyle = '#1e1b4b';
+            ctx.fillRect(drawX - 6, drawY + 6, 12, 7);
+
+            // Mini top status bar (battery / time / wifi)
+            ctx.fillStyle = '#94a3b8';
+            ctx.fillRect(drawX - 5, drawY + 6, 10, 1);
+
+            // Vibrant colorful app interface & widgets (social feed, Figma design mockups)
+            ctx.fillStyle = '#fb7185';
+            ctx.fillRect(drawX - 5, drawY + 8, 4, 2);
+            ctx.fillStyle = '#38bdf8';
+            ctx.fillRect(drawX, drawY + 8, 4, 2);
+            ctx.fillStyle = '#a855f7';
+            ctx.fillRect(drawX - 5, drawY + 11, 4, 1);
+            ctx.fillStyle = '#34d399';
+            ctx.fillRect(drawX, drawY + 11, 4, 1);
+
+            // Dynamic tapping finger / stylus interaction
+            const isTapping = Math.sin(frame * 0.45) > 0.15;
+            if (isTapping) {
+              // Tapping fingertip
+              ctx.fillStyle = '#ffdfba';
+              ctx.fillRect(drawX + 1, drawY + 8, 2, 2);
+              // Neon touch pulse ripple
+              ctx.fillStyle = 'rgba(251, 113, 133, 0.75)';
+              ctx.fillRect(drawX, drawY + 7, 4, 4);
+            }
+
+            // Magnetic Apple Pencil docked at the top edge of the iPad
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(drawX - 5, drawY + 3, 10, 1);
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(drawX + 3, drawY + 3, 2, 1);
+
+            // Soft glowing ambient light reflecting from screen onto face/lap
+            ctx.fillStyle = 'rgba(251, 113, 133, 0.16)';
+            ctx.fillRect(drawX - 6, drawY + 2, 12, 3);
+
+            // Floating cute status indicator
+            if (frame % 60 < 25) {
+              ctx.fillStyle = '#fb7185';
+              ctx.font = 'bold 7px monospace';
+              ctx.fillText(frame % 120 < 60 ? '📱' : '💕', drawX + 10, drawY - 9);
+            }
+          } else {
+            // ================================================================
+            // SPECIALISTS: SIGNATURE LAPTOPS IN LAPTOP LOUNGE (Open Display + Active Typing)
+            // ================================================================
+            const lapTheme = char.id === 'maya'
+              ? { chassis: '#f8fafc', trim: '#cbd5e1', well: '#1e1b4b', screen: '#ec4899', code: ['#ec4899', '#f472b6', '#cbd5e1'], glow: 'rgba(236, 72, 153, 0.22)', icon: '🎨' }
+              : char.id === 'alex'
+              ? { chassis: '#1e293b', trim: '#334155', well: '#0f172a', screen: '#f97316', code: ['#f97316', '#fb923c', '#fed7aa'], glow: 'rgba(249, 115, 22, 0.22)', icon: '💻' }
+              : char.id === 'wendy'
+              ? { chassis: '#f8fafc', trim: '#94a3b8', well: '#064e3b', screen: '#34d399', code: ['#34d399', '#4ade80', '#bbf7d0'], glow: 'rgba(52, 211, 153, 0.22)', icon: '📢' }
+              : char.id === 'ray'
+              ? { chassis: '#e2e8f0', trim: '#94a3b8', well: '#0c4a6e', screen: '#38bdf8', code: ['#38bdf8', '#00f0ff', '#bae6fd'], glow: 'rgba(56, 189, 248, 0.22)', icon: '🔬' }
+              : { chassis: '#e2e8f0', trim: '#94a3b8', well: '#090d16', screen: '#00f0ff', code: ['#ffbe0b', '#00f0ff', '#38bdf8'], glow: 'rgba(0, 240, 255, 0.22)', icon: '⚡' };
+
+            // 1. Laptop Base / Chassis resting on lap
+            ctx.fillStyle = lapTheme.chassis;
+            ctx.fillRect(drawX - 8, drawY + 4, 16, 5); // Unibody aluminum slab
+            ctx.fillStyle = lapTheme.trim;
+            ctx.fillRect(drawX - 8, drawY + 8, 16, 1); // Front chamfer edge
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(drawX - 2, drawY + 6, 4, 2); // Precision glass trackpad
+
+            // Recessed keyboard deck
+            ctx.fillStyle = lapTheme.well;
+            ctx.fillRect(drawX - 7, drawY + 4, 14, 2);
+            // Glowing keyboard underglow / active key row
+            ctx.fillStyle = lapTheme.screen;
+            ctx.fillRect(drawX - 6, drawY + 4, 12, 1);
+
+            // 2. Upright Open Display Lid
+            ctx.fillStyle = '#0f172a'; // Bezel
+            ctx.fillRect(drawX - 7, drawY - 4, 14, 8);
+            ctx.fillStyle = '#030712'; // Retina screen display
+            ctx.fillRect(drawX - 6, drawY - 3, 12, 6);
+
+            // Screen Top Header Bar
+            ctx.fillStyle = lapTheme.screen;
+            ctx.fillRect(drawX - 5, drawY - 3, 10, 1);
+
+            // Animated Code Telemetry & UI Lines
+            const codeCycle = Math.floor(frame * 0.15) % 3;
+            lapTheme.code.forEach((col, idx) => {
+              const lineW = 3 + ((idx * 3 + codeCycle * 2) % 6);
+              ctx.fillStyle = col;
+              ctx.fillRect(drawX - 5, drawY - 1 + idx * 1.5, Math.min(8, lineW), 1);
+            });
+
+            // Blinking cursor on screen
+            if (frame % 30 < 15) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(drawX + 4, drawY, 1, 1);
+            }
+
+            // Screen glow reflecting onto lap & torso
+            ctx.fillStyle = lapTheme.glow;
+            ctx.fillRect(drawX - 8, drawY - 4, 16, 12);
+
+            // 3. Active Typing Hands on Keyboard
+            const typeTick = Math.sin(frame * 0.5) > 0;
+            // Left arm and tapping hand
+            ctx.fillStyle = char.shirtColor;
+            ctx.fillRect(drawX - 9, drawY + 1, 3, 4);
+            ctx.fillStyle = '#ffdfba';
+            ctx.fillRect(drawX - 7, drawY + 4 + (typeTick ? 0 : 1), 3, 2);
+
+            // Right arm and tapping hand
+            ctx.fillStyle = char.shirtColor;
+            ctx.fillRect(drawX + 6, drawY + 1, 3, 4);
+            ctx.fillStyle = '#ffdfba';
+            ctx.fillRect(drawX + 4, drawY + 4 + (typeTick ? 1 : 0), 3, 2);
+
+            // 4. Artisanal Coffee Mug Resting on Side Table
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(drawX + 11, drawY + 2, 5, 5); // Ceramic cup
+            ctx.fillStyle = '#3e2318';
+            ctx.fillRect(drawX + 12, drawY + 2, 3, 2); // Rich dark coffee
+            ctx.fillStyle = '#cbd5e1';
+            ctx.fillRect(drawX + 15, drawY + 3, 2, 3); // Handle
+
+            // Subtle rising steam curl
+            const sY = (frame * 0.25) % 6;
+            ctx.fillStyle = 'rgba(255, 255, 255, 0.45)';
+            ctx.fillRect(drawX + 13, drawY - sY, 1, 2);
+
+            // Cute occasional telemetry / focus icon
+            if (frame % 80 < 30) {
+              ctx.fillStyle = lapTheme.screen;
+              ctx.font = 'bold 7px monospace';
+              ctx.fillText(lapTheme.icon, drawX + 9, drawY - 8);
+            }
+          }
 
         } else if (char.activity === 'drinking_water' || isAtWater) {
           // D. DRINKING CHILLED WATER ANIMATION
@@ -2792,64 +5918,88 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
 
         } else if (char.activity === 'meeting' || isAtBoardroom) {
           // F. EXECUTIVE BOARDROOM CONFERENCE SEATED POSTURE WITH VISIBLE LAPTOP ON TABLE!
-          const screenColors: Record<string, string> = {
-            dylan: '#00f0ff',
-            alex: '#f97316',
-            maya: '#ec4899',
-            wendy: '#10b981',
-            ray: '#38bdf8',
-            zane: '#22c55e',
-          };
-          const lapGlow = screenColors[char.id] || '#00f0ff';
+          const lStyle = LAPTOP_STYLES_2D[char.id] || LAPTOP_STYLES_2D.dylan;
+          const lapGlow = lStyle.accentGlow;
           const type = Math.sin(frame * 0.45) * 2;
 
-          if (drawX <= 260) {
+          if (char.id === 'dylan' || drawX < 685) {
             // 1. DYLAN AT HEAD OF TABLE (Left side, facing right towards mahogany conference table)
-            // Aluminum Laptop Base on Table Surface (Table starts at x = 270)
-            ctx.fillStyle = '#cbd5e1';
-            ctx.fillRect(drawX + 34, drawY - 4, 12, 14);
-            ctx.fillStyle = '#0f172a';
-            ctx.fillRect(drawX + 35, drawY - 3, 9, 12);
+            // Apple Silver MacBook Pro Base on Table Surface (Table starts at x = 690)
+            ctx.fillStyle = lStyle.baseColor;
+            ctx.fillRect(drawX + 28, drawY - 6, 12, 14);
+            ctx.fillStyle = lStyle.kbColor;
+            ctx.fillRect(drawX + 29, drawY - 5, 9, 12);
+            ctx.fillStyle = lStyle.trackpadColor;
+            ctx.fillRect(drawX + 35, drawY - 2, 2, 6);
 
             // Angled Screen Lid facing Dylan
-            ctx.fillStyle = '#94a3b8';
-            ctx.fillRect(drawX + 45, drawY - 7, 3, 18);
+            ctx.fillStyle = lStyle.lidColor;
+            ctx.fillRect(drawX + 38, drawY - 9, 3, 18);
+            ctx.fillStyle = lStyle.screenBg;
+            ctx.fillRect(drawX + 37, drawY - 8, 2, 16);
+            // Glowing white Apple logo on back of lid
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(drawX + 41, drawY - 1, 1, 2);
+
+            // Active executive code / KPI telemetry on Dylan's screen
             ctx.fillStyle = '#00f0ff';
-            ctx.fillRect(drawX + 44, drawY - 6, 2, 16);
+            ctx.fillRect(drawX + 37, drawY - 6, 2, 4);
+            ctx.fillRect(drawX + 37, drawY, 2, 5);
 
             // Dylan's hands actively typing on laptop keyboard
             ctx.fillStyle = '#ffdfba';
-            ctx.fillRect(drawX + 30, drawY - 2 + type, 6, 3);
-            ctx.fillRect(drawX + 30, drawY + 4 - type, 6, 3);
+            ctx.fillRect(drawX + 24, drawY - 4 + type, 6, 3);
+            ctx.fillRect(drawX + 24, drawY + 2 - type, 6, 3);
 
             // White ceramic demitasse coffee cup with steam on table
             ctx.fillStyle = '#ffffff';
-            ctx.fillRect(drawX + 38, drawY - 12, 5, 5);
+            ctx.fillRect(drawX + 32, drawY - 14, 5, 5);
             ctx.fillStyle = '#3e2318';
-            ctx.fillRect(drawX + 39, drawY - 12, 3, 2);
+            ctx.fillRect(drawX + 33, drawY - 14, 3, 2);
             const sY = (frame * 0.25) % 6;
             ctx.fillStyle = 'rgba(255, 255, 255, 0.6)';
-            ctx.fillRect(drawX + 40, drawY - 14 - sY, 2, 2);
+            ctx.fillRect(drawX + 34, drawY - 16 - sY, 2, 2);
 
-          } else if (drawY < 410) {
+          } else if (drawY < 400) {
             // 2. NORTH CHAIRS (Ray, Maya, Alex facing down towards table)
-            // Aluminum Laptop Base placed on mahogany table in front of character
-            ctx.fillStyle = '#cbd5e1';
+            // Character-Specific Laptop Base placed on mahogany table in front of character
+            ctx.fillStyle = lStyle.baseColor;
             ctx.fillRect(drawX - 9, drawY + 18, 18, 8);
-            ctx.fillStyle = '#0f172a';
+            ctx.fillStyle = lStyle.kbColor;
             ctx.fillRect(drawX - 8, drawY + 19, 16, 6);
+            ctx.fillStyle = lStyle.trackpadColor;
+            ctx.fillRect(drawX - 3, drawY + 22, 6, 2);
+
+            // ThinkPad Iconic Red TrackPoint Nub
+            if (lStyle.hasTrackPoint) {
+              ctx.fillStyle = '#ef4444';
+              ctx.fillRect(drawX - 1, drawY + 20, 2, 2);
+            }
 
             // Upright Screen Lid facing character
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = lStyle.lidColor;
             ctx.fillRect(drawX - 9, drawY + 11, 18, 8);
-            // Role-colored glowing display
-            ctx.fillStyle = lapGlow;
+            ctx.fillStyle = lStyle.screenBg;
             ctx.fillRect(drawX - 8, drawY + 12, 16, 6);
-            // Miniature active code lines on display
-            ctx.fillStyle = '#ffffff';
+
+            // Apple logo or lid emblem on back
+            if (lStyle.hasAppleLogo) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(drawX - 1, drawY + 9, 2, 2);
+            } else if (lStyle.hasTrackPoint) {
+              ctx.fillStyle = '#ef4444';
+              ctx.fillRect(drawX + 5, drawY + 9, 2, 2);
+            }
+
+            // Miniature active code lines on display with blinking cursor
+            ctx.fillStyle = lapGlow;
             ctx.fillRect(drawX - 6, drawY + 13, 8, 1);
             ctx.fillRect(drawX - 6, drawY + 15, 12, 1);
             ctx.fillRect(drawX - 6, drawY + 17, 6, 1);
+            if (frame % 20 < 10) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(drawX + 1, drawY + 17, 2, 1);
+            }
 
             // Animated typing hands clicking on keys
             ctx.fillStyle = '#ffdfba';
@@ -2864,23 +6014,44 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
 
           } else {
             // 3. SOUTH CHAIRS (Wendy, Zane facing up towards table)
-            // Aluminum Laptop Base placed on mahogany table in front of character
-            ctx.fillStyle = '#cbd5e1';
+            // Character-Specific Laptop Base placed on mahogany table in front of character
+            ctx.fillStyle = lStyle.baseColor;
             ctx.fillRect(drawX - 9, drawY - 8, 18, 7);
-            ctx.fillStyle = '#0f172a';
+            ctx.fillStyle = lStyle.kbColor;
             ctx.fillRect(drawX - 8, drawY - 7, 16, 5);
+            ctx.fillStyle = lStyle.trackpadColor;
+            ctx.fillRect(drawX - 3, drawY - 4, 6, 2);
+
+            // ThinkPad Iconic Red TrackPoint Nub
+            if (lStyle.hasTrackPoint) {
+              ctx.fillStyle = '#ef4444';
+              ctx.fillRect(drawX - 1, drawY - 6, 2, 2);
+            }
 
             // Upright Screen Lid facing character
-            ctx.fillStyle = '#94a3b8';
+            ctx.fillStyle = lStyle.lidColor;
             ctx.fillRect(drawX - 9, drawY - 17, 18, 9);
-            // Role-colored glowing display
-            ctx.fillStyle = lapGlow;
+            ctx.fillStyle = lStyle.screenBg;
             ctx.fillRect(drawX - 8, drawY - 16, 16, 7);
-            // Miniature text / terminal lines
-            ctx.fillStyle = '#ffffff';
+
+            // Apple logo or lid emblem on back
+            if (lStyle.hasAppleLogo) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(drawX - 1, drawY - 19, 2, 2);
+            } else if (lStyle.hasTrackPoint) {
+              ctx.fillStyle = '#ef4444';
+              ctx.fillRect(drawX + 5, drawY - 19, 2, 2);
+            }
+
+            // Miniature text / terminal lines with blinking cursor
+            ctx.fillStyle = lapGlow;
             ctx.fillRect(drawX - 6, drawY - 15, 10, 1);
             ctx.fillRect(drawX - 6, drawY - 13, 12, 1);
             ctx.fillRect(drawX - 6, drawY - 11, 7, 1);
+            if (frame % 20 < 10) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(drawX + 2, drawY - 11, 2, 1);
+            }
 
             // Animated typing hands on keyboard
             ctx.fillStyle = '#ffdfba';
@@ -2898,27 +6069,35 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
 
         } else if (isAtWorkBench || (isInLoungeArea && !char.isWalking)) {
           // G. COLLABORATIVE OAK BENCH / LOUNGE LAPTOP WORKING
-          const screenColors: Record<string, string> = {
-            dylan: '#00f0ff',
-            alex: '#f97316',
-            maya: '#ec4899',
-            wendy: '#10b981',
-            ray: '#38bdf8',
-            zane: '#22c55e',
-          };
-          const lapGlow = screenColors[char.id] || '#00f0ff';
+          const lStyle = LAPTOP_STYLES_2D[char.id] || LAPTOP_STYLES_2D.dylan;
+          const lapGlow = lStyle.accentGlow;
 
           // Laptop Base resting on lap / work bench
-          ctx.fillStyle = '#cbd5e1';
+          ctx.fillStyle = lStyle.baseColor;
           ctx.fillRect(drawX - 8, drawY - 2, 16, 5);
-          ctx.fillStyle = '#0f172a';
+          ctx.fillStyle = lStyle.kbColor;
           ctx.fillRect(drawX - 7, drawY - 1, 14, 3);
 
+          // ThinkPad Red TrackPoint Nub
+          if (lStyle.hasTrackPoint) {
+            ctx.fillStyle = '#ef4444';
+            ctx.fillRect(drawX - 1, drawY, 2, 1);
+          }
+
           // Upright Screen Lid facing character
-          ctx.fillStyle = '#94a3b8';
+          ctx.fillStyle = lStyle.lidColor;
           ctx.fillRect(drawX - 8, drawY - 9, 16, 7);
-          ctx.fillStyle = lapGlow;
+          ctx.fillStyle = lStyle.screenBg;
           ctx.fillRect(drawX - 7, drawY - 8, 14, 5);
+
+          // Active mini code lines on screen
+          ctx.fillStyle = lapGlow;
+          ctx.fillRect(drawX - 5, drawY - 7, 9, 1);
+          ctx.fillRect(drawX - 5, drawY - 5, 7, 1);
+          if (frame % 20 < 10) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(drawX + 3, drawY - 5, 2, 1);
+          }
 
           // Animated typing hands clicking on keyboard
           const type = Math.sin(frame * 0.45) * 2;
@@ -2929,28 +6108,29 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
         } else if ((isInLoungeArea || isAtBoardroom || char.isMeeting || char.activity === 'working') && char.isWalking) {
           // Smoothly carrying folded laptop under arm with natural walking stride bobbing & arm grip
           const carryBob = Math.sin(frame * 0.45) * 2;
-          const screenColors: Record<string, string> = {
-            dylan: '#00f0ff',
-            alex: '#f97316',
-            maya: '#ec4899',
-            wendy: '#10b981',
-            ray: '#38bdf8',
-            zane: '#22c55e',
-          };
+          const lStyle = LAPTOP_STYLES_2D[char.id] || LAPTOP_STYLES_2D.dylan;
 
           // Character's shirt arm bent holding laptop against body
           ctx.fillStyle = char.shirtColor;
           ctx.fillRect(drawX + 4, drawY - 1 + carryBob, 4, 7);
 
-          // Folded Aluminum Laptop Chassis under arm
-          ctx.fillStyle = '#cbd5e1';
+          // Folded Character-Specific Laptop Chassis under arm
+          ctx.fillStyle = lStyle.baseColor;
           ctx.fillRect(drawX + 6, drawY + 1 + carryBob, 5, 9);
           // Dark edge / keyboard crease
-          ctx.fillStyle = '#1e293b';
+          ctx.fillStyle = lStyle.kbColor;
           ctx.fillRect(drawX + 7, drawY + 2 + carryBob, 3, 7);
-          // Outer lid role-colored glowing logo
-          ctx.fillStyle = screenColors[char.id] || '#00f0ff';
-          ctx.fillRect(drawX + 8, drawY + 4 + carryBob, 2, 2);
+          // Outer lid role-colored glowing logo or Apple logo
+          if (lStyle.hasAppleLogo) {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(drawX + 8, drawY + 4 + carryBob, 2, 2);
+          } else if (lStyle.hasTrackPoint) {
+            ctx.fillStyle = '#ef4444'; // Red dot ThinkPad LED
+            ctx.fillRect(drawX + 9, drawY + 3 + carryBob, 1, 1);
+          } else {
+            ctx.fillStyle = lStyle.logoColor;
+            ctx.fillRect(drawX + 8, drawY + 4 + carryBob, 2, 2);
+          }
 
           // Hand gripping bottom edge of laptop securely
           ctx.fillStyle = '#ffdfba';
@@ -2965,7 +6145,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
         }
 
         // Floating Status Badge Pill
-        const pillW = char.id === 'dylan' ? 94 : 118;
+        const pillW = char.id === 'dylan' ? 108 : char.id === 'eah' ? 128 : 118;
         const pillH = 24;
         const pillX = drawX - pillW / 2;
         const pillY = drawY - 36;
@@ -2993,14 +6173,25 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
         if (char.id === 'dylan') {
           ctx.fillStyle = '#ffffff';
           ctx.font = 'bold 9px sans-serif';
-          ctx.fillText('Dylan (You)', pillX + 23, pillY + 11);
+          ctx.fillText('Dylan Ramos 👑', pillX + 23, pillY + 11);
           ctx.fillStyle = '#00f59b';
           ctx.beginPath();
-          ctx.arc(pillX + 80, pillY + 8, 3, 0, Math.PI * 2);
+          ctx.arc(pillX + 94, pillY + 8, 3, 0, Math.PI * 2);
           ctx.fill();
           ctx.fillStyle = '#94a3b8';
           ctx.font = '8px monospace';
           ctx.fillText(char.isSeated ? '🪑 Seated' : '🚶 Roaming', pillX + 23, pillY + 20);
+        } else if (char.id === 'eah') {
+          ctx.fillStyle = '#fda4af';
+          ctx.font = 'bold 9px sans-serif';
+          ctx.fillText('Eah Ilagan ✨', pillX + 23, pillY + 11);
+          ctx.fillStyle = '#f43f5e';
+          ctx.beginPath();
+          ctx.arc(pillX + 114, pillY + 8, 3, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.fillStyle = '#fb7185';
+          ctx.font = '8px monospace';
+          ctx.fillText('With Dylan Ramos 💻', pillX + 23, pillY + 20);
         } else {
           ctx.fillStyle = '#f8fafc';
           ctx.font = 'bold 8px sans-serif';
@@ -3015,10 +6206,10 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
         if (char.bubbleText) {
           ctx.font = 'bold 8.5px sans-serif';
           const textMetrics = ctx.measureText(char.bubbleText);
-          const bW = Math.max(100, Math.min(230, textMetrics.width + 18));
+          const bW = Math.max(90, Math.min(240, textMetrics.width + 18));
           const bH = 24;
-          const bX = Math.max(12, Math.min(LOGICAL_W - bW - 12, drawX - bW / 2));
-          const bY = drawY - 68;
+          const bX = Math.max(16, Math.min(LOGICAL_W - bW - 16, drawX - bW / 2));
+          const bY = Math.max(16, drawY - 68);
 
           // Subtle shadow
           ctx.fillStyle = 'rgba(0, 0, 0, 0.45)';
@@ -3026,31 +6217,61 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
           ctx.roundRect(bX + 1, bY + 2, bW, bH, 6);
           ctx.fill();
 
-          // Bubble background with cyan border
+          // Bubble background with cyan (or rose-pink for Eah) border
           ctx.fillStyle = '#ffffff';
           ctx.beginPath();
           ctx.roundRect(bX, bY, bW, bH, 6);
           ctx.fill();
-          ctx.strokeStyle = '#00f0ff';
-          ctx.lineWidth = 1.2;
+          ctx.strokeStyle = char.id === 'eah' ? '#f43f5e' : '#00f0ff';
+          ctx.lineWidth = char.id === 'eah' ? 1.6 : 1.2;
           ctx.stroke();
 
-          // Downward pointer beak toward character head
+          // Downward pointer beak toward character head (clamped within bubble bounds)
+          const beakX = Math.max(bX + 8, Math.min(bX + bW - 8, drawX));
           ctx.fillStyle = '#ffffff';
           ctx.beginPath();
-          ctx.moveTo(drawX - 4, bY + bH);
-          ctx.lineTo(drawX + 4, bY + bH);
-          ctx.lineTo(drawX, bY + bH + 4);
+          ctx.moveTo(beakX - 4, bY + bH);
+          ctx.lineTo(beakX + 4, bY + bH);
+          ctx.lineTo(beakX, bY + bH + 4);
           ctx.closePath();
           ctx.fill();
 
-          // Speech text
+          // Speech text with dynamic font scaling to ensure zero clipping
+          let fontSize = 8.5;
+          if (textMetrics.width > bW - 16) {
+            fontSize = Math.max(7, Math.floor(8.5 * ((bW - 16) / textMetrics.width)));
+          }
           ctx.fillStyle = '#0f172a';
-          ctx.font = 'bold 8.5px sans-serif';
+          ctx.font = `bold ${fontSize}px sans-serif`;
           ctx.textAlign = 'center';
           ctx.fillText(char.bubbleText, bX + bW / 2, bY + 15);
         }
       });
+
+      // Dog Speech Bubble Render (Arf arf! 🐶💕)
+      if (dogSpeechRef.current && dogSpeechRef.current.timer > 0) {
+        dogSpeechRef.current.timer -= 0.016;
+        const dX = 766;
+        const dY = 318;
+        ctx.font = 'bold 9px monospace';
+        const textW = ctx.measureText(dogSpeechRef.current.text).width;
+        const bubW = textW + 18;
+        const bubH = 20;
+        const bubX = dX - bubW / 2;
+        const bubY = dY - bubH - 8;
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+        ctx.beginPath();
+        ctx.roundRect(bubX, bubY, bubW, bubH, 6);
+        ctx.fill();
+        ctx.strokeStyle = '#f59e0b';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#fef3c7';
+        ctx.textAlign = 'center';
+        ctx.fillText(dogSpeechRef.current.text, dX, bubY + 13);
+      }
     };
 
     render();
@@ -3062,6 +6283,13 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       const scaleY = LOGICAL_H / rect.height;
       const clickX = (e.clientX - rect.left) * scaleX;
       const clickY = (e.clientY - rect.top) * scaleY;
+
+      // Click on Puppy
+      if (Math.hypot(clickX - 766, clickY - 338) < 26) {
+        dogSpeechRef.current = { text: 'Arf arf! 🐶💕 *happy puppy tail wag*', timer: 5.0 };
+        playSfx('click');
+        return;
+      }
 
       let hitId: string | null = null;
       for (const char of Object.values(charactersRef.current)) {
@@ -3075,6 +6303,21 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
 
       if (hitId) {
         onSelectAgent?.(hitId);
+        if (hitId === 'eah') {
+          const eahQuotes = [
+            'Hi Dylan 💕 Chilling on my iPad here! [Press C to cook / B for coffee]',
+            'Don\'t stress yourself too much, babe 💖 Luto kita? [C]',
+            'I love keeping you company in the CEO suite 🥰',
+            'Coffee delivery for my CEO anytime! ☕💕 [B]',
+            'Cheering for you always Dylan! 📱💕',
+          ];
+          const quote = eahQuotes[Math.floor(Math.random() * eahQuotes.length)];
+          const eah = charactersRef.current.eah;
+          if (eah) {
+            eah.bubbleText = quote;
+            eah.bubbleTimer = 5;
+          }
+        }
       } else if (isWalkable(clickX, clickY)) {
         // Player Click-to-Move for Dylan Ramos
         const dylan = charactersRef.current.dylan;
@@ -3124,11 +6367,69 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '12px',
+          flexWrap: 'wrap',
+          rowGap: '8px',
           boxShadow: '0 4px 24px rgba(0, 0, 0, 0.65)',
         }}
       >
-        {/* Left: Dylan Ramos CEO Badge */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        {/* Left: View Mode Toggle & Dylan Ramos CEO Badge */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {/* View Mode Toggle */}
+          {onViewModeChange && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                background: 'rgba(10, 12, 20, 0.8)',
+                border: '1px solid rgba(0, 240, 255, 0.35)',
+                borderRadius: '6px',
+                padding: '3px',
+                gap: '3px',
+              }}
+            >
+              <button
+                onClick={() => onViewModeChange('pixel')}
+                style={{
+                  background: viewMode === 'pixel' ? '#00f0ff' : 'transparent',
+                  color: viewMode === 'pixel' ? '#0a0c14' : '#94a3b8',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '5px 8px',
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: '8px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  boxShadow: viewMode === 'pixel' ? '0 0 10px rgba(0, 240, 255, 0.5)' : 'none',
+                }}
+                title="Currently on 2D Pixel Office View"
+              >
+                🕹️ PIXEL
+              </button>
+              <button
+                onClick={() => onViewModeChange('voxel')}
+                style={{
+                  background: viewMode === 'voxel' ? '#00f0ff' : 'transparent',
+                  color: viewMode === 'voxel' ? '#0a0c14' : '#94a3b8',
+                  border: 'none',
+                  borderRadius: '4px',
+                  padding: '5px 8px',
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: '8px',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                  boxShadow: viewMode === 'voxel' ? '0 0 10px rgba(0, 240, 255, 0.5)' : 'none',
+                }}
+                title="Switch to 3D Voxel Office View"
+              >
+                🧊 3D VOXEL
+              </button>
+            </div>
+          )}
+
+          <div style={{ width: '1px', height: '22px', background: 'rgba(255, 255, 255, 0.15)', margin: '0 2px' }} />
+
           <span
             style={{
               width: '10px',
@@ -3177,27 +6478,29 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
         </div>
 
         {/* Center: Team Work & Stand-Up Action Controls */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           {/* Stand & Stretch Button */}
           <button
             onClick={handleAllWorkersStand}
             title="Make all workers stand up and stretch"
             style={{
-              background: 'rgba(56, 189, 248, 0.15)',
-              border: '1px solid #38bdf8',
+              background: 'rgba(56, 189, 248, 0.18)',
+              border: '1.5px solid #38bdf8',
               color: '#38bdf8',
-              borderRadius: '6px',
-              padding: '5px 10px',
-              fontSize: '10px',
-              fontFamily: "'Press Start 2P', monospace",
+              borderRadius: '8px',
+              padding: '9px 16px',
+              height: '42px',
+              fontSize: '13px',
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '7px',
               transition: 'all 0.15s ease',
             }}
           >
-            <span>🤸</span>
+            <span style={{ fontSize: '16px' }}>🤸</span>
             <span>WORKERS STAND</span>
           </button>
 
@@ -3206,21 +6509,23 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
             onClick={handleToggleRestMode}
             title="Send team with laptops to work at the lounge sofa & collaborative oak bench"
             style={{
-              background: inRestMode ? 'rgba(236, 72, 153, 0.25)' : 'rgba(245, 158, 11, 0.15)',
-              border: inRestMode ? '1px solid #ec4899' : '1px solid #f59e0b',
+              background: inRestMode ? 'rgba(236, 72, 153, 0.3)' : 'rgba(245, 158, 11, 0.18)',
+              border: inRestMode ? '1.5px solid #ec4899' : '1.5px solid #f59e0b',
               color: inRestMode ? '#ec4899' : '#f59e0b',
-              borderRadius: '6px',
-              padding: '5px 10px',
-              fontSize: '10px',
-              fontFamily: "'Press Start 2P', monospace",
+              borderRadius: '8px',
+              padding: '9px 16px',
+              height: '42px',
+              fontSize: '13px',
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontWeight: 700,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '7px',
               transition: 'all 0.15s ease',
             }}
           >
-            <span>{inRestMode ? '💼' : '🛋️'}</span>
+            <span style={{ fontSize: '16px' }}>{inRestMode ? '💼' : '🛋️'}</span>
             <span>{inRestMode ? 'DESK WORK' : 'LAPTOP LOUNGE'}</span>
           </button>
 
@@ -3228,21 +6533,23 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
           <button
             onClick={handleToggleMeetingMode}
             style={{
-              background: inMeetingMode ? 'rgba(255, 190, 11, 0.25)' : 'rgba(0, 240, 255, 0.15)',
-              border: inMeetingMode ? '1px solid #ffbe0b' : '1px solid #00f0ff',
+              background: inMeetingMode ? 'rgba(255, 190, 11, 0.3)' : 'rgba(0, 240, 255, 0.18)',
+              border: inMeetingMode ? '1.5px solid #ffbe0b' : '1.5px solid #00f0ff',
               color: inMeetingMode ? '#ffbe0b' : '#00f0ff',
-              borderRadius: '6px',
-              padding: '5px 10px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '10px',
+              borderRadius: '8px',
+              padding: '9px 16px',
+              height: '42px',
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontSize: '13px',
+              fontWeight: 700,
               cursor: 'pointer',
               transition: 'all 0.2s ease',
               display: 'flex',
               alignItems: 'center',
-              gap: '6px',
+              gap: '7px',
             }}
           >
-            <span>{inMeetingMode ? '💼' : '📢'}</span>
+            <span style={{ fontSize: '16px' }}>{inMeetingMode ? '💼' : '📢'}</span>
             <span>{inMeetingMode ? 'DISMISS TO DESKS' : 'ALL-HANDS MEETING'}</span>
           </button>
         </div>
@@ -3253,13 +6560,15 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
             onClick={() => setIsSprinting(!isSprinting)}
             title="Toggle Sprint Speed"
             style={{
-              background: isSprinting ? 'rgba(236, 72, 153, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-              border: isSprinting ? '1px solid #ec4899' : '1px solid rgba(255, 255, 255, 0.1)',
-              color: isSprinting ? '#ec4899' : '#94a3b8',
-              borderRadius: '4px',
-              padding: '4px 8px',
-              fontSize: '10px',
-              fontFamily: "'Fira Code', monospace",
+              background: isSprinting ? 'rgba(236, 72, 153, 0.28)' : 'rgba(255, 255, 255, 0.06)',
+              border: isSprinting ? '1.5px solid #ec4899' : '1.5px solid rgba(255, 255, 255, 0.15)',
+              color: isSprinting ? '#ec4899' : '#cbd5e1',
+              borderRadius: '8px',
+              padding: '7px 14px',
+              height: '40px',
+              fontSize: '12px',
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontWeight: 700,
               cursor: 'pointer',
             }}
           >
@@ -3270,12 +6579,15 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
             onClick={() => setSoundEnabled(!soundEnabled)}
             title="Toggle SFX"
             style={{
-              background: soundEnabled ? 'rgba(0, 245, 155, 0.15)' : 'rgba(255, 255, 255, 0.05)',
-              border: soundEnabled ? '1px solid #00f59b' : '1px solid rgba(255, 255, 255, 0.1)',
-              color: soundEnabled ? '#00f59b' : '#64748b',
-              borderRadius: '4px',
-              padding: '4px 8px',
-              fontSize: '11px',
+              background: soundEnabled ? 'rgba(0, 245, 155, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+              border: soundEnabled ? '1.5px solid #00f59b' : '1.5px solid rgba(255, 255, 255, 0.15)',
+              color: soundEnabled ? '#00f59b' : '#94a3b8',
+              borderRadius: '8px',
+              padding: '7px 14px',
+              height: '40px',
+              fontSize: '13px',
+              fontFamily: "'Inter', system-ui, sans-serif",
+              fontWeight: 700,
               cursor: 'pointer',
             }}
           >
@@ -3455,12 +6767,12 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent }: PixelOff
       >
         <canvas
           ref={canvasRef}
-          width={840}
+          width={1040}
           height={520}
           style={{
             maxWidth: '100%',
             maxHeight: '100%',
-            aspectRatio: '840 / 520',
+            aspectRatio: '1040 / 520',
             imageRendering: 'pixelated',
             boxShadow: '0 16px 64px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(99, 115, 178, 0.25)',
             borderRadius: '12px',

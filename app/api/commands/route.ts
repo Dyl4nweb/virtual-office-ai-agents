@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createTicket, logActivity } from '@/lib/db';
-import { officeEmitter } from '@/lib/runner';
+import { executeAgentTicketImmediately, officeEmitter } from '@/lib/runner';
 
 export const runtime = 'nodejs';
 
@@ -24,6 +24,9 @@ export async function POST(request: NextRequest) {
 
     logActivity('user', 'info', `Direct command assigned to ${to_agent}: "${text}"`);
     officeEmitter.emit('ticket:created', ticket);
+
+    // Trigger immediate agent execution without waiting for 3s tick
+    executeAgentTicketImmediately(ticket);
 
     return NextResponse.json({ success: true, ticket });
   } catch (err: any) {

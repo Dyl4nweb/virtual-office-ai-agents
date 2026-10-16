@@ -217,10 +217,22 @@ export const FUNCTION_DECLARATIONS = {
   },
 };
 
-// Filter tools by role
-export function getToolsForRole(role: string): any[] {
+// Filter tools by role (supports both role string or agent id e.g. 'alex', 'maya')
+export function getToolsForRole(roleOrAgentId: string): any[] {
+  const roleMap: Record<string, string> = {
+    alex: 'developer',
+    maya: 'designer',
+    wendy: 'writer',
+    ray: 'researcher',
+    zane: 'cyber_sec',
+    eah: 'manager',
+    dylan: 'ceo',
+  };
+  const role = roleMap[roleOrAgentId] || roleOrAgentId;
+
   switch (role) {
     case 'manager':
+    case 'ceo':
       return [
         FUNCTION_DECLARATIONS.delegate_subtask,
         FUNCTION_DECLARATIONS.request_human_approval,
@@ -297,7 +309,7 @@ async function handleWebSearch(query: string): Promise<any> {
     try {
       // Execute separate generateContent with googleSearch tool only (not combined with function declarations)
       const res = await aiClient.models.generateContent({
-        model: process.env.WORKER_MODEL || 'gemini-3.8-flash',
+        model: process.env.WORKER_MODEL || 'gemini-3.5-flash',
         contents: `Research current market trends, competitor pricing, and popular keywords for: ${query}. Provide a structured, concise summary.`,
         config: {
           tools: [{ googleSearch: {} } as any],
@@ -418,6 +430,7 @@ export async function executeTool(name: string, args: Record<string, any>, conte
         filename: args.filename,
         language: args.language,
         code_length: args.code_content?.length || 0,
+        code_content: args.code_content || '',
         explanation: args.explanation,
         notice: 'Production-ready fullstack code delivered with type safety and error boundaries.',
       };
