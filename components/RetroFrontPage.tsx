@@ -4,125 +4,21 @@ import React, { useState, useEffect, useRef } from 'react';
 import { IconLock, IconCrown, IconSparkles, IconCheck, IconAlertTriangle } from '@/components/Icons';
 import { AGENT_ROSTER_INFO } from '@/lib/roster';
 import PixelTechFrontScenery from '@/components/PixelTechFrontScenery';
+import {
+  playArcadeSfx,
+  startArcadeBgm,
+  stopArcadeBgm,
+  isArcadeBgmPlaying,
+  ArcadeSfxType,
+} from '@/lib/arcadeSound';
 
 interface RetroFrontPageProps {
   onEnter: (remember?: boolean, token?: string) => void;
 }
 
-// 8-bit Web Audio Synthesizer for authentic retro arcade feedback
-function playArcadeAudio(type: 'click' | 'success' | 'error' | 'open' | 'chime' | 'bark' | 'meow' | 'coin') {
-  try {
-    const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtx) return;
-    const ctx = new AudioCtx();
-    const now = ctx.currentTime;
-
-    if (type === 'click') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(520, now);
-      osc.frequency.exponentialRampToValueAtTime(260, now + 0.05);
-      gain.gain.setValueAtTime(0.08, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.05);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.05);
-    } else if (type === 'success') {
-      // Ascending triumphant 8-bit arcade fanfare
-      const notes = [523.25, 659.25, 783.99, 1046.5];
-      notes.forEach((freq, idx) => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.type = 'square';
-        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-        gain.gain.setValueAtTime(0.06, now + idx * 0.08);
-        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.16);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(now + idx * 0.08);
-        osc.stop(now + idx * 0.08 + 0.17);
-      });
-    } else if (type === 'error') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(160, now);
-      osc.frequency.setValueAtTime(110, now + 0.12);
-      gain.gain.setValueAtTime(0.09, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.28);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.28);
-    } else if (type === 'open') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(320, now);
-      osc.frequency.exponentialRampToValueAtTime(680, now + 0.12);
-      gain.gain.setValueAtTime(0.06, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.12);
-    } else if (type === 'chime') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(880, now);
-      osc.frequency.exponentialRampToValueAtTime(1760, now + 0.15);
-      gain.gain.setValueAtTime(0.05, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.2);
-    } else if (type === 'bark') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sawtooth';
-      osc.frequency.setValueAtTime(380, now);
-      osc.frequency.exponentialRampToValueAtTime(220, now + 0.14);
-      gain.gain.setValueAtTime(0.08, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.16);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.16);
-    } else if (type === 'meow') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'triangle';
-      osc.frequency.setValueAtTime(680, now);
-      osc.frequency.exponentialRampToValueAtTime(940, now + 0.08);
-      osc.frequency.exponentialRampToValueAtTime(580, now + 0.22);
-      gain.gain.setValueAtTime(0.08, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.22);
-    } else if (type === 'coin') {
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(987.77, now);
-      osc.frequency.setValueAtTime(1318.51, now + 0.08);
-      gain.gain.setValueAtTime(0.08, now);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.35);
-    }
-  } catch {}
-}
-
 export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [bgmPlaying, setBgmPlaying] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
   const [showRosterModal, setShowRosterModal] = useState(false);
   const [showStatusModal, setShowStatusModal] = useState(false);
@@ -137,9 +33,28 @@ export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
   const [shake, setShake] = useState(false);
   const passwordInputRef = useRef<HTMLInputElement>(null);
 
-  const soundSfx = (type: 'click' | 'success' | 'error' | 'open' | 'chime' | 'bark' | 'meow' | 'coin') => {
-    if (soundEnabled) playArcadeAudio(type);
+  const soundSfx = (type: ArcadeSfxType) => {
+    if (soundEnabled) playArcadeSfx(type);
   };
+
+  // Auto-start authentic 8-bit arcade BGM upon first user interaction (click/touch/key)
+  useEffect(() => {
+    const handleFirstGesture = () => {
+      if (soundEnabled && !isArcadeBgmPlaying()) {
+        const ok = startArcadeBgm(0.12);
+        if (ok) setBgmPlaying(true);
+      }
+    };
+
+    window.addEventListener('pointerdown', handleFirstGesture, { once: true });
+    window.addEventListener('keydown', handleFirstGesture, { once: true });
+
+    return () => {
+      window.removeEventListener('pointerdown', handleFirstGesture);
+      window.removeEventListener('keydown', handleFirstGesture);
+      stopArcadeBgm();
+    };
+  }, [soundEnabled]);
 
   useEffect(() => {
     if (showPasswordModal) {
@@ -186,6 +101,7 @@ export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
         soundSfx('success');
         setIsSuccess(true);
         setErrorMsg('');
+        stopArcadeBgm();
         setTimeout(() => {
           onEnter(rememberMe, data.token);
         }, 700);
@@ -265,45 +181,53 @@ export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
           <span>AVERO TECHNOLOGIES • DYLAN RAMOS HQ</span>
         </div>
 
-        {/* Right Retro Audio Speaker Button */}
-        <button
-          onClick={() => {
-            const next = !soundEnabled;
-            setSoundEnabled(next);
-            if (next) playArcadeAudio('chime');
-          }}
-          title={soundEnabled ? 'Mute 8-bit sound effects' : 'Enable 8-bit sound effects'}
-          style={{
-            background: soundEnabled ? '#fffbeb' : '#94a3b8',
-            border: '3px solid #0f172a',
-            borderRadius: '10px',
-            padding: '10px 14px',
-            cursor: 'pointer',
-            boxShadow: '0 3px 0 #0f172a',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            transform: 'translateY(0)',
-            transition: 'transform 0.08s ease',
-            pointerEvents: 'auto',
-          }}
-          onMouseDown={(e) => (e.currentTarget.style.transform = 'translateY(2px)')}
-          onMouseUp={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
-        >
-          {soundEnabled ? (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#0f172a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#0f172a" />
-              <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
-              <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
-            </svg>
-          ) : (
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#334155" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" fill="#334155" />
-              <line x1="23" y1="9" x2="17" y2="15" />
-              <line x1="17" y1="9" x2="23" y2="15" />
-            </svg>
-          )}
-        </button>
+        {/* Right Retro Audio Speaker & BGM Controller */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', pointerEvents: 'auto' }}>
+          <button
+            onClick={() => {
+              if (bgmPlaying) {
+                stopArcadeBgm();
+                setBgmPlaying(false);
+              } else {
+                startArcadeBgm(0.14);
+                setBgmPlaying(true);
+                playArcadeSfx('chime');
+              }
+            }}
+            onMouseEnter={() => playArcadeSfx('hover', 0.08)}
+            title={bgmPlaying ? 'Mute 8-Bit Game Music' : 'Play 8-Bit Game Music'}
+            style={{
+              background: bgmPlaying
+                ? 'linear-gradient(180deg, #ecfdf5 0%, #a7f3d0 100%)'
+                : 'linear-gradient(180deg, #1e293b 0%, #0f172a 100%)',
+              border: bgmPlaying ? '2.5px solid #10b981' : '2.5px solid #475569',
+              borderRadius: '999px',
+              padding: '8px 14px',
+              cursor: 'pointer',
+              boxShadow: bgmPlaying
+                ? '0 3px 0 #047857, 0 0 12px rgba(16, 185, 129, 0.4)'
+                : '0 3px 0 #0f172a',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              color: bgmPlaying ? '#065f46' : '#94a3b8',
+              fontFamily: "'Press Start 2P', monospace",
+              fontSize: '8px',
+              fontWeight: 700,
+              letterSpacing: '0.5px',
+              transition: 'all 0.12s ease',
+            }}
+          >
+            {/* Animated dancing equalizer bars */}
+            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '11px' }}>
+              <span className={bgmPlaying ? 'eq-bar eq-bar-1' : 'eq-bar eq-bar-static'} />
+              <span className={bgmPlaying ? 'eq-bar eq-bar-2' : 'eq-bar eq-bar-static'} />
+              <span className={bgmPlaying ? 'eq-bar eq-bar-3' : 'eq-bar eq-bar-static'} />
+              <span className={bgmPlaying ? 'eq-bar eq-bar-4' : 'eq-bar eq-bar-static'} />
+            </div>
+            <span>{bgmPlaying ? '8-BIT BGM: ON' : '8-BIT BGM: OFF'}</span>
+          </button>
+        </div>
       </header>
 
       {/* =========================================================================
@@ -581,6 +505,45 @@ export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
           <span>AUTONOMOUS TECH WORKFORCE • DYLAN RAMOS HQ</span>
         </div>
 
+        {/* 8-Bit Retro Audio Prompt & Live Equalizer Badge */}
+        <div
+          onClick={() => {
+            if (!bgmPlaying) {
+              startArcadeBgm(0.14);
+              setBgmPlaying(true);
+              playArcadeSfx('coin');
+            } else {
+              playArcadeSfx('coin');
+            }
+          }}
+          onMouseEnter={() => playArcadeSfx('hover', 0.08)}
+          style={{
+            marginTop: '10px',
+            cursor: 'pointer',
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: '8px',
+            fontSize: '8px',
+            color: bgmPlaying ? '#34d399' : '#fef08a',
+            background: 'rgba(15, 23, 42, 0.88)',
+            border: '1.5px solid',
+            borderColor: bgmPlaying ? 'rgba(52, 211, 153, 0.5)' : 'rgba(254, 240, 138, 0.5)',
+            borderRadius: '999px',
+            padding: '6px 14px',
+            letterSpacing: '0.5px',
+            pointerEvents: 'auto',
+            boxShadow: bgmPlaying ? '0 0 10px rgba(52, 211, 153, 0.25)' : 'none',
+            transition: 'all 0.15s ease',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '2px', height: '9px' }}>
+            <span className={bgmPlaying ? 'eq-bar eq-bar-1' : 'eq-bar eq-bar-static'} />
+            <span className={bgmPlaying ? 'eq-bar eq-bar-2' : 'eq-bar eq-bar-static'} />
+            <span className={bgmPlaying ? 'eq-bar eq-bar-3' : 'eq-bar eq-bar-static'} />
+          </div>
+          <span>{bgmPlaying ? 'CHIPTUNE BGM PLAYING' : 'CLICK ANYWHERE FOR 8-BIT GAME SOUND'}</span>
+        </div>
+
         {/* =========================================================================
             4. ACTION BUTTONS (PLAY, Roster, Stats)
             ========================================================================= */}
@@ -590,32 +553,15 @@ export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
             flexDirection: 'column',
             alignItems: 'center',
             gap: '16px',
-            marginTop: '28px',
+            marginTop: '22px',
             pointerEvents: 'auto',
           }}
         >
           {/* Primary Golden "▶ ENTER HQ" Button */}
           <button
             onClick={handleOpenPasswordModal}
-            style={{
-              background: 'linear-gradient(180deg, #fef08a 0%, #facc15 50%, #eab308 100%)',
-              border: '4px solid #0f172a',
-              borderRadius: '16px',
-              padding: '16px 52px',
-              fontSize: 'clamp(14px, 2.2vw, 22px)',
-              fontWeight: 700,
-              fontFamily: "'Press Start 2P', monospace",
-              color: '#0f172a',
-              cursor: 'pointer',
-              letterSpacing: '2px',
-              boxShadow: '0 6px 0 #854d0e, 0 10px 20px rgba(0, 0, 0, 0.35)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '12px',
-              transform: 'translateY(0)',
-              transition: 'transform 0.08s ease, box-shadow 0.08s ease',
-            }}
             onMouseEnter={(e) => {
+              playArcadeSfx('hover', 0.1);
               e.currentTarget.style.transform = 'translateY(-2px)';
               e.currentTarget.style.boxShadow = '0 8px 0 #854d0e, 0 14px 24px rgba(0, 0, 0, 0.4)';
             }}
@@ -643,6 +589,7 @@ export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
                 soundSfx('open');
                 setShowRosterModal(true);
               }}
+              onMouseEnter={() => playArcadeSfx('hover', 0.08)}
               style={{
                 background: 'linear-gradient(180deg, #fbcfe8 0%, #f472b6 60%, #ec4899 100%)',
                 border: '3px solid #0f172a',
@@ -673,6 +620,7 @@ export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
                 soundSfx('open');
                 setShowStatusModal(true);
               }}
+              onMouseEnter={() => playArcadeSfx('hover', 0.08)}
               style={{
                 background: 'linear-gradient(180deg, #bae6fd 0%, #38bdf8 60%, #0284c7 100%)',
                 border: '3px solid #0f172a',
@@ -798,6 +746,9 @@ export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
                   onChange={(e) => {
                     setPassword(e.target.value);
                     if (errorMsg) setErrorMsg('');
+                  }}
+                  onKeyDown={() => {
+                    if (soundEnabled) playArcadeSfx('key', 0.08);
                   }}
                   placeholder="ENTER PASSCODE..."
                   disabled={isSuccess}
@@ -1281,6 +1232,38 @@ export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
         .retro-shake-anim {
           animation: shakeError 0.4s ease-in-out;
         }
+
+        /* Equalizer Bouncing Bars for 8-Bit BGM */
+        .eq-bar {
+          display: inline-block;
+          width: 2.5px;
+          background: currentColor;
+          border-radius: 1px;
+        }
+        .eq-bar-static {
+          height: 3px;
+          opacity: 0.5;
+        }
+        @keyframes eqBounce1 {
+          0%, 100% { height: 3px; }
+          50% { height: 11px; }
+        }
+        @keyframes eqBounce2 {
+          0%, 100% { height: 9px; }
+          50% { height: 4px; }
+        }
+        @keyframes eqBounce3 {
+          0%, 100% { height: 5px; }
+          50% { height: 12px; }
+        }
+        @keyframes eqBounce4 {
+          0%, 100% { height: 11px; }
+          50% { height: 3px; }
+        }
+        .eq-bar-1 { animation: eqBounce1 0.35s ease-in-out infinite; }
+        .eq-bar-2 { animation: eqBounce2 0.28s ease-in-out infinite; }
+        .eq-bar-3 { animation: eqBounce3 0.42s ease-in-out infinite; }
+        .eq-bar-4 { animation: eqBounce4 0.32s ease-in-out infinite; }
       `}</style>
     </div>
   );
