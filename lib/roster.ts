@@ -99,6 +99,7 @@ export const AGENT_ROSTER_INFO: Record<string, AgentRosterMeta> = {
       { label: 'Project Triage', prompt: 'Eah, organize and triage incoming directives across Alex, Maya, Wendy, Ray, and Zane for maximum efficiency.', icon: '🎯' },
       { label: 'Executive Coffee & Pep Talk', prompt: 'Eah, give Dylan a motivational executive check-in and brew a cup of fresh virtual espresso! ☕💖', icon: '☕' },
       { label: 'Milestone Roadmap', prompt: 'Eah, draft a prioritized milestone roadmap for our next product release with Founder Dylan.', icon: '🗺️' },
+      { label: 'Share Warm Snack with Dylan', prompt: 'Eah, share a warm gourmet snack and coffee with Dylan at the CEO suite! 🥞☕💖', icon: '🥞' },
     ],
   },
   dylan: {
@@ -110,6 +111,8 @@ export const AGENT_ROSTER_INFO: Record<string, AgentRosterMeta> = {
     specialty: 'Founder vision, executive command, strategic leadership, product roadmap direction.',
     presets: [
       { label: 'Executive Directive', prompt: 'Broadcast strategic directive to all virtual office personnel to align sprint priorities.', icon: '📢' },
+      { label: 'Give Flowers to Eah 💐', prompt: 'Surprise Eah with a fresh bouquet of roses to brighten her day in the office! 💐', icon: '💐' },
+      { label: 'Cook Gourmet Meal for Eah 🍳', prompt: 'Step away from the CEO desk to cook a warm, delicious gourmet breakfast for Eah!', icon: '🍳' },
     ],
   },
 };

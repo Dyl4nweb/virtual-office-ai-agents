@@ -1,6 +1,30 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
+import {
+  IconZap,
+  IconCode,
+  IconPalette,
+  IconMegaphone,
+  IconSearch,
+  IconShield,
+  IconSparkles,
+  IconTarget,
+  IconCoffee,
+  IconCrown,
+  IconHeart,
+  IconCheck,
+  IconX,
+  IconAlertTriangle,
+  IconLock,
+  IconLogOut,
+  IconTrash,
+  IconBroom,
+  IconRocket,
+  IconAward,
+  IconArrowRight,
+} from './Icons';
+
 
 // ============================================================================
 // TYPES
@@ -64,6 +88,7 @@ interface SidePanelProps {
   selectedAgentId?: string | null;
   onSelectAgent?: (id: string | null) => void;
   onOpenActionModal?: (id?: string) => void;
+  onLock?: () => void;
 }
 
 const AGENT_META: Record<
@@ -121,7 +146,12 @@ const AGENT_META: Record<
   },
 };
 
-export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenActionModal }: SidePanelProps) {
+export default function SidePanel({
+  selectedAgentId,
+  onSelectAgent,
+  onOpenActionModal,
+  onLock,
+}: SidePanelProps) {
   // Office State
   const [agents, setAgents] = useState<AgentRecord[]>([]);
   const [tickets, setTickets] = useState<TicketRecord[]>([]);
@@ -132,6 +162,36 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
 
   // UI Navigation & Filters
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isMobile, setIsMobile] = useState<boolean>(false);
+  const [isTablet, setIsTablet] = useState<boolean>(false);
+  const userManuallyToggled = useRef<boolean>(false);
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window === 'undefined') return;
+      const w = window.innerWidth;
+      const mob = w <= 768;
+      const tab = w > 768 && w <= 1100;
+      setIsMobile(mob);
+      setIsTablet(tab);
+      if (!userManuallyToggled.current && (mob || tab)) {
+        setIsCollapsed(true);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
+    const toggleHandler = () => {
+      userManuallyToggled.current = true;
+      setIsCollapsed((prev) => !prev);
+    };
+    window.addEventListener('office:toggle:sidebar', toggleHandler);
+    return () => window.removeEventListener('office:toggle:sidebar', toggleHandler);
+  }, []);
+
   const [activeTab, setActiveTab] = useState<'board' | 'agents' | 'logs'>('board');
   const [ticketFilter, setTicketFilter] = useState<'all' | 'active' | 'review' | 'completed'>('all');
   const [expandedTicketId, setExpandedTicketId] = useState<string | null>(null);
@@ -458,22 +518,56 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
   const pendingApprovals = approvals.filter((a) => a.status === 'pending');
 
   return (
-    <aside
-      style={{
-        width: isCollapsed ? '54px' : '460px',
-        transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
-        height: '100%',
-        backgroundColor: 'var(--bg-panel)',
-        backdropFilter: 'blur(16px)',
-        WebkitBackdropFilter: 'blur(16px)',
-        borderLeft: '1px solid var(--border-color)',
-        display: 'flex',
-        flexDirection: 'column',
-        zIndex: 30,
-        position: 'relative',
-        boxShadow: '-8px 0 32px rgba(0, 0, 0, 0.65)',
-      }}
-    >
+    <>
+      {/* Mobile Drawer Backdrop when open */}
+      {isMobile && !isCollapsed && (
+        <div
+          onClick={() => {
+            userManuallyToggled.current = true;
+            setIsCollapsed(true);
+          }}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.7)',
+            backdropFilter: 'blur(4px)',
+            WebkitBackdropFilter: 'blur(4px)',
+            zIndex: 49,
+            transition: 'opacity 0.2s ease',
+          }}
+        />
+      )}
+
+      <aside
+        style={{
+          width: isCollapsed
+            ? isMobile
+              ? '0px'
+              : '54px'
+            : isMobile
+            ? 'min(440px, 94vw)'
+            : isTablet
+            ? 'min(380px, 42vw)'
+            : 'min(460px, 32vw)',
+          minWidth: isCollapsed ? (isMobile ? '0px' : '54px') : undefined,
+          transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          height: '100%',
+          backgroundColor: 'var(--bg-panel)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
+          borderLeft: isCollapsed && isMobile ? 'none' : '1px solid var(--border-color)',
+          display: 'flex',
+          flexDirection: 'column',
+          zIndex: isMobile ? 50 : 30,
+          position: isMobile ? 'fixed' : 'relative',
+          right: isMobile ? 0 : undefined,
+          top: isMobile ? 0 : undefined,
+          bottom: isMobile ? 0 : undefined,
+          boxShadow: isCollapsed && isMobile ? 'none' : '-8px 0 32px rgba(0, 0, 0, 0.65)',
+          overflow: isCollapsed && isMobile ? 'hidden' : 'visible',
+          flexShrink: 0,
+        }}
+      >
       {/* ==================================================================== */}
       {/* PANEL COLLAPSED STRIP                                                */}
       {/* ==================================================================== */}
@@ -538,11 +632,44 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
               color: '#94a3b8',
               letterSpacing: '2px',
               marginTop: 'auto',
-              marginBottom: '20px',
+              marginBottom: '16px',
             }}
           >
             COMMAND CENTER
           </div>
+
+          {onLock && (
+            <button
+              onClick={onLock}
+              title="Logout (Return to Front Page)"
+              style={{
+                background: 'rgba(239, 68, 68, 0.18)',
+                border: '1.5px solid #ef4444',
+                color: '#f87171',
+                borderRadius: '6px',
+                width: '38px',
+                height: '38px',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: '16px',
+                boxShadow: '0 0 10px rgba(239, 68, 68, 0.3)',
+                transition: 'all 0.15s ease',
+                marginBottom: '8px',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.35)';
+                e.currentTarget.style.color = '#ffffff';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'rgba(239, 68, 68, 0.18)';
+                e.currentTarget.style.color = '#f87171';
+              }}
+            >
+              <IconLogOut size={16} color="currentColor" />
+            </button>
+          )}
         </div>
       ) : (
         /* ==================================================================== */
@@ -608,9 +735,12 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                     borderRadius: '4px',
                     letterSpacing: '0.5px',
                     fontWeight: 600,
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
                   }}
                 >
-                  ⚡ 3-AI TIERED PIPELINE
+                  <IconZap size={11} color="#00f59b" /> 3-AI TIERED PIPELINE
                 </span>
               </div>
 
@@ -630,8 +760,8 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
               </button>
             </div>
 
-            {/* Emergency Killswitch & Status Bar */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Emergency Killswitch & Logout Controls */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <button
                 onClick={handleToggleKillSwitch}
                 style={{
@@ -652,9 +782,44 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                   transition: 'all 0.2s',
                 }}
               >
-                <span>⚠️</span>
-                {killSwitch ? 'HALTED: RESUME OPS' : 'EMERGENCY STOP'}
+                <IconAlertTriangle size={12} color={killSwitch ? '#ffffff' : '#ff4d6d'} />
+                {killSwitch ? 'HALTED: RESUME' : 'EMERGENCY STOP'}
               </button>
+
+              {onLock && (
+                <button
+                  onClick={onLock}
+                  title="Logout and Lock Office (Return to Front Page)"
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '6px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    border: '1.5px solid rgba(239, 68, 68, 0.6)',
+                    background: 'linear-gradient(180deg, rgba(239, 68, 68, 0.2) 0%, rgba(185, 28, 28, 0.35) 100%)',
+                    color: '#fca5a5',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '8.5px',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    boxShadow: '0 0 8px rgba(239, 68, 68, 0.25)',
+                    transition: 'all 0.15s ease',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(180deg, rgba(239, 68, 68, 0.35) 0%, rgba(185, 28, 28, 0.55) 100%)';
+                    e.currentTarget.style.color = '#ffffff';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'linear-gradient(180deg, rgba(239, 68, 68, 0.2) 0%, rgba(185, 28, 28, 0.35) 100%)';
+                    e.currentTarget.style.color = '#fca5a5';
+                  }}
+                >
+                  <IconLogOut size={12} color="currentColor" />
+                  <span>LOGOUT</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -701,7 +866,7 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                     gap: '6px',
                   }}
                 >
-                  ⚡ HUMAN APPROVAL REQUIRED ({pendingApprovals.length})
+                  <IconAlertTriangle size={12} color="#ffbe0b" /> HUMAN APPROVAL REQUIRED ({pendingApprovals.length})
                 </span>
               </div>
 
@@ -785,10 +950,11 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '4px',
+                        gap: '6px',
                       }}
                     >
-                      ✓ APPROVE
+                      <IconCheck size={11} color="#042a1a" />
+                      <span>APPROVE</span>
                     </button>
                     <button
                       onClick={() => handleResolveApproval(appr.id, 'rejected')}
@@ -805,10 +971,11 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        gap: '4px',
+                        gap: '6px',
                       }}
                     >
-                      ✕ REJECT
+                      <IconX size={11} color="#ff3366" />
+                      <span>REJECT</span>
                     </button>
                   </div>
                 </div>
@@ -966,7 +1133,7 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                   e.currentTarget.style.borderColor = 'rgba(0, 240, 255, 0.35)';
                 }}
               >
-                <span>⚡</span>
+                <IconZap size={13} color="#00f0ff" />
                 <span>OPEN REAL-TIME LIVE CONSOLE</span>
               </button>
             </form>
@@ -983,7 +1150,8 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                 }
                 style={presetBtnStyle}
               >
-                💻 Fullstack Code
+                <IconCode size={12} color="#f97316" />
+                <span>Fullstack Code</span>
               </button>
               <button
                 onClick={() =>
@@ -995,7 +1163,8 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                 }
                 style={presetBtnStyle}
               >
-                🎨 UI/UX Design
+                <IconPalette size={12} color="#ec4899" />
+                <span>UI/UX Design</span>
               </button>
               <button
                 onClick={() =>
@@ -1007,7 +1176,8 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                 }
                 style={presetBtnStyle}
               >
-                🚀 Marketing Campaign
+                <IconRocket size={12} color="#c084fc" />
+                <span>Marketing Campaign</span>
               </button>
               <button
                 onClick={() =>
@@ -1019,7 +1189,8 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                 }
                 style={presetBtnStyle}
               >
-                🔍 AI Research
+                <IconSearch size={12} color="#38bdf8" />
+                <span>AI Research</span>
               </button>
               <button
                 onClick={() =>
@@ -1031,7 +1202,8 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                 }
                 style={presetBtnStyle}
               >
-                🛡️ Cyber Security
+                <IconShield size={12} color="#22c55e" />
+                <span>Cyber Security</span>
               </button>
             </div>
           </div>
@@ -1121,10 +1293,10 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '3px',
+                          gap: '4px',
                         }}
                       >
-                        <span>🧹</span>
+                        <IconBroom size={11} color="currentColor" />
                         <span>Clear Done</span>
                       </button>
                     )}
@@ -1144,10 +1316,10 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '3px',
+                          gap: '4px',
                         }}
                       >
-                        <span>🗑️</span>
+                        <IconTrash size={11} color="currentColor" />
                         <span>Clear All</span>
                       </button>
                     )}
@@ -1211,9 +1383,14 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                                 fontSize: '9px',
                                 color: AGAGENT_COLOR(ticket.to_agent),
                                 fontFamily: "'Fira Code', monospace",
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '3px',
                               }}
                             >
-                              {ticket.from_agent} ➔ {ticket.to_agent}
+                              <span>{ticket.from_agent}</span>
+                              <IconArrowRight size={10} color="#94a3b8" />
+                              <span>{ticket.to_agent}</span>
                             </span>
                           </div>
 
@@ -1239,6 +1416,9 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                                 padding: '2px 4px',
                                 borderRadius: '3px',
                                 lineHeight: '1',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
                               }}
                               onMouseEnter={(e) => {
                                 (e.currentTarget as HTMLElement).style.color = '#ff3366';
@@ -1249,7 +1429,7 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                                 (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
                               }}
                             >
-                              🗑️
+                              <IconTrash size={12} color="currentColor" />
                             </button>
                           </div>
                         </div>
@@ -1471,12 +1651,13 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                                 border: '1px solid rgba(56, 189, 248, 0.35)',
                                 padding: '3px 6px',
                                 borderRadius: '4px',
-                                display: 'flex',
+                                display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '3px',
+                                gap: '4px',
                               }}
                             >
-                              <span>🎯 Designated:</span>
+                              <IconTarget size={11} color="#38bdf8" />
+                              <span>Designated:</span>
                               <strong>{liveAgent?.ai_trio?.tier1 || 'openrouter/free'}</strong>
                             </span>
 
@@ -1490,12 +1671,13 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                                 border: '1px solid rgba(0, 245, 155, 0.35)',
                                 padding: '3px 6px',
                                 borderRadius: '4px',
-                                display: 'flex',
+                                display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '3px',
+                                gap: '4px',
                               }}
                             >
-                              <span>🛡️ Backup:</span>
+                              <IconShield size={11} color="#00f59b" />
+                              <span>Backup:</span>
                               <strong>{liveAgent?.ai_trio?.tier2 || 'google/gemini-3.8-flash'}</strong>
                             </span>
 
@@ -1509,12 +1691,13 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                                 border: '1px solid rgba(245, 158, 11, 0.35)',
                                 padding: '3px 6px',
                                 borderRadius: '4px',
-                                display: 'flex',
+                                display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '3px',
+                                gap: '4px',
                               }}
                             >
-                              <span>🥉 Safety:</span>
+                              <IconAward size={11} color="#f59e0b" />
+                              <span>Safety:</span>
                               <strong>{liveAgent?.ai_trio?.tier3 || 'nvidia/nemotron-3.5-lightning:free'}</strong>
                             </span>
                           </div>
@@ -1523,8 +1706,8 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                         <div
                           style={{
                             display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
+                            flexDirection: 'column',
+                            gap: '4px',
                             background: 'rgba(244, 63, 94, 0.1)',
                             border: '1px solid rgba(244, 63, 94, 0.35)',
                             padding: '6px 10px',
@@ -1534,14 +1717,24 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                             color: '#fb7185',
                           }}
                         >
-                          <span>💖 Executive Partner &amp; Dylan&apos;s Girlfriend • iPad Chilling in CEO Suite</span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                            <IconHeart size={12} color="#fb7185" />
+                            <span>Executive Partner &amp; Dylan&apos;s Girlfriend • CEO Suite</span>
+                          </span>
+                          <span style={{ fontSize: '9px', color: '#fda4af', display: 'inline-flex', alignItems: 'center', gap: '5px', flexWrap: 'wrap' }}>
+                            <IconSparkles size={11} color="#fda4af" />
+                            <span>Spoiled with fresh flowers &amp; gourmet meals by Dylan</span>
+                            <span>•</span>
+                            <IconCoffee size={11} color="#fda4af" />
+                            <span>Cooks &amp; brews for Dylan</span>
+                          </span>
                         </div>
                       ) : (
                         <div
                           style={{
                             display: 'flex',
-                            alignItems: 'center',
-                            gap: '6px',
+                            flexDirection: 'column',
+                            gap: '4px',
                             background: 'rgba(245, 158, 11, 0.1)',
                             border: '1px solid rgba(245, 158, 11, 0.3)',
                             padding: '6px 10px',
@@ -1551,7 +1744,15 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                             color: '#fbbf24',
                           }}
                         >
-                          <span>👑 Executive Command &amp; Decision Maker</span>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                            <IconCrown size={12} color="#fbbf24" />
+                            <span>Executive Command &amp; Decision Maker</span>
+                          </span>
+                          <span style={{ fontSize: '9px', color: '#fde68a', display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                            <IconSparkles size={11} color="#fde68a" />
+                            <span>Gifts flowers &amp; cooks gourmet meals for Eah with love</span>
+                            <IconHeart size={11} color="#f43f5e" />
+                          </span>
                         </div>
                       )}
 
@@ -1605,7 +1806,7 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                             e.currentTarget.style.backgroundColor = `${meta.color}22`;
                           }}
                         >
-                          <span>⚡</span>
+                          <IconZap size={11} color="currentColor" />
                           <span>ASSIGN TASK (REAL-TIME)</span>
                         </button>
                       )}
@@ -1656,10 +1857,10 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                           cursor: 'pointer',
                           display: 'flex',
                           alignItems: 'center',
-                          gap: '3px',
+                          gap: '4px',
                         }}
                       >
-                        <span>🗑️</span>
+                        <IconTrash size={11} color="currentColor" />
                         <span>Clear Logs</span>
                       </button>
                     )}
@@ -1745,10 +1946,12 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                               border: 'none',
                               color: '#64748b',
                               cursor: 'pointer',
-                              fontSize: '11px',
-                              padding: '1px 3px',
+                              padding: '2px 3px',
                               borderRadius: '2px',
                               lineHeight: '1',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
                               transition: 'all 0.15s ease',
                             }}
                             onMouseEnter={(e) => {
@@ -1760,7 +1963,7 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
                               (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
                             }}
                           >
-                            ✕
+                            <IconX size={10} color="currentColor" />
                           </button>
                         </div>
                       </div>
@@ -1774,9 +1977,80 @@ export default function SidePanel({ selectedAgentId, onSelectAgent, onOpenAction
               </div>
             )}
           </div>
+
+          {/* 6. BOTTOM STICKY FOOTER: LOGOUT & CLEARANCE BAR */}
+          {onLock && (
+            <div
+              style={{
+                marginTop: 'auto',
+                padding: '12px 16px',
+                borderTop: '1px solid var(--border-color)',
+                background: 'rgba(10, 12, 20, 0.95)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                flexShrink: 0,
+              }}
+            >
+              <button
+                onClick={onLock}
+                title="Logout and Return to Front Page"
+                style={{
+                  width: '100%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px',
+                  padding: '11px 14px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #ef4444',
+                  background: 'linear-gradient(180deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.45) 100%)',
+                  color: '#ffffff',
+                  fontFamily: "'Press Start 2P', monospace",
+                  fontSize: '9.5px',
+                  fontWeight: 700,
+                  letterSpacing: '0.6px',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(239, 68, 68, 0.3)',
+                  transition: 'all 0.15s ease',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(180deg, rgba(239, 68, 68, 0.45) 0%, rgba(185, 28, 28, 0.65) 100%)';
+                  e.currentTarget.style.boxShadow = '0 6px 18px rgba(239, 68, 68, 0.45)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'linear-gradient(180deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.45) 100%)';
+                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(239, 68, 68, 0.3)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
+              >
+                <IconLogOut size={13} color="currentColor" />
+                <span>LOGOUT • LOCK HQ</span>
+              </button>
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: '8px',
+                  color: '#94a3b8',
+                  fontFamily: "'Press Start 2P', monospace",
+                  padding: '0 2px',
+                }}
+              >
+                <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                  <IconLock size={10} color="#94a3b8" />
+                  <span>RETURN TO FRONT PAGE</span>
+                </span>
+                <span style={{ color: '#00f0ff' }}>AVERO HQ</span>
+              </div>
+            </div>
+          )}
         </>
       )}
     </aside>
+    </>
   );
 }
 
@@ -1790,12 +2064,15 @@ const presetBtnStyle: React.CSSProperties = {
   background: 'rgba(255, 255, 255, 0.05)',
   border: '1px solid rgba(99, 115, 178, 0.3)',
   color: '#cbd5e1',
-  padding: '4px 8px',
+  padding: '5px 8px',
   borderRadius: '4px',
   fontSize: '10px',
   fontFamily: "'Fira Code', monospace",
   cursor: 'pointer',
   transition: 'all 0.15s ease',
+  display: 'inline-flex',
+  alignItems: 'center',
+  gap: '5px',
 };
 
 const tabBtnStyle = (isActive: boolean): React.CSSProperties => ({

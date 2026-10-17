@@ -714,7 +714,7 @@ export default function WorkerActionModal({
                 ref={textareaRef}
                 value={promptText}
                 onChange={(e) => setPromptText(e.target.value)}
-                placeholder={`Ano ang kailangan mong ipagawa kay ${info.name}? (e.g. 'Gumawa ng high-performance API route gamit ang TypeScript', 'Design layout spec para sa landing page')...`}
+                placeholder={`What task do you want to assign to ${info.name}? (e.g. 'Build a high-performance API route using TypeScript', 'Design layout spec for landing page')...`}
                 disabled={streamState.isStreaming}
                 rows={4}
                 style={{
@@ -770,7 +770,7 @@ export default function WorkerActionModal({
                   />
                   <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                     <IconUsers size={15} color="#00f0ff" />
-                    <span>Mag-meeting muna sa Boardroom bago gawin</span>
+                    <span>Hold executive meeting in Boardroom first</span>
                   </span>
                   <span
                     style={{
@@ -788,7 +788,7 @@ export default function WorkerActionModal({
                       gap: '4px',
                     }}
                   >
-                    <span>ASTIG</span>
+                    <span>PRO</span>
                     <IconFlame size={12} color="#ffbe0b" />
                   </span>
                 </label>

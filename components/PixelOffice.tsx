@@ -1,6 +1,20 @@
 'use client';
 
 import React, { useRef, useEffect, useState, useCallback } from 'react';
+import {
+  IconGamepad,
+  IconBox,
+  IconArmchair,
+  IconFootprints,
+  IconActivity,
+  IconBriefcase,
+  IconLaptop,
+  IconUsers,
+  IconZap,
+  IconVolume2,
+  IconVolumeX,
+} from './Icons';
+
 
 // ============================================================================
 // TYPES & DATA CONTRACTS
@@ -59,6 +73,11 @@ export interface CharacterEntity {
     | 'eah_carrying_coffee'
     | 'eah_serving'
     | 'eah_petting_dog'
+    | 'dylan_carrying_flowers'
+    | 'dylan_giving_flowers'
+    | 'dylan_cooking'
+    | 'dylan_carrying_food'
+    | 'dylan_serving_food'
     | 'syncing'
     | 'reporting'
     | 'stretching'
@@ -768,12 +787,14 @@ export function isWalkable(x: number, y: number): boolean {
   if (x >= 422 && x <= 466 && y >= 422 && y <= 450) return false;
   // Cute Office Puppy Donut Pet Bed (x: 492..520, y: 328..352)
   if (x >= 492 && x <= 520 && y >= 328 && y <= 352) return false;
+  // White Cat Velvet Cushion & Scratching Tree (x: 492..520, y: 436..460)
+  if (x >= 492 && x <= 520 && y >= 436 && y <= 460) return false;
   // Espresso Bar & Refreshment Station (x: 234..268, y: 416..480)
   if (x >= 234 && x <= 268 && y >= 416 && y <= 480) return false;
   // Retro Arcade Cabinet (x: 234..268, y: 316..352)
   if (x >= 234 && x <= 268 && y >= 316 && y <= 352) return false;
 
-  // ZONE 4: Grand Executive Boardroom & Meeting Suite (Right Wing, x: 560..1024, y: 280..504) - "MALUWAG"
+  // ZONE 4: Grand Executive Boardroom & Meeting Suite (Right Wing, x: 560..1024, y: 280..504) - EXTRA SPACIOUS
   // Generous walking clearance around all 4 sides of the conference table!
   // Table surface is x: 685..895, y: 365..428
   if (x >= 685 && x <= 895 && y >= 365 && y <= 428) return false;
@@ -1050,7 +1071,24 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
   >('relaxing');
   const eahCycleCountRef = useRef<number>(0);
   const servedDeskItemRef = useRef<'food' | 'coffee' | null>(null);
+
+  // Dylan Ramos Caring Routines for Eah ("Just to Be Fair" 💖💐)
+  const dylanRoutineStepRef = useRef<
+    | 'idle'
+    | 'flower_walk'
+    | 'giving_flowers'
+    | 'cook_walk'
+    | 'cooking'
+    | 'deliver_food_walk'
+    | 'serving_food'
+    | 'return_desk'
+  >('idle');
+  const dylanCycleCountRef = useRef<number>(0);
+  const dylanRoutineTimerRef = useRef<number>(24);
+  const servedEahTableItemRef = useRef<'flowers' | 'food' | null>(null);
+
   const dogSpeechRef = useRef<{ text: string; timer: number } | null>(null);
+  const catSpeechRef = useRef<{ text: string; timer: number } | null>(null);
 
   // Virtual D-pad directional hold state
   const dpadDirRef = useRef<{ up: boolean; down: boolean; left: boolean; right: boolean }>({
@@ -1060,7 +1098,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
     right: false,
   });
 
-  const playSfx = useCallback((type: 'click' | 'drink' | 'bell' | 'step' | 'door') => {
+  const playSfx = useCallback((type: 'click' | 'drink' | 'bell' | 'step' | 'door' | 'meow') => {
     if (!soundEnabled) return;
     try {
       if (!audioCtxRef.current) {
@@ -1111,6 +1149,20 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
         osc.frequency.setValueAtTime(220, now);
         osc.frequency.exponentialRampToValueAtTime(140, now + 0.25);
         gain.gain.setValueAtTime(0.035, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.28);
+      } else if (type === 'meow') {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(680, now);
+        osc.frequency.exponentialRampToValueAtTime(940, now + 0.12);
+        osc.frequency.exponentialRampToValueAtTime(580, now + 0.28);
+        gain.gain.setValueAtTime(0.06, now);
+        gain.gain.linearRampToValueAtTime(0.08, now + 0.08);
         gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
         osc.connect(gain);
         gain.connect(ctx.destination);
@@ -1192,13 +1244,52 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
       }
       const code = e.code;
       if (
-        ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Space', 'KeyE', 'KeyC', 'KeyB', 'ShiftLeft', 'ShiftRight'].includes(code)
+        ['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight', 'Space', 'KeyE', 'KeyC', 'KeyB', 'KeyF', 'KeyG', 'ShiftLeft', 'ShiftRight'].includes(code)
       ) {
         e.preventDefault();
         keysPressed.current.add(code);
 
         if (code === 'ShiftLeft' || code === 'ShiftRight') {
           setIsSprinting(true);
+        }
+
+        if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'].includes(code)) {
+          if (dylanRoutineStepRef.current !== 'idle') {
+            dylanRoutineStepRef.current = 'idle';
+          }
+        }
+
+        // Direct shortcut keys for Dylan caring for Eah (Flowers & Cooking with Love! 💐🍳)
+        if (code === 'KeyF') {
+          const d = charactersRef.current.dylan;
+          const eah = charactersRef.current.eah;
+          if (eah) {
+            d.isSeated = false;
+            dylanRoutineStepRef.current = 'flower_walk';
+            d.activity = 'dylan_carrying_flowers';
+            d.bubbleText = 'Surprising Eah with fresh flowers to brighten her day! 💐🌹';
+            d.bubbleTimer = 4.5;
+            d.path = generateSmartPath(d.currentX, d.currentY, 90, 175);
+            d.isWalking = true;
+            playSfx('click');
+            return;
+          }
+        }
+
+        if (code === 'KeyG') {
+          const d = charactersRef.current.dylan;
+          const eah = charactersRef.current.eah;
+          if (eah) {
+            d.isSeated = false;
+            dylanRoutineStepRef.current = 'cook_walk';
+            d.activity = 'working';
+            d.bubbleText = 'Eah always cooks for me—time to return the favor! 🍳✨';
+            d.bubbleTimer = 4.5;
+            d.path = generateSmartPath(d.currentX, d.currentY, 136, 350);
+            d.isWalking = true;
+            playSfx('click');
+            return;
+          }
         }
 
         // Direct shortcut keys for asking Eah to cook or brew coffee
@@ -1248,6 +1339,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
           const distToKitchen = Math.hypot(d.currentX - 120, d.currentY - 370);
           const distToGarden = Math.hypot(d.currentX - 120, d.currentY - 460);
           const distToDog = Math.hypot(d.currentX - 505, d.currentY - 340);
+          const distToCat = Math.hypot(d.currentX - 506, d.currentY - 448);
           const distToEah = charactersRef.current.eah
             ? Math.hypot(d.currentX - charactersRef.current.eah.currentX, d.currentY - charactersRef.current.eah.currentY)
             : 999;
@@ -1273,6 +1365,11 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
             d.bubbleTimer = 4.0;
             dogSpeechRef.current = { text: 'Arf arf! 🐶💕 *happy puppy tail wag*', timer: 5.0 };
             playSfx('click');
+          } else if (distToCat < 44) {
+            d.bubbleText = 'Who\'s the sweetest white kitty? 🐱🤍 Snowy!';
+            d.bubbleTimer = 4.0;
+            catSpeechRef.current = { text: 'Purrrrr... Nyaa~ 💕 *soft headbonk & purrs*', timer: 5.0 };
+            playSfx('meow');
           } else if (distToDesk < 28) {
             const nextSeated = !d.isSeated;
             d.isSeated = nextSeated;
@@ -1866,8 +1963,8 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
         if (char.waitTimer && char.waitTimer > 0 && char.path.length === 0) {
           char.waitTimer -= 0.016;
           if (char.waitTimer <= 0) {
-            if (char.id === 'eah') {
-              // Eah destination actions are advanced by the Eah State Machine below
+            if (char.id === 'eah' || char.id === 'dylan') {
+              // Eah & Dylan destination actions are advanced by their caring state machines below
             } else {
               // Once finished, walk back to personal desk!
               char.path = generateSmartPath(char.currentX, char.currentY, char.deskX, char.deskY);
@@ -2015,6 +2112,112 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
               char.bubbleTimer = 4.5;
             }
           }
+        } else if (char.id === 'dylan') {
+          const dylanStep = dylanRoutineStepRef.current;
+
+          if (dylanStep === 'idle') {
+            // Autonomous Caring Cycle: Dylan occasionally stands up to give flowers or cook for Eah ("Just to Be Fair" 💖)
+            if (char.isSeated && char.path.length === 0 && !char.isMeeting && !inRestMode && keysPressed.current.size === 0) {
+              dylanRoutineTimerRef.current -= 0.016;
+              if (dylanRoutineTimerRef.current <= 0) {
+                dylanRoutineTimerRef.current = 28 + Math.random() * 14;
+                dylanCycleCountRef.current++;
+                const cycle = dylanCycleCountRef.current % 2;
+
+                if (cycle === 1) {
+                  // ROUTINE 1: Surprise Eah with fresh luxury flowers!
+                  dylanRoutineStepRef.current = 'flower_walk';
+                  char.isSeated = false;
+                  char.activity = 'dylan_carrying_flowers';
+                  char.bubbleText = 'Surprising Eah with fresh flowers to brighten her day! 💐🌹';
+                  char.bubbleTimer = 4.5;
+                  char.path = generateSmartPath(char.currentX, char.currentY, 90, 175);
+                  char.isWalking = true;
+                  setIsDylanSeated(false);
+                } else {
+                  // ROUTINE 2: Cook a warm gourmet meal for Eah!
+                  dylanRoutineStepRef.current = 'cook_walk';
+                  char.isSeated = false;
+                  char.activity = 'working';
+                  char.bubbleText = 'Eah always cooks for me—time to return the favor! 🍳✨';
+                  char.bubbleTimer = 4.5;
+                  char.path = generateSmartPath(char.currentX, char.currentY, 136, 350);
+                  char.isWalking = true;
+                  setIsDylanSeated(false);
+                }
+              }
+            }
+          } else if (dylanStep === 'flower_walk') {
+            if (char.path.length === 0) {
+              dylanRoutineStepRef.current = 'giving_flowers';
+              char.activity = 'dylan_giving_flowers';
+              char.facing = 'left';
+              char.waitTimer = 5.5;
+              char.bubbleText = 'These flowers are for you, my dearest Eah! 💐🌹 Thank you for always taking care of me! 💖✨';
+              char.bubbleTimer = 5.5;
+              servedEahTableItemRef.current = 'flowers';
+              const eah = charactersRef.current.eah;
+              if (eah) {
+                eah.facing = 'right';
+                eah.bubbleText = 'Awww Dylan, they are absolutely gorgeous! 🌹🥰 You are the sweetest! Thank you! 💖✨';
+                eah.bubbleTimer = 5.5;
+              }
+              playSfx('bell');
+            }
+          } else if (dylanStep === 'cook_walk') {
+            if (char.path.length === 0) {
+              dylanRoutineStepRef.current = 'cooking';
+              char.activity = 'dylan_cooking';
+              char.facing = 'down';
+              char.waitTimer = 7.0;
+              char.bubbleText = 'Sizzling fluffy golden pancakes & gourmet breakfast for Eah! 🥞🍳✨';
+              char.bubbleTimer = 4.5;
+            }
+          } else if (dylanStep === 'cooking') {
+            if (!char.waitTimer || char.waitTimer <= 0) {
+              dylanRoutineStepRef.current = 'deliver_food_walk';
+              char.activity = 'dylan_carrying_food';
+              char.bubbleText = 'Piping hot and delicious! Delivering to Eah! 🥞🍓✨';
+              char.bubbleTimer = 4.0;
+              char.path = generateSmartPath(char.currentX, char.currentY, 90, 175);
+              char.isWalking = true;
+            }
+          } else if (dylanStep === 'deliver_food_walk') {
+            if (char.path.length === 0) {
+              dylanRoutineStepRef.current = 'serving_food';
+              char.activity = 'dylan_serving_food';
+              char.facing = 'left';
+              char.waitTimer = 5.5;
+              char.bubbleText = 'Here is your special gourmet breakfast, Eah! 🥞✨ Made with love, enjoy! 💖';
+              char.bubbleTimer = 5.5;
+              servedEahTableItemRef.current = 'food';
+              const eah = charactersRef.current.eah;
+              if (eah) {
+                eah.facing = 'right';
+                eah.bubbleText = 'Omg Dylan, you cooked for me?! 🥞😋 Smells amazing! Best partner ever! 💖✨';
+                eah.bubbleTimer = 5.5;
+              }
+              playSfx('bell');
+            }
+          } else if (dylanStep === 'giving_flowers' || dylanStep === 'serving_food') {
+            if (!char.waitTimer || char.waitTimer <= 0) {
+              dylanRoutineStepRef.current = 'return_desk';
+              char.activity = 'idle';
+              char.bubbleText = 'Heading back to CEO command station with a happy heart 💻👑';
+              char.bubbleTimer = 3.5;
+              char.path = generateSmartPath(char.currentX, char.currentY, char.deskX, char.deskY);
+              char.isWalking = true;
+            }
+          } else if (dylanStep === 'return_desk') {
+            if (char.path.length === 0) {
+              dylanRoutineStepRef.current = 'idle';
+              char.isSeated = true;
+              char.activity = 'working';
+              char.facing = 'down';
+              setIsDylanSeated(true);
+              dylanRoutineTimerRef.current = 28 + Math.random() * 14;
+            }
+          }
         } else if (char.id !== 'dylan' && !char.isMeeting && !inRestMode && char.path.length === 0 && !char.waitTimer) {
           char.routineTimer -= 0.016;
           if (char.routineTimer <= 0) {
@@ -2155,12 +2358,14 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
         setNearbyPrompt('[E / Space] Relax in Bottom Leather Booth');
       } else if (Math.hypot(dylan.currentX - 506, dylan.currentY - 340) < 42) {
         setNearbyPrompt('[Click / E] Pet Mochi the Office Puppy 🐶💕');
+      } else if (Math.hypot(dylan.currentX - 506, dylan.currentY - 448) < 42) {
+        setNearbyPrompt('[Click / E] Pet Snowy the White Cat 🐱🤍');
       } else if (Math.hypot(dylan.currentX - 300, dylan.currentY - 170) < 36) {
         setNearbyPrompt('[E] Mini Fridge: Grab energy drink');
       } else if (Math.hypot(dylan.currentX - 780, dylan.currentY - 130) < 36) {
         setNearbyPrompt('[E] Water Cooler: Drink cold water');
       } else if (chars.eah && Math.hypot(dylan.currentX - chars.eah.currentX, dylan.currentY - chars.eah.currentY) < 52) {
-        setNearbyPrompt('[Click / E] Talk with Eah 💕 • [C] Cook Meal • [B] Brew Coffee');
+        setNearbyPrompt('[Click / E] Talk with Eah 💕 • [F] Give Flowers 💐 • [G] Cook Food 🍳 • [C] Cook Meal • [B] Brew Coffee');
       } else if (chars.ray && Math.hypot(dylan.currentX - chars.ray.currentX, dylan.currentY - chars.ray.currentY) < 40) {
         setNearbyPrompt('[Click / E] Consult Ray • Lead AI Researcher');
       } else if (chars.maya && Math.hypot(dylan.currentX - chars.maya.currentX, dylan.currentY - chars.maya.currentY) < 40) {
@@ -2238,6 +2443,50 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
       ctx.fillRect(58, 150, 12, 12);
       ctx.fillStyle = '#f1f5f9';
       ctx.fillRect(57, 149, 14, 2);
+
+      // SERVED FLOWERS OR GOURMET FOOD FROM DYLAN FOR EAH ("Just to Be Fair" 💖)
+      if (servedEahTableItemRef.current === 'flowers') {
+        // Luxury crystal vase with red roses, pink blossoms & baby's breath
+        ctx.fillStyle = 'rgba(56, 189, 248, 0.65)';
+        ctx.fillRect(61, 143, 6, 7);
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(62, 144, 2, 5); // Glass highlight
+        // Green stems
+        ctx.fillStyle = '#15803d';
+        ctx.fillRect(63, 139, 2, 5);
+        // Blossoms cluster
+        ctx.fillStyle = '#e11d48'; // Red rose
+        ctx.fillRect(60, 136, 4, 4);
+        ctx.fillStyle = '#f43f5e'; // Blushing rose
+        ctx.fillRect(64, 135, 4, 4);
+        ctx.fillStyle = '#fbcfe8'; // Soft pink bloom
+        ctx.fillRect(62, 133, 4, 3);
+        ctx.fillStyle = '#ffffff'; // Baby's breath
+        ctx.fillRect(59, 138, 2, 2);
+        ctx.fillRect(67, 138, 2, 2);
+        // Twinkle sparkle
+        if (frame % 30 < 15) {
+          ctx.fillStyle = '#fde047';
+          ctx.fillRect(63, 131, 2, 2);
+        }
+      } else if (servedEahTableItemRef.current === 'food') {
+        // Porcelain plate with golden fluffy pancakes & fresh strawberry
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(58, 144, 12, 6);
+        ctx.fillStyle = '#fbbf24';
+        ctx.strokeRect(58, 144, 12, 6);
+        ctx.fillStyle = '#f59e0b';
+        ctx.fillRect(60, 145, 8, 3); // Fluffy pancakes
+        ctx.fillStyle = '#ef4444';
+        ctx.fillRect(63, 143, 3, 3); // Fresh red strawberry
+        ctx.fillStyle = '#fef08a';
+        ctx.fillRect(61, 144, 2, 2); // Melting butter cube
+        // Steam curls rising
+        const s = (frame * 0.25) % 5;
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+        ctx.fillRect(62, 140 - s, 2, 2);
+        ctx.fillRect(65, 139 - s, 2, 2);
+      }
 
       // Executive Leather Lounge Couch
       ctx.fillStyle = '#0f172a';
@@ -2986,6 +3235,125 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
         ctx.fillText('💕', dogBedX + 10, dogBedY - 10);
       }
 
+      // 5B. ADORABLE PURE WHITE CAT (SNOWY) PET SANCTUARY & SCRATCHING TREE
+      const catBedX = 506;
+      const catBedY = 448;
+
+      // Soft Sky-Blue Braided Woven Oval Rug under Cat Bed
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.35)';
+      ctx.beginPath();
+      ctx.ellipse(catBedX, catBedY + 3, 26, 17, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#e0f2fe';
+      ctx.beginPath();
+      ctx.ellipse(catBedX, catBedY + 2, 25, 16, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+
+      // Plush Sky-Blue Cat Basket Rim
+      ctx.fillStyle = '#0284c7';
+      ctx.beginPath();
+      ctx.ellipse(catBedX, catBedY, 18, 12, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Fluffy Pure White Cushion
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(catBedX, catBedY, 14, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sisal Scratching Tree Post on Right
+      ctx.fillStyle = '#d97706';
+      ctx.fillRect(catBedX + 18, catBedY - 14, 4, 16);
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(catBedX + 14, catBedY - 18, 12, 4); // Cat perch
+      // Dangling Pink Sisal Yarn Ball
+      ctx.fillStyle = '#f472b6';
+      ctx.beginPath();
+      ctx.arc(catBedX + 16, catBedY - 10, 2.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Porcelain Saucer with Fresh Milk on Left
+      ctx.fillStyle = '#cbd5e1';
+      ctx.beginPath();
+      ctx.ellipse(catBedX - 18, catBedY + 4, 6, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(catBedX - 18, catBedY + 4, 4.5, 2.5, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Cute White Cat (Snowy)
+      const catBreathe = Math.sin(frame * 0.07) * 0.8;
+      const catTailSway = Math.sin(frame * 0.14) * 3;
+
+      // Graceful Curled White Tail
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(catBedX + 6 + catTailSway, catBedY - 6, 3.2, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Pure White Cat Torso
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(catBedX, catBedY, 8, 6 + catBreathe, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      // White Cat Head
+      ctx.beginPath();
+      ctx.arc(catBedX - 2, catBedY - 3, 5.5, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Sky Blue Collar & Silver Bell
+      ctx.fillStyle = '#38bdf8';
+      ctx.fillRect(catBedX - 4, catBedY + 1, 6, 1.5);
+      ctx.fillStyle = '#e2e8f0';
+      ctx.fillRect(catBedX - 1.5, catBedY + 2, 1.5, 1.5);
+
+      // Pointed White Cat Ears with Pink Inner Fluff
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(catBedX - 6, catBedY - 7); ctx.lineTo(catBedX - 4, catBedY - 13); ctx.lineTo(catBedX - 2, catBedY - 7);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#f472b6';
+      ctx.beginPath();
+      ctx.moveTo(catBedX - 5, catBedY - 7); ctx.lineTo(catBedX - 4, catBedY - 11); ctx.lineTo(catBedX - 3, catBedY - 7);
+      ctx.closePath(); ctx.fill();
+
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.moveTo(catBedX, catBedY - 7); ctx.lineTo(catBedX + 2, catBedY - 13); ctx.lineTo(catBedX + 4, catBedY - 7);
+      ctx.closePath(); ctx.fill();
+      ctx.fillStyle = '#f472b6';
+      ctx.beginPath();
+      ctx.moveTo(catBedX + 1, catBedY - 7); ctx.lineTo(catBedX + 2, catBedY - 11); ctx.lineTo(catBedX + 3, catBedY - 7);
+      ctx.closePath(); ctx.fill();
+
+      // Emerald Green Cat Eyes
+      ctx.fillStyle = '#10b981';
+      ctx.fillRect(catBedX - 4, catBedY - 5, 2, 2);
+      ctx.fillRect(catBedX, catBedY - 5, 2, 2);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(catBedX - 3.5, catBedY - 5, 1, 2);
+      ctx.fillRect(catBedX + 0.5, catBedY - 5, 1, 2);
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(catBedX - 4, catBedY - 5, 1, 1);
+      ctx.fillRect(catBedX, catBedY - 5, 1, 1);
+
+      // Pink Nose & Sweet Whiskers
+      ctx.fillStyle = '#f472b6';
+      ctx.fillRect(catBedX - 2.5, catBedY - 2, 1.5, 1);
+      ctx.fillStyle = '#cbd5e1';
+      ctx.fillRect(catBedX - 7, catBedY - 2, 3, 0.8);
+      ctx.fillRect(catBedX + 2, catBedY - 2, 3, 0.8);
+
+      if (frame % 80 >= 40 && frame % 80 < 75) {
+        ctx.fillStyle = '#38bdf8';
+        ctx.font = 'bold 7px monospace';
+        ctx.fillText('✨', catBedX + 10, catBedY - 10);
+      }
+
       // 6. FRAMED HEART PHOTO & MINIATURE SUCCULENT
       const frameX = 356;
       const frameY = 466;
@@ -3137,7 +3505,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
 
       // ======================================================================
       // ZONE 4: GRAND EXECUTIVE BOARDROOM & ALL-HANDS MEETING SUITE (Right Wing, x: 560..1024, y: 290..504)
-      // "MALUWAG" / EXTRA SPACIOUS: MASSIVE 464PX WIDE EXECUTIVE WING, 85" ULTRA-HD PRESENTATION SCREEN,
+      // EXTRA SPACIOUS: MASSIVE 464PX WIDE EXECUTIVE WING, 85" ULTRA-HD PRESENTATION SCREEN,
       // EXPANSIVE MAHOGANY CONFERENCE TABLE WITH TONS OF WALKING CLEARANCE, KANBAN STRATEGY WALL & PLANTS!
       // ======================================================================
       // 1. Dark Mahogany Herringbone Parquet Wood Floor
@@ -3206,7 +3574,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
       ctx.fillText('REV +48%', bScrX + 125, bScrY + 22);
       ctx.fillText('SLA 99.9%', bScrX + 125, bScrY + 32);
 
-      // 3. Grand Executive Mahogany Conference Table ("MALUWAG" / EXTRA SPACIOUS)
+      // 3. Grand Executive Mahogany Conference Table (EXTRA SPACIOUS)
       // Has generous walking clearance around all 4 sides!
       const tableX = 690;
       const tableY = 368;
@@ -3398,14 +3766,23 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
       ctx.fillRect(275, ceoDoorY + Math.round(ceoDoorH * 0.38), 2, 16);
       ctx.fillRect(283, ceoDoorY + Math.round(ceoDoorH * 0.38), 2, 16);
 
-      // Horizontal Glass Wall between Bullpen & Lounge / Boardroom (y = 280)
+      // Horizontal Wall: Bullpen / Lounge glass divider (x: 16..480)
       ctx.fillStyle = 'rgba(56, 189, 248, 0.18)';
       ctx.fillRect(16, 280, 464, 8);  // Left wall segment (x: 16..480)
-      ctx.fillRect(550, 280, 140, 8); // Wall segment (x: 550..690)
-      ctx.fillRect(760, 280, 264, 8); // Right wall segment (x: 760..1024)
       ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
       ctx.lineWidth = 1;
       ctx.strokeRect(16, 280, 464, 8);
+
+      // Horizontal Solid Acoustic Wall for Executive Boardroom (x: 550..690 and 760..1024)
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(550, 280, 140, 8); // Wall segment (x: 550..690)
+      ctx.fillRect(760, 280, 264, 8); // Right wall segment (x: 760..1024)
+      // Boardroom Acoustic Walnut Wood Trim on inner face (y = 286..288)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(550, 286, 140, 2);
+      ctx.fillRect(760, 286, 264, 2);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
       ctx.strokeRect(550, 280, 140, 8);
       ctx.strokeRect(760, 280, 264, 8);
 
@@ -3497,25 +3874,40 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
       ctx.font = 'bold 5.5px monospace';
       ctx.fillText('LOUNGE W', 200, 297);
 
-      // Vertical Glass Divider between Lounge & Grand Boardroom (x = 560, y in [280, 504])
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.16)';
-      ctx.fillRect(560, 288, 8, 22);  // Top wall segment (y: 288..310)
-      ctx.fillRect(560, 370, 8, 134); // Bottom wall segment (y: 370..504)
-      ctx.strokeStyle = 'rgba(56, 189, 248, 0.6)';
-      ctx.lineWidth = 1;
-      ctx.strokeRect(560, 288, 8, 22);
-      ctx.strokeRect(560, 370, 8, 134);
-      // Floor guide track / threshold across doorway (y: 310..370)
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(558, 310, 12, 60);
+      // Vertical Solid Acoustic Private Divider between Lounge & Grand Boardroom (x = 560, y in [288, 504])
+      // Symmetrically Centered Doorway at y = 396 (opening y: 366..426, walls: 78px each)
       ctx.fillStyle = '#0f172a';
-      ctx.fillRect(557, 308, 14, 4); // Top jamb
-      ctx.fillRect(557, 368, 14, 4); // Bottom jamb
-      // Frosted Sliding Door Leaf / Open Portal
-      ctx.fillStyle = 'rgba(56, 189, 248, 0.28)';
-      ctx.fillRect(560, 312, 8, 56);
-      ctx.fillStyle = 'rgba(224, 242, 254, 0.6)';
-      ctx.fillRect(561, 334, 6, 12);
+      ctx.fillRect(560, 288, 8, 78);  // Top wall segment (y: 288..366)
+      ctx.fillRect(560, 426, 8, 78); // Bottom wall segment (y: 426..504)
+      // Acoustic Walnut Wood Trim on boardroom side (x: 566..568)
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(566, 288, 2, 78);
+      ctx.fillRect(566, 426, 2, 78);
+      ctx.strokeStyle = '#1e293b';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(560, 288, 8, 78);
+      ctx.strokeRect(560, 426, 8, 78);
+      // Floor guide track / threshold across doorway (y: 366..426)
+      ctx.fillStyle = '#1e293b';
+      ctx.fillRect(558, 366, 12, 60);
+      ctx.fillStyle = '#0f172a';
+      ctx.fillRect(557, 364, 14, 4); // Top jamb
+      ctx.fillRect(557, 424, 14, 4); // Bottom jamb
+      // Solid Executive Walnut Acoustic Door Leaf (Centered)
+      ctx.fillStyle = '#3d2314';
+      ctx.fillRect(560, 368, 8, 56);
+      ctx.strokeStyle = '#0f172a';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(560, 368, 8, 56);
+      // Brushed Brass Gold Accent Line & Acoustic Walnut Inlay
+      ctx.fillStyle = '#78350f';
+      ctx.fillRect(562, 372, 4, 48);
+      ctx.fillStyle = '#fbbf24';
+      ctx.fillRect(563, 374, 2, 44);
+      // Chrome vertical handle
+      ctx.fillStyle = '#cfd8dc';
+      ctx.fillRect(559, 392, 2, 8);
+      ctx.fillRect(567, 392, 2, 8);
       // East Divider Plaque
       ctx.fillStyle = '#0f172a';
       ctx.fillRect(564, 290, 64, 10);
@@ -5535,6 +5927,126 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
           ctx.font = 'bold 9px monospace';
           ctx.fillText('🐶💕', drawX + 7, drawY - 6);
 
+        } else if (char.id === 'dylan' && (char.activity === 'dylan_carrying_flowers' || char.activity === 'dylan_giving_flowers' || (char.isWalking && dylanRoutineStepRef.current === 'flower_walk') || dylanRoutineStepRef.current === 'giving_flowers')) {
+          // ================================================================
+          // DYLAN: CARRYING & PRESENTING FRESH LUXURY FLOWER BOUQUET FOR EAH 💐🌹
+          // ================================================================
+          // Arms brought forward holding bouquet
+          ctx.fillStyle = char.shirtColor;
+          ctx.fillRect(drawX - 7, drawY + 2, 3, 5);
+          ctx.fillRect(drawX + 4, drawY + 2, 3, 5);
+          ctx.fillStyle = '#ffdfba';
+          ctx.fillRect(drawX - 6, drawY + 6, 3, 3);
+          ctx.fillRect(drawX + 3, drawY + 6, 3, 3);
+
+          // Golden/kraft wrapping paper cone
+          ctx.fillStyle = '#d97706';
+          ctx.fillRect(drawX - 5, drawY + 3, 10, 6);
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillRect(drawX - 3, drawY + 7, 6, 3);
+          ctx.fillStyle = '#fef3c7';
+          ctx.fillRect(drawX - 2, drawY + 8, 4, 1); // Ribbon tie
+
+          // Stems and rich leafy greens
+          ctx.fillStyle = '#15803d';
+          ctx.fillRect(drawX - 4, drawY + 1, 8, 3);
+
+          // Blooming Roses & Peonies
+          ctx.fillStyle = '#e11d48'; // Crimson rose
+          ctx.fillRect(drawX - 5, drawY - 3, 4, 4);
+          ctx.fillStyle = '#f43f5e'; // Vibrant rose
+          ctx.fillRect(drawX + 1, drawY - 3, 4, 4);
+          ctx.fillStyle = '#fb7185'; // Soft pink peony
+          ctx.fillRect(drawX - 2, drawY - 5, 4, 4);
+          ctx.fillStyle = '#ffffff'; // Baby's breath
+          ctx.fillRect(drawX - 6, drawY - 1, 2, 2);
+          ctx.fillRect(drawX + 4, drawY - 1, 2, 2);
+
+          // Floating heart & flower sparkle
+          if (frame % 40 < 22) {
+            ctx.fillStyle = '#fb7185';
+            ctx.font = 'bold 8px monospace';
+            ctx.fillText('💐💖', drawX - 2, drawY - 10);
+          }
+
+        } else if (char.id === 'dylan' && (char.activity === 'dylan_cooking' || (isAtKitchen && dylanRoutineStepRef.current === 'cooking'))) {
+          // ================================================================
+          // DYLAN: COOKING SIZZLING GOURMET MEAL FOR EAH AT KITCHEN ISLAND 🍳🥞
+          // ================================================================
+          ctx.fillStyle = '#1e293b';
+          ctx.fillRect(drawX - 16, drawY - 3, 14, 10);
+          ctx.fillStyle = '#334155';
+          ctx.fillRect(drawX - 15, drawY - 2, 12, 8);
+          ctx.fillStyle = '#64748b';
+          ctx.fillRect(drawX - 7, drawY + 1, 5, 3);
+          ctx.fillStyle = '#ffdfba';
+          ctx.fillRect(drawX - 8, drawY, 3, 4);
+
+          // Golden pancakes / eggs sizzling in pan
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(drawX - 14, drawY - 1, 8, 6);
+          ctx.fillStyle = '#fbbf24';
+          ctx.fillRect(drawX - 12, drawY, 4, 3);
+          ctx.fillStyle = '#ef4444';
+          ctx.fillRect(drawX - 9, drawY, 3, 3); // strawberry topping
+
+          // Spatula flip animation
+          const spatFlip = Math.sin(frame * 0.45) * 3;
+          ctx.fillStyle = '#94a3b8';
+          ctx.fillRect(drawX + 4, drawY - 4 + spatFlip, 2, 8);
+          ctx.fillRect(drawX + 2, drawY - 6 + spatFlip, 6, 3);
+          ctx.fillStyle = '#ffdfba';
+          ctx.fillRect(drawX + 3, drawY + 2, 4, 3);
+
+          // Sizzle steam
+          const sY = (frame * 0.3) % 8;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.7)';
+          ctx.fillRect(drawX - 13, drawY - 5 - sY, 2, 2);
+          ctx.fillRect(drawX - 9, drawY - 7 - sY, 2, 2);
+          ctx.fillRect(drawX - 16, drawY - 10 - sY, 2, 2);
+
+          if (frame % 40 < 22) {
+            ctx.fillStyle = '#f59e0b';
+            ctx.font = 'bold 8px monospace';
+            ctx.fillText('🥞🍳✨', drawX - 16, drawY - 10);
+          }
+
+        } else if (char.id === 'dylan' && (char.activity === 'dylan_carrying_food' || char.activity === 'dylan_serving_food' || (char.isWalking && dylanRoutineStepRef.current === 'deliver_food_walk') || dylanRoutineStepRef.current === 'serving_food')) {
+          // ================================================================
+          // DYLAN: CARRYING / SERVING GOURMET PLATTER FOR EAH 🥞🍓
+          // ================================================================
+          ctx.fillStyle = char.shirtColor;
+          ctx.fillRect(drawX - 8, drawY + 2, 3, 5);
+          ctx.fillRect(drawX + 5, drawY + 2, 3, 5);
+          ctx.fillStyle = '#ffdfba';
+          ctx.fillRect(drawX - 7, drawY + 6, 3, 3);
+          ctx.fillRect(drawX + 4, drawY + 6, 3, 3);
+
+          // Silver Platter
+          ctx.fillStyle = '#cbd5e1';
+          ctx.fillRect(drawX - 10, drawY + 5, 20, 4);
+          ctx.fillStyle = '#f8fafc';
+          ctx.fillRect(drawX - 9, drawY + 5, 18, 1);
+
+          // Fluffy golden pancakes on plate
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(drawX - 5, drawY + 2, 10, 4);
+          ctx.fillStyle = '#f59e0b';
+          ctx.fillRect(drawX - 4, drawY + 2, 6, 3);
+          ctx.fillStyle = '#ef4444';
+          ctx.fillRect(drawX - 1, drawY + 1, 2, 2); // Strawberry
+
+          // Steam
+          const sY = (frame * 0.25) % 6;
+          ctx.fillStyle = 'rgba(255, 255, 255, 0.65)';
+          ctx.fillRect(drawX - 1, drawY - 1 - sY, 2, 2);
+
+          if (frame % 50 < 25) {
+            ctx.fillStyle = '#fb7185';
+            ctx.font = 'bold 7px monospace';
+            ctx.fillText('🥞💖', drawX + 8, drawY - 8);
+          }
+
         } else if (char.activity === 'kitchen_work' || isAtKitchen) {
           // A. GOURMET KITCHEN ISLAND WORKING & SNACKING
           const lStyle = LAPTOP_STYLES_2D[char.id] || LAPTOP_STYLES_2D.dylan;
@@ -6251,8 +6763,8 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
       // Dog Speech Bubble Render (Arf arf! 🐶💕)
       if (dogSpeechRef.current && dogSpeechRef.current.timer > 0) {
         dogSpeechRef.current.timer -= 0.016;
-        const dX = 766;
-        const dY = 318;
+        const dX = 506;
+        const dY = 328;
         ctx.font = 'bold 9px monospace';
         const textW = ctx.measureText(dogSpeechRef.current.text).width;
         const bubW = textW + 18;
@@ -6272,6 +6784,31 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
         ctx.textAlign = 'center';
         ctx.fillText(dogSpeechRef.current.text, dX, bubY + 13);
       }
+
+      // Cat Speech Bubble Render (Purrrrr... Nyaa~ 🐱🤍)
+      if (catSpeechRef.current && catSpeechRef.current.timer > 0) {
+        catSpeechRef.current.timer -= 0.016;
+        const cX = 506;
+        const cY = 436;
+        ctx.font = 'bold 9px monospace';
+        const textW = ctx.measureText(catSpeechRef.current.text).width;
+        const bubW = textW + 18;
+        const bubH = 20;
+        const bubX = cX - bubW / 2;
+        const bubY = cY - bubH - 8;
+
+        ctx.fillStyle = 'rgba(15, 23, 42, 0.92)';
+        ctx.beginPath();
+        ctx.roundRect(bubX, bubY, bubW, bubH, 6);
+        ctx.fill();
+        ctx.strokeStyle = '#38bdf8';
+        ctx.lineWidth = 1.2;
+        ctx.stroke();
+
+        ctx.fillStyle = '#e0f2fe';
+        ctx.textAlign = 'center';
+        ctx.fillText(catSpeechRef.current.text, cX, bubY + 13);
+      }
     };
 
     render();
@@ -6285,9 +6822,16 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
       const clickY = (e.clientY - rect.top) * scaleY;
 
       // Click on Puppy
-      if (Math.hypot(clickX - 766, clickY - 338) < 26) {
+      if (Math.hypot(clickX - 506, clickY - 340) < 26) {
         dogSpeechRef.current = { text: 'Arf arf! 🐶💕 *happy puppy tail wag*', timer: 5.0 };
         playSfx('click');
+        return;
+      }
+
+      // Click on Snowy (White Cat)
+      if (Math.hypot(clickX - 506, clickY - 448) < 26) {
+        catSpeechRef.current = { text: 'Purrrrr... Nyaa~ 💕 *soft headbonk & purrs*', timer: 5.0 };
+        playSfx('meow');
         return;
       }
 
@@ -6306,7 +6850,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
         if (hitId === 'eah') {
           const eahQuotes = [
             'Hi Dylan 💕 Chilling on my iPad here! [Press C to cook / B for coffee]',
-            'Don\'t stress yourself too much, babe 💖 Luto kita? [C]',
+            'Don\'t stress yourself too much, babe 💖 Want me to cook for you? [C]',
             'I love keeping you company in the CEO suite 🥰',
             'Coffee delivery for my CEO anytime! ☕💕 [B]',
             'Cheering for you always Dylan! 📱💕',
@@ -6401,10 +6945,14 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                   boxShadow: viewMode === 'pixel' ? '0 0 10px rgba(0, 240, 255, 0.5)' : 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                 }}
                 title="Currently on 2D Pixel Office View"
               >
-                🕹️ PIXEL
+                <IconGamepad size={11} color="currentColor" />
+                <span>PIXEL</span>
               </button>
               <button
                 onClick={() => onViewModeChange('voxel')}
@@ -6420,10 +6968,14 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                   boxShadow: viewMode === 'voxel' ? '0 0 10px rgba(0, 240, 255, 0.5)' : 'none',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
                 }}
                 title="Switch to 3D Voxel Office View"
               >
-                🧊 3D VOXEL
+                <IconBox size={11} color="currentColor" />
+                <span>3D VOXEL</span>
               </button>
             </div>
           )}
@@ -6450,8 +7002,19 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
             >
               DYLAN RAMOS
             </span>
-            <span style={{ fontSize: '9px', color: '#94a3b8', fontFamily: "'Fira Code', monospace" }}>
-              CEO & Founder • {isDylanSeated ? '🪑 Seated' : '🚶 Roaming HQ'}
+            <span style={{ fontSize: '9px', color: '#94a3b8', fontFamily: "'Fira Code', monospace", display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+              <span>CEO &amp; Founder •</span>
+              {isDylanSeated ? (
+                <>
+                  <IconArmchair size={9} color="#00f59b" />
+                  <span>Seated</span>
+                </>
+              ) : (
+                <>
+                  <IconFootprints size={9} color="#ffbe0b" />
+                  <span>Roaming HQ</span>
+                </>
+              )}
             </span>
           </div>
 
@@ -6473,7 +7036,17 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
               gap: '4px',
             }}
           >
-            {isDylanSeated ? '🚶 Stand Up [E]' : '🪑 Sit at Desk [E]'}
+            {isDylanSeated ? (
+              <>
+                <IconFootprints size={11} color="#00f0ff" />
+                <span>Stand Up [E]</span>
+              </>
+            ) : (
+              <>
+                <IconArmchair size={11} color="#ffbe0b" />
+                <span>Sit at Desk [E]</span>
+              </>
+            )}
           </button>
         </div>
 
@@ -6500,7 +7073,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
               transition: 'all 0.15s ease',
             }}
           >
-            <span style={{ fontSize: '16px' }}>🤸</span>
+            <IconActivity size={15} color="#38bdf8" />
             <span>WORKERS STAND</span>
           </button>
 
@@ -6525,7 +7098,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
               transition: 'all 0.15s ease',
             }}
           >
-            <span style={{ fontSize: '16px' }}>{inRestMode ? '💼' : '🛋️'}</span>
+            {inRestMode ? <IconBriefcase size={15} color="#ec4899" /> : <IconArmchair size={15} color="#f59e0b" />}
             <span>{inRestMode ? 'DESK WORK' : 'LAPTOP LOUNGE'}</span>
           </button>
 
@@ -6549,7 +7122,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
               gap: '7px',
             }}
           >
-            <span style={{ fontSize: '16px' }}>{inMeetingMode ? '💼' : '📢'}</span>
+            {inMeetingMode ? <IconBriefcase size={15} color="#ffbe0b" /> : <IconUsers size={15} color="#00f0ff" />}
             <span>{inMeetingMode ? 'DISMISS TO DESKS' : 'ALL-HANDS MEETING'}</span>
           </button>
         </div>
@@ -6570,9 +7143,13 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
               fontFamily: "'Inter', system-ui, sans-serif",
               fontWeight: 700,
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
             }}
           >
-            {isSprinting ? '⚡ SPRINT 2X' : '🚶 WALK'}
+            {isSprinting ? <IconZap size={13} color="#ec4899" /> : <IconFootprints size={13} color="#cbd5e1" />}
+            <span>{isSprinting ? 'SPRINT 2X' : 'WALK'}</span>
           </button>
 
           <button
@@ -6589,9 +7166,13 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
               fontFamily: "'Inter', system-ui, sans-serif",
               fontWeight: 700,
               cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
             }}
           >
-            {soundEnabled ? '🔊 ON' : '🔈 OFF'}
+            {soundEnabled ? <IconVolume2 size={13} color="#00f59b" /> : <IconVolumeX size={13} color="#94a3b8" />}
+            <span>{soundEnabled ? 'ON' : 'OFF'}</span>
           </button>
         </div>
       </div>
@@ -6618,7 +7199,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
           transition: 'all 0.2s ease',
         }}
       >
-        <span style={{ fontSize: '14px' }}>🕹️</span>
+        <IconGamepad size={14} color="#00f0ff" />
         {nearbyPrompt ? (
           <span style={{ fontWeight: 700, color: '#00f59b' }}>{nearbyPrompt}</span>
         ) : (
@@ -6706,7 +7287,7 @@ export default function PixelOffice({ selectedAgentId, onSelectAgent, viewMode =
               justifyContent: 'center',
             }}
           >
-            {isDylanSeated ? '🪑' : '🚶'}
+            {isDylanSeated ? <IconArmchair size={12} color="#00f59b" /> : <IconFootprints size={12} color="#ffbe0b" />}
           </button>
           <button
             onMouseDown={() => (dpadDirRef.current.right = true)}

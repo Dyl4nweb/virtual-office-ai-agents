@@ -20,6 +20,8 @@ import {
   IconCompass,
   IconBox,
   IconGrid,
+  IconLayers,
+  IconCheckCircle,
   IconRotateCw,
   IconTarget,
   IconServer,
@@ -30,6 +32,11 @@ import {
   IconFlame,
   IconHeart,
   IconShield,
+  IconSidebar,
+  IconChevronDown,
+  IconChevronUp,
+  IconLock,
+  IconBuilding,
   getAgentIcon,
 } from './Icons';
 import ServerRoomModal from './ServerRoomModal';
@@ -62,31 +69,31 @@ export const OFFICE_3D_LAYOUT = {
     // Row 2 (Marketing Strategist - aligned with Ray in Column 1, keeping Lounge doorway corridor x=17..20 completely clear!)
     wendy: { x: 14.5, z: 7.8, chair: { x: 14.5, z: 9.0 } },
     // Zone 6: High-Tech Cyber Security & Server Vault Tech Hub (Fullstack + Cyber Sec Together!)
-    alex: { x: 32.2, z: 7.2, chair: { x: 32.2, z: 8.6 } },
-    zane: { x: 36.2, z: 7.2, chair: { x: 36.2, z: 8.6 } },
+    alex: { x: 28.8, z: 7.2, chair: { x: 28.8, z: 8.5 } },
+    zane: { x: 33.8, z: 7.2, chair: { x: 33.8, z: 8.5 } },
   },
 
-  // 6. High-Tech Cyber Security & Server Vault (Zone 6, East Wing: x: 29.5..38.5, z: 0.5..11.5)
+  // 6. High-Tech Cyber Security & Server Vault (Zone 6, East Wing: x: 26.0..38.0, z: 0.5..11.0 - Expansive 12m Tech Hub!)
   SERVER_ROOM: {
-    doorway: { x: 29.0, z: 6.5 },
+    doorway: { x: 26.0, z: 6.5 },
     racks: [
-      { id: 'rack1', name: 'PROD-DB-CLUSTER', x: 31.6, z: 1.6 },
-      { id: 'rack2', name: 'AI-GPU-MAINFRAME', x: 33.4, z: 1.6 },
-      { id: 'rack3', name: 'EDGE-FIREWALL', x: 35.2, z: 1.6 },
-      { id: 'rack4', name: 'ZERO-TRUST-VAULT', x: 37.0, z: 1.6 },
+      { id: 'rack1', name: 'PROD-DB-CLUSTER', x: 27.8, z: 2.0 },
+      { id: 'rack2', name: 'AI-GPU-MAINFRAME', x: 30.4, z: 2.0 },
+      { id: 'rack3', name: 'EDGE-FIREWALL', x: 33.0, z: 2.0 },
+      { id: 'rack4', name: 'ZERO-TRUST-VAULT', x: 35.6, z: 2.0 },
     ],
-    threatMap: { x: 34.3, z: 0.8 },
-    alexDesk: { x: 32.2, z: 7.2 },
-    alexChair: { x: 32.2, z: 8.6 },
-    zaneDesk: { x: 36.2, z: 7.2 },
-    zaneChair: { x: 36.2, z: 8.6 },
-    crashCart: { x: 30.5, z: 3.6 },
+    threatMap: { x: 32.0, z: 0.8 },
+    alexDesk: { x: 28.8, z: 7.2 },
+    alexChair: { x: 28.8, z: 8.5 },
+    zaneDesk: { x: 33.8, z: 7.2 },
+    zaneChair: { x: 33.8, z: 8.5 },
+    crashCart: { x: 27.2, z: 4.5 },
   },
 
   AMENITIES: {
-    waterCooler: { x: 28.0, z: 4.5 },
+    waterCooler: { x: 24.2, z: 4.2 },
     miniFridge: { x: 12.8, z: 8.5 },
-    serverDiagnostic: { x: 33.4, z: 3.2 },
+    serverDiagnostic: { x: 31.3, z: 3.2 },
   },
 
   // 3. Team Relaxation & Coffee Lounge (Zone 3, Bottom-Center: x: 8..21, z: 11..21)
@@ -97,6 +104,7 @@ export const OFFICE_3D_LAYOUT = {
     bottomBooth: { x: 16.8, z: 19.7 },
     bottomTable: { x: 16.8, z: 18.25 },
     dogBed: { x: 19.2, z: 13.8 },
+    catBed: { x: 18.2, z: 18.8 },
     espressoBar: { x: 10.2, z: 18.6, width: 1.6, depth: 2.4 },
     framedHeartPhoto: { x: 11.2, z: 19.5 },
     plant: { x: 19.5, z: 19.5 },
@@ -120,6 +128,7 @@ export const OFFICE_3D_LAYOUT = {
     table: { x: 29.5, z: 16.2, width: 7.2, depth: 2.2 },
     screen: { x: 29.5, z: 11.15 },
     doors: { x: 21.0, z: 15.0 },
+    waterDispenser: { x: 22.4, z: 11.8 },
     seats: {
       dylan: { x: 25.2, z: 16.2 }, // Head of table (CEO Dylan Ramos)
       // North side (3 specialists, ample legroom)
@@ -174,20 +183,23 @@ export function isTileBlocked3D(x: number, z: number): boolean {
     if (z < 7.2 || z > 10.2) return true;
   }
 
-  // Security Glass Divider between Bullpen & Server Room (x = 29, z in [0, 11.5])
-  // Doorway is at z in [5.4, 7.6]
-  if (x >= 28.6 && x <= 29.4 && z <= 11.5) {
-    if (z < 5.4 || z > 7.6) return true;
+  // Security Glass Divider between Bullpen & Server Room (x = 26.0, z in [0, 11.5])
+  // Doorway is at z in [5.2, 7.8]
+  if (x >= 25.6 && x <= 26.4 && z <= 11.5) {
+    if (z < 5.2 || z > 7.8) return true;
   }
 
-  // Server Room Server Racks (x: 30.6..38.0, z: 1.0..2.5)
-  if (x >= 30.6 && x <= 38.0 && z >= 1.0 && z <= 2.5) return true;
+  // Server Room Server Racks (x: 26.8..36.6, z: 1.4..2.6)
+  if (x >= 26.8 && x <= 36.6 && z >= 1.4 && z <= 2.6) return true;
 
-  // Server Room Command Desks (Alex & Zane: x: 31.0..37.4, z: 6.4..8.0)
-  if (x >= 31.0 && x <= 37.4 && z >= 6.4 && z <= 8.0) return true;
+  // Server Room Command Desks (Alex: x: 27.6..30.0, Zane: x: 32.6..35.0, Central Bridge: x: 30.5..32.1, z: 6.4..8.0)
+  const isAlexDesk = (x >= 27.6 && x <= 30.0 && z >= 6.4 && z <= 8.0);
+  const isZaneDesk = (x >= 32.6 && x <= 35.0 && z >= 6.4 && z <= 8.0);
+  const isConsoleBridge = (x >= 30.5 && x <= 32.1 && z >= 6.6 && z <= 7.8);
+  if (isAlexDesk || isZaneDesk || isConsoleBridge) return true;
 
-  // Server Room Diagnostic Cart (x: 30.8..32.0, z: 3.8..4.6)
-  if (x >= 30.8 && x <= 32.0 && z >= 3.8 && z <= 4.6) return true;
+  // Server Room Diagnostic Cart (x: 26.6..27.8, z: 4.0..5.0)
+  if (x >= 26.6 && x <= 27.8 && z >= 4.0 && z <= 5.0) return true;
 
   // Horizontal Dividing Wall along z = 11 (Bullpen & Server Room vs Lounge & Boardroom: x in [1.0, 38.5])
   // Double sliding doors into Lounge at x in [16.5, 20.5]
@@ -208,10 +220,10 @@ export function isTileBlocked3D(x: number, z: number): boolean {
     if (x < 3.4 || x > 5.6) return true;
   }
 
-  // Vertical Glass Divider between Lounge & Boardroom (x = 21, z in [11, 21])
-  // Doorway is at z in [12.5, 15.5]
+  // Solid Acoustic Dividing Wall between Lounge & Boardroom (x = 21, z in [11, 21])
+  // Doorway is centered at z = 16.075 (clearance z in [14.6, 17.5])
   if (x >= 20.6 && x <= 21.4 && z >= 11.0 && z <= 21.0) {
-    if (z < 12.5 || z > 15.5) return true;
+    if (z < 14.6 || z > 17.5) return true;
   }
 
   // Modern Wood Slat Acoustic Accent Wall along East Perimeter (x: 37.6..38.0, z: 13.5..19.5)
@@ -234,12 +246,15 @@ export function isTileBlocked3D(x: number, z: number): boolean {
   // Bullpen Workstation Desks Grid (Row 1 at z=3.6, Row 2 at z=7.8)
   const isRow1Desk = (z >= 2.8 && z <= 4.4) && ((x >= 13.0 && x <= 16.0) || (x >= 20.0 && x <= 23.0));
   const isRow2Desk = (z >= 7.0 && z <= 8.6) && (x >= 13.0 && x <= 16.0);
-  const isWaterCooler = (x >= 27.2 && x <= 28.8 && z >= 3.8 && z <= 5.2);
+  const isWaterCooler = (x >= 23.6 && x <= 24.8 && z >= 3.6 && z <= 4.8);
   if (isRow1Desk || isRow2Desk || isWaterCooler) return true;
 
   // Boardroom Conference Table (Zone 4: table surface is x: 25.8..33.2, z: 15.0..17.4)
   // Generous margin around all edges so characters can walk around freely:
   if (x >= 25.8 && x <= 33.2 && z >= 15.0 && z <= 17.4) return true;
+
+  // Boardroom Executive Water Dispenser (Zone 4: x: 22.0..22.8, z: 11.4..12.3)
+  if (x >= 22.0 && x <= 22.8 && z >= 11.4 && z <= 12.3) return true;
 
   // Rest Area Lounge Furniture (Zone 3: x: 8..21, z: 13..21)
   if (x >= 9.4 && x <= 11.2 && z >= 17.4 && z <= 20.0) return true; // Espresso counter
@@ -249,6 +264,7 @@ export function isTileBlocked3D(x: number, z: number): boolean {
   if (x >= 14.8 && x <= 18.8 && z >= 19.5 && z <= 20.2) return true; // Bottom booth back (z=19.15 cushion is clear!)
   if (x >= 15.7 && x <= 17.9 && z >= 17.8 && z <= 18.7) return true; // Bottom caramel coffee table
   if (x >= 18.5 && x <= 19.8 && z >= 13.2 && z <= 14.4) return true; // Puppy donut bed sanctuary
+  if (x >= 17.6 && x <= 18.8 && z >= 18.2 && z <= 19.4) return true; // White cat velvet basket & scratching tree
 
   return false;
 }
@@ -262,7 +278,7 @@ export function findPath3D(
 ): Array<{ x: number; z: number }> {
   const getZone = (x: number, z: number) => {
     if (x <= 10.0 && z <= 11.0) return 'ceo';
-    if (x > 29.0 && z <= 12.0) return 'server';
+    if (x > 26.0 && z <= 12.0) return 'server';
     if (x > 10.0 && z <= 11.0) return 'bullpen';
     if (x < 8.0 && z > 11.0 && z <= 16.0) return 'kitchen';
     if (x < 8.0 && z > 16.0) return 'garden';
@@ -334,9 +350,9 @@ export function findPath3D(
 
   // 2. Real Doorways & Portals
   const ceoDoor = { x: 10.0, z: 8.6 };
-  const serverDoor = { x: 29.0, z: 6.5 };
+  const serverDoor = { x: 26.0, z: 6.5 };
   const loungeDoors = { x: 18.5, z: 11.0 };
-  const boardDoor = { x: 21.0, z: 14.0 };
+  const boardDoor = { x: 21.0, z: 16.075 };
   const recDoor = { x: 8.0, z: 14.0 };
   const patioDoor = { x: 4.5, z: 16.0 };
 
@@ -369,9 +385,9 @@ export function findPath3D(
     path.push({ x: 12.0, z: 6.4 }); // Reach Bullpen aisle
   } else if (sZone === 'server') {
     path.push({ x: startX, z: 5.2 }); // Clear server aisle
-    path.push({ x: 30.5, z: 5.2 });
-    path.push(serverDoor); // (29.0, 6.5)
-    path.push({ x: 27.2, z: 6.4 }); // Reach Bullpen aisle
+    path.push({ x: 27.5, z: 5.2 });
+    path.push(serverDoor); // (26.0, 6.5)
+    path.push({ x: 24.2, z: 6.4 }); // Reach Bullpen aisle
   } else if (sZone === 'bullpen') {
     if (Math.abs(startZ - 6.4) > 0.4) {
       path.push({ x: startX, z: 6.4 });
@@ -388,18 +404,19 @@ export function findPath3D(
     path.push({ x: 10.5, z: 14.0 }); // Reach Lounge concourse
   } else if (sZone === 'boardroom') {
     // Avoid table when exiting Boardroom
-    if (startZ > 16.0) {
+    if (startZ > 17.5) {
       path.push({ x: startX, z: 19.0 });
       path.push({ x: 23.5, z: 19.0 });
-    } else if (startZ < 15.5) {
+    } else if (startZ < 14.5) {
       path.push({ x: startX, z: 13.5 });
       path.push({ x: 23.5, z: 13.5 });
     } else {
-      path.push({ x: 23.5, z: 16.2 });
+      path.push({ x: 23.5, z: 16.075 });
     }
-    path.push({ x: 23.5, z: 14.0 });
-    path.push(boardDoor); // (21.0, 14.0)
-    path.push({ x: 18.5, z: 14.0 }); // Reach Lounge concourse
+    path.push({ x: 23.5, z: 16.075 });
+    path.push(boardDoor); // (21.0, 16.075)
+    path.push({ x: 18.5, z: 16.075 }); // Reach Lounge concourse
+    path.push({ x: 18.5, z: 14.0 });
   } else if (sZone === 'lounge') {
     if (Math.abs(startZ - 14.0) > 0.5) {
       path.push({ x: startX, z: 14.0 });
@@ -435,9 +452,9 @@ export function findPath3D(
     if (targetZ < 4.5) path.push({ x: 8.5, z: targetZ });
     path.push({ x: targetX, z: targetZ });
   } else if (tZone === 'server') {
-    path.push({ x: 27.2, z: 6.4 });
-    path.push(serverDoor); // (29.0, 6.5)
-    path.push({ x: 30.5, z: 5.2 }); // Enter clear server aisle
+    path.push({ x: 24.2, z: 6.4 });
+    path.push(serverDoor); // (26.0, 6.5)
+    path.push({ x: 27.5, z: 5.2 }); // Enter clear server aisle
     path.push({ x: targetX, z: 5.2 });
     path.push({ x: targetX, z: targetZ });
   } else if (tZone === 'bullpen') {
@@ -457,13 +474,14 @@ export function findPath3D(
     path.push({ x: targetX, z: targetZ });
   } else if (tZone === 'boardroom') {
     path.push({ x: 18.5, z: 14.0 });
-    path.push(boardDoor); // (21.0, 14.0)
-    path.push({ x: 23.5, z: 14.0 }); // Inside Boardroom West Aisle
+    path.push({ x: 18.5, z: 16.075 });
+    path.push(boardDoor); // (21.0, 16.075)
+    path.push({ x: 23.5, z: 16.075 }); // Inside Boardroom West Aisle
     // Navigate around conference table to target seat:
-    if (targetZ > 16.0) {
+    if (targetZ > 17.5) {
       path.push({ x: 23.5, z: 19.0 }); // South aisle around table
       path.push({ x: targetX, z: 19.0 });
-    } else if (targetZ < 15.5) {
+    } else if (targetZ < 14.5) {
       path.push({ x: 23.5, z: 13.5 }); // North aisle around table
       path.push({ x: targetX, z: 13.5 });
     } else {
@@ -608,12 +626,23 @@ export const AGENT_BUBBLE_CONFIG: Record<string, AgentBubbleMeta> = {
     glowColor: 'rgba(245, 158, 11, 0.45)',
     icon: '🐶',
   },
+  cat: {
+    id: 'cat',
+    name: 'Snowy (White Cat)',
+    role: 'Executive Purr Officer',
+    badge: '🐱 WHITE KITTY',
+    borderColor: '#38bdf8',
+    badgeBg: 'rgba(56, 189, 248, 0.2)',
+    badgeColor: '#38bdf8',
+    glowColor: 'rgba(56, 189, 248, 0.45)',
+    icon: '🐱',
+  },
 };
 
 // ============================================================================
 // 8-BIT RETRO GAME AUDIO SYNTHESIZER (Pure Web Audio, Zero Dependencies)
 // ============================================================================
-export function play8BitGameSound(type: 'quest' | 'heart' | 'coin' | 'bark' | 'step' | 'click') {
+export function play8BitGameSound(type: 'quest' | 'heart' | 'coin' | 'bark' | 'meow' | 'purr' | 'step' | 'click') {
   try {
     const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
     if (!AudioCtx) return;
@@ -672,6 +701,31 @@ export function play8BitGameSound(type: 'quest' | 'heart' | 'coin' | 'bark' | 's
       gain.connect(ctx.destination);
       osc.start(now);
       osc.stop(now + 0.14);
+    } else if (type === 'meow') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(680, now);
+      osc.frequency.exponentialRampToValueAtTime(940, now + 0.12);
+      osc.frequency.exponentialRampToValueAtTime(580, now + 0.28);
+      gain.gain.setValueAtTime(0.06, now);
+      gain.gain.linearRampToValueAtTime(0.08, now + 0.08);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.28);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.28);
+    } else if (type === 'purr') {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(75, now);
+      gain.gain.setValueAtTime(0.04, now);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now);
+      osc.stop(now + 0.35);
     } else if (type === 'click') {
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -689,58 +743,154 @@ export function play8BitGameSound(type: 'quest' | 'heart' | 'coin' | 'bark' | 's
 
 
 // ============================================================================
-// LIVING ANIMATED VOXEL PUPPY (MOCHI) CLASS
+// LIVING ANIMATED VOXEL PUPPY (MOCHI) - AUTONOMOUS LOUNGE PATROL CIRCUIT
 // ============================================================================
+export const PUPPY_LOUNGE_CIRCUIT = [
+  // 1. Puppy Donut Bed Sanctuary Corner (Resting & drinking water)
+  { x: 19.2, z: 14.8, wait: 5.5, activity: 'bed_rest' as const, speech: 'Woof! Mochi is resting by his donut bed 🐾' },
+  // 2. Sniffing walkway near Boardroom Glass Partition
+  { x: 19.5, z: 16.5, wait: 3.5, activity: 'sniffing' as const, speech: '*Sniff sniff* 🐾 Exploring the warm wooden floor border!' },
+  // 3. Strolling past bottom booth towards the caramel table
+  { x: 17.2, z: 17.5, wait: 4.0, activity: 'sitting' as const, speech: 'Arf! Happy tail wags by the coffee booth ☕🐶' },
+  // 4. Center of the plush teal lounge rug
+  { x: 14.5, z: 16.5, wait: 5.0, activity: 'sitting' as const, speech: 'Woof woof! Sitting proudly on the executive rug ✨' },
+  // 5. In front of the Espresso Bar counter
+  { x: 12.2, z: 17.5, wait: 3.5, activity: 'sniffing' as const, speech: '*Sniffing delicious coffee aroma* Any puppy cookies? 🍪🐾' },
+  // 6. Beside the Retro Arcade Machine
+  { x: 11.8, z: 15.0, wait: 4.0, activity: 'happy_bark' as const, speech: 'Yip yip! Watching the colorful arcade screen! 🕹️🐶' },
+  // 7. North aisle in front of Top Booth
+  { x: 13.5, z: 15.8, wait: 3.5, activity: 'sniffing' as const, speech: '*Curious sniffs* Checking out the team lounge 🐾' },
+  // 8. Lounging near central sliding glass doors
+  { x: 16.8, z: 13.0, wait: 4.0, activity: 'sitting' as const, speech: 'Watching team members come in through the sliding door 🚪🐕' },
+  // 9. Back towards the puppy sanctuary bowls
+  { x: 18.6, z: 14.0, wait: 4.5, activity: 'sniffing' as const, speech: 'Drinking cool fresh water from his silver bowl! 💧🐶' },
+];
+
 export class VoxelPuppy3D {
   public group: THREE.Group;
+  public bodyGroup: THREE.Group;
   public tail: THREE.Mesh;
   public headGroup: THREE.Group;
   public earsGroup: THREE.Group;
   public tongue: THREE.Mesh;
+
+  // 4 Articulated Puppy Legs with White Paw Socks
+  public legFL: THREE.Group;
+  public legFR: THREE.Group;
+  public legBL: THREE.Group;
+  public legBR: THREE.Group;
+
+  public currentX: number;
+  public currentZ: number;
+  public isWalking = false;
+  public walkCycle = 0;
+  public walkSpeed = 1.35; // Energetic, bouncy puppy trotting speed
+  public currentActivity: 'patrol' | 'sniffing' | 'sitting' | 'happy_bark' | 'bed_rest' | 'being_pet' = 'bed_rest';
+  public waitTimer = 4.0;
+  public circuitIndex = 0;
+  public pathQueue: Array<{ x: number; z: number }> = [];
+  public speechText = '';
+  public speechTimer = 0;
+
   private animTimer = 0;
 
   constructor(x: number, z: number) {
+    this.currentX = x;
+    this.currentZ = z;
     this.group = new THREE.Group();
-    this.group.position.set(x, 0, z);
+    this.group.position.set(x, 0.02, z);
 
     const boxGeo = new THREE.BoxGeometry(1, 1, 1);
     const furBlackMat = new THREE.MeshLambertMaterial({ color: 0x18181b });
     const furWhiteMat = new THREE.MeshLambertMaterial({ color: 0xf8fafc });
     const pinkMat = new THREE.MeshLambertMaterial({ color: 0xf43f5e, emissive: 0xf43f5e, emissiveIntensity: 0.35 });
     const noseMat = new THREE.MeshLambertMaterial({ color: 0x090d16 });
+    const collarRedMat = new THREE.MeshLambertMaterial({ color: 0xdc2626 });
+    const goldBellMat = new THREE.MeshLambertMaterial({ color: 0xfbbf24, emissive: 0xfbbf24, emissiveIntensity: 0.6 });
 
-    // Puppy Body
+    // 1. Articulated Legs (Pivot at hip/shoulder y = 0.22)
+    const createLeg = (lx: number, lz: number) => {
+      const legGroup = new THREE.Group();
+      legGroup.position.set(lx, 0.22, lz);
+
+      // Black leg upper
+      const leg = new THREE.Mesh(boxGeo, furBlackMat);
+      leg.scale.set(0.11, 0.16, 0.11);
+      leg.position.set(0, -0.07, 0);
+      leg.castShadow = true;
+      legGroup.add(leg);
+
+      // Cute white paw sock
+      const paw = new THREE.Mesh(boxGeo, furWhiteMat);
+      paw.scale.set(0.12, 0.07, 0.13);
+      paw.position.set(0, -0.18, 0.01);
+      paw.castShadow = true;
+      legGroup.add(paw);
+
+      this.group.add(legGroup);
+      return legGroup;
+    };
+
+    this.legFL = createLeg(-0.16, -0.14);
+    this.legFR = createLeg(0.16, -0.14);
+    this.legBL = createLeg(-0.16, 0.14);
+    this.legBR = createLeg(0.16, 0.14);
+
+    // 2. Main Body Group (Articulated vertically for playful trotting bounce)
+    this.bodyGroup = new THREE.Group();
+    this.bodyGroup.position.set(0, 0, 0);
+    this.group.add(this.bodyGroup);
+
+    // Puppy Torso
     const body = new THREE.Mesh(boxGeo, furBlackMat);
-    body.scale.set(0.56, 0.28, 0.44);
-    body.position.set(0, 0.38, 0);
+    body.scale.set(0.54, 0.26, 0.42);
+    body.position.set(0, 0.36, 0);
     body.castShadow = true;
-    this.group.add(body);
+    this.bodyGroup.add(body);
 
+    // Fluffy White Chest
     const chest = new THREE.Mesh(boxGeo, furWhiteMat);
-    chest.scale.set(0.36, 0.24, 0.14);
-    chest.position.set(0, 0.38, -0.18);
+    chest.scale.set(0.36, 0.22, 0.14);
+    chest.position.set(0, 0.36, -0.18);
     chest.castShadow = true;
-    this.group.add(chest);
+    this.bodyGroup.add(chest);
+
+    // Red Collar with Golden Jingle Bell
+    const collar = new THREE.Mesh(boxGeo, collarRedMat);
+    collar.scale.set(0.38, 0.06, 0.18);
+    collar.position.set(0, 0.45, -0.17);
+    this.bodyGroup.add(collar);
+
+    const bell = new THREE.Mesh(boxGeo, goldBellMat);
+    bell.scale.set(0.07, 0.07, 0.07);
+    bell.position.set(0, 0.43, -0.27);
+    this.bodyGroup.add(bell);
 
     // Tail (Articulated at rear)
     this.tail = new THREE.Mesh(boxGeo, furBlackMat);
-    this.tail.scale.set(0.12, 0.24, 0.12);
-    this.tail.position.set(0, 0.48, 0.22);
-    this.tail.rotation.x = 0.5;
+    this.tail.scale.set(0.11, 0.24, 0.11);
+    this.tail.position.set(0, 0.46, 0.22);
+    this.tail.rotation.x = 0.55;
     this.tail.castShadow = true;
-    this.group.add(this.tail);
+    this.bodyGroup.add(this.tail);
 
-    // Head Group
+    // White tip on tail
+    const tailTip = new THREE.Mesh(boxGeo, furWhiteMat);
+    tailTip.scale.set(0.115, 0.08, 0.115);
+    tailTip.position.set(0, 0.10, 0);
+    this.tail.add(tailTip);
+
+    // 3. Head Group
     this.headGroup = new THREE.Group();
-    this.headGroup.position.set(0, 0.58, -0.20);
-    this.group.add(this.headGroup);
+    this.headGroup.position.set(0, 0.56, -0.20);
+    this.bodyGroup.add(this.headGroup);
 
     const headMesh = new THREE.Mesh(boxGeo, furBlackMat);
     headMesh.scale.set(0.42, 0.34, 0.36);
     headMesh.castShadow = true;
     this.headGroup.add(headMesh);
 
-    // Muzzle & Wet Nose
+    // Muzzle & Wet Black Nose
     const muzzle = new THREE.Mesh(boxGeo, furWhiteMat);
     muzzle.scale.set(0.24, 0.16, 0.16);
     muzzle.position.set(0, -0.06, -0.20);
@@ -751,7 +901,7 @@ export class VoxelPuppy3D {
     nose.position.set(0, -0.02, -0.29);
     this.headGroup.add(nose);
 
-    // Cute Anime Puppy Eyes with White Glint
+    // Cute Anime Puppy Eyes with Sparkling Glint
     [-0.12, 0.12].forEach((ex) => {
       const eye = new THREE.Mesh(boxGeo, noseMat);
       eye.scale.set(0.07, 0.07, 0.04);
@@ -764,7 +914,7 @@ export class VoxelPuppy3D {
       this.headGroup.add(glint);
     });
 
-    // Rosy puppy cheek blush
+    // Rosy Puppy Cheek Blush
     [-0.18, 0.18].forEach((bx) => {
       const blush = new THREE.Mesh(boxGeo, pinkMat);
       blush.scale.set(0.08, 0.04, 0.03);
@@ -772,13 +922,13 @@ export class VoxelPuppy3D {
       this.headGroup.add(blush);
     });
 
-    // Tongue
+    // Pink Panting Tongue
     this.tongue = new THREE.Mesh(boxGeo, pinkMat);
     this.tongue.scale.set(0.10, 0.04, 0.08);
     this.tongue.position.set(0, -0.12, -0.24);
     this.headGroup.add(this.tongue);
 
-    // Floppy Ears
+    // Floppy Puppy Ears with Pink Fluff Inlay
     this.earsGroup = new THREE.Group();
     [-0.16, 0.16].forEach((ex) => {
       const ear = new THREE.Mesh(boxGeo, furBlackMat);
@@ -793,19 +943,533 @@ export class VoxelPuppy3D {
     });
     this.headGroup.add(this.earsGroup);
 
-    // Tag for raycasting
+    // Tag for 3D raycasting and click interaction
     this.group.traverse((obj) => {
       (obj as any).agentId = 'puppy';
     });
   }
 
-  public update(delta: number, isBeingPet = false) {
+  public walkTo(targetX: number, targetZ: number) {
+    this.pathQueue = [{ x: targetX, z: targetZ }];
+    this.isWalking = true;
+  }
+
+  public update(delta: number, isBeingPet = false, onSpeechUpdate?: (text: string, timer: number) => void) {
     this.animTimer += delta;
-    const wagSpeed = isBeingPet ? 24 : 12;
-    this.tail.rotation.y = Math.sin(this.animTimer * wagSpeed) * (isBeingPet ? 0.75 : 0.42);
-    this.earsGroup.rotation.z = Math.sin(this.animTimer * 5) * 0.07;
-    this.headGroup.rotation.y = Math.sin(this.animTimer * 2) * 0.10;
-    this.tongue.scale.z = 1.0 + Math.sin(this.animTimer * 10) * 0.25;
+
+    if (this.speechTimer > 0) {
+      this.speechTimer -= delta;
+    }
+
+    // 1. Being Pet Mode: Stop in tracks, face player, enthusiastic tail wag & happy hops
+    if (isBeingPet) {
+      this.currentActivity = 'being_pet';
+      this.isWalking = false;
+      this.waitTimer = Math.max(this.waitTimer, 3.5);
+
+      const wagSpeed = 26;
+      this.tail.rotation.y = Math.sin(this.animTimer * wagSpeed) * 0.82;
+      this.earsGroup.rotation.z = Math.sin(this.animTimer * 10) * 0.14;
+      this.headGroup.rotation.y = Math.sin(this.animTimer * 3) * 0.12;
+      this.bodyGroup.position.y = Math.abs(Math.sin(this.animTimer * 12)) * 0.06;
+      this.tongue.scale.z = 1.35;
+
+      this.legFL.rotation.x *= 0.8;
+      this.legFR.rotation.x *= 0.8;
+      this.legBL.rotation.x *= 0.8;
+      this.legBR.rotation.x *= 0.8;
+      return;
+    }
+
+    // 2. Moving along Lounge Circuit
+    if (this.pathQueue.length > 0) {
+      this.isWalking = true;
+      const target = this.pathQueue[0];
+      const dx = target.x - this.group.position.x;
+      const dz = target.z - this.group.position.z;
+      const dist = Math.hypot(dx, dz);
+      const step = this.walkSpeed * delta;
+
+      // Smooth heading rotation towards walking direction
+      const heading = Math.atan2(dx, dz) + Math.PI;
+      let diff = heading - this.group.rotation.y;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      this.group.rotation.y += diff * Math.min(1, delta * 7);
+
+      if (dist <= step) {
+        // Reached destination waypoint!
+        this.group.position.x = target.x;
+        this.group.position.z = target.z;
+        this.currentX = target.x;
+        this.currentZ = target.z;
+        this.pathQueue.shift();
+
+        if (this.pathQueue.length === 0) {
+          this.isWalking = false;
+          const currentPoint = PUPPY_LOUNGE_CIRCUIT[this.circuitIndex];
+          this.currentActivity = currentPoint.activity;
+          this.waitTimer = currentPoint.wait;
+          this.speechText = currentPoint.speech;
+          this.speechTimer = 4.0;
+          if (onSpeechUpdate) {
+            onSpeechUpdate(currentPoint.speech, 4.0);
+          }
+        }
+      } else {
+        this.group.position.x += (dx / dist) * step;
+        this.group.position.z += (dz / dist) * step;
+        this.currentX = this.group.position.x;
+        this.currentZ = this.group.position.z;
+
+        // Energetic 4-Leg Trotting Gait (FL/BR match, FR/BL match)
+        this.walkCycle += delta * 12;
+        this.legFL.rotation.x = Math.sin(this.walkCycle) * 0.65;
+        this.legBR.rotation.x = Math.sin(this.walkCycle) * 0.65;
+        this.legFR.rotation.x = -Math.sin(this.walkCycle) * 0.65;
+        this.legBL.rotation.x = -Math.sin(this.walkCycle) * 0.65;
+
+        // Playful puppy bounce and lively ear/tail bobbing
+        this.bodyGroup.position.y = Math.abs(Math.sin(this.walkCycle)) * 0.035;
+        this.bodyGroup.rotation.x = Math.sin(this.walkCycle) * 0.04;
+        this.tail.rotation.y = Math.sin(this.walkCycle * 1.5) * 0.55;
+        this.earsGroup.rotation.z = Math.sin(this.walkCycle) * 0.10;
+        this.headGroup.position.y = 0.56 + Math.sin(this.walkCycle) * 0.02;
+        this.headGroup.rotation.x = 0;
+        this.tongue.scale.z = 1.0 + Math.sin(this.walkCycle * 2) * 0.2;
+      }
+    } else {
+      // 3. Resting / Idling / Sniffing at Current Lounge Waypoint
+      this.isWalking = false;
+      this.legFL.rotation.x *= 0.85;
+      this.legFR.rotation.x *= 0.85;
+      this.legBL.rotation.x *= 0.85;
+      this.legBR.rotation.x *= 0.85;
+      this.bodyGroup.position.y *= 0.85;
+
+      const wagSpeed = 12;
+      this.tail.rotation.y = Math.sin(this.animTimer * wagSpeed) * 0.42;
+      this.earsGroup.rotation.z = Math.sin(this.animTimer * 5) * 0.07;
+      this.tongue.scale.z = 1.0 + Math.sin(this.animTimer * 10) * 0.20;
+
+      if (this.currentActivity === 'sniffing') {
+        // Head down, sniffing ground curiously
+        this.headGroup.position.y = 0.46;
+        this.headGroup.rotation.x = 0.28 + Math.sin(this.animTimer * 8) * 0.05;
+        this.headGroup.rotation.y = Math.sin(this.animTimer * 4) * 0.14;
+        this.bodyGroup.rotation.x = 0.06;
+      } else if (this.currentActivity === 'sitting') {
+        // Sitting posture: hind legs back, head tilted upwards
+        this.bodyGroup.rotation.x = -0.16;
+        this.bodyGroup.position.y = -0.04;
+        this.headGroup.position.y = 0.52;
+        this.headGroup.rotation.x = -0.10;
+        this.headGroup.rotation.y = Math.sin(this.animTimer * 2) * 0.10;
+      } else if (this.currentActivity === 'happy_bark') {
+        // Happy head bob and lively yip
+        this.headGroup.position.y = 0.58;
+        this.headGroup.rotation.x = -0.22 + Math.sin(this.animTimer * 12) * 0.08;
+        this.headGroup.rotation.y = Math.sin(this.animTimer * 3) * 0.10;
+        this.bodyGroup.rotation.x = 0;
+      } else {
+        // Normal peaceful idling
+        this.headGroup.position.y = 0.56;
+        this.headGroup.rotation.x = 0;
+        this.headGroup.rotation.y = Math.sin(this.animTimer * 2) * 0.10;
+        this.bodyGroup.rotation.x = 0;
+      }
+
+      this.waitTimer -= delta;
+      if (this.waitTimer <= 0) {
+        // Step to next patrol point in the circuit!
+        this.circuitIndex = (this.circuitIndex + 1) % PUPPY_LOUNGE_CIRCUIT.length;
+        const nextPoint = PUPPY_LOUNGE_CIRCUIT[this.circuitIndex];
+        this.walkTo(nextPoint.x, nextPoint.z);
+      }
+    }
+  }
+}
+
+// ============================================================================
+// LIVING ANIMATED VOXEL WHITE CAT (SNOWY) - AUTONOMOUS EXPLORATION CIRCUIT
+// ============================================================================
+export const CAT_LOUNGE_CIRCUIT = [
+  // 1. Cozy plush cat cushion under the leafy ficus tree
+  { x: 18.2, z: 18.8, wait: 6.0, activity: 'napping' as const, speech: 'Purrrrr... Snowy is curled up peacefully in her plush cat basket 💤🤍' },
+  // 2. Center of plush teal lounge rug - grooming paws
+  { x: 15.5, z: 16.5, wait: 4.5, activity: 'grooming' as const, speech: '*Grooms white paws with pink tongue* Grooming time! 🐱🐾' },
+  // 3. Beside espresso bar - stretching
+  { x: 12.0, z: 18.0, wait: 4.0, activity: 'stretching' as const, speech: '*Big arching cat stretch* Mew! Smells like fresh espresso beans ☕✨' },
+  // 4. Sunbathing near the garden glass door
+  { x: 8.5, z: 16.0, wait: 5.0, activity: 'curious' as const, speech: '*Stares curiously through garden glass* Chirp chirp... 🌿🐦' },
+  // 5. Peeking through Dylan\'s CEO Suite door
+  { x: 10.8, z: 8.8, wait: 4.0, activity: 'sitting' as const, speech: 'Meow! Checking in on CEO Dylan Ramos at his executive desk 💼🐱' },
+  // 6. Beside the retro arcade cabinet
+  { x: 11.2, z: 14.5, wait: 3.5, activity: 'sitting' as const, speech: '*Bats playfully at arcade joystick shadows* Nyaa! 🕹️✨' },
+  // 7. Playful visit with Mochi the puppy
+  { x: 18.5, z: 14.2, wait: 5.0, activity: 'purring' as const, speech: 'Purrr! Snuggling close to Mochi the puppy 🐶🤍🐱' },
+  // 8. Strolling gracefully along the acoustic wood wall
+  { x: 19.5, z: 16.0, wait: 4.0, activity: 'walking' as const, speech: 'Mew mew! Silent ninja stealth walk along the wood slat wall 🐾' },
+];
+
+export class VoxelCat3D {
+  public group: THREE.Group;
+  public bodyGroup: THREE.Group;
+  public tailGroup: THREE.Group;
+  public tail1: THREE.Mesh;
+  public tail2: THREE.Mesh;
+  public tail3: THREE.Mesh;
+  public headGroup: THREE.Group;
+  public earsGroup: THREE.Group;
+  public whiskersGroup: THREE.Group;
+
+  // 4 Articulated Sleek White Legs with Pink Paw Pads
+  public legFL: THREE.Group;
+  public legFR: THREE.Group;
+  public legBL: THREE.Group;
+  public legBR: THREE.Group;
+
+  public currentX: number;
+  public currentZ: number;
+  public isWalking = false;
+  public walkCycle = 0;
+  public walkSpeed = 1.25; // Smooth, silent feline stalk & trot
+  public currentActivity: 'napping' | 'grooming' | 'stretching' | 'sitting' | 'curious' | 'purring' | 'walking' | 'being_pet' = 'napping';
+  public waitTimer = 5.0;
+  public circuitIndex = 0;
+  public pathQueue: Array<{ x: number; z: number }> = [];
+  public speechText = '';
+  public speechTimer = 0;
+
+  private animTimer = 0;
+
+  constructor(x: number, z: number) {
+    this.currentX = x;
+    this.currentZ = z;
+    this.group = new THREE.Group();
+    this.group.position.set(x, 0.02, z);
+
+    const boxGeo = new THREE.BoxGeometry(1, 1, 1);
+    const furWhiteMat = new THREE.MeshLambertMaterial({ color: 0xffffff });
+    const furCreamMat = new THREE.MeshLambertMaterial({ color: 0xf8fafc });
+    const pinkMat = new THREE.MeshLambertMaterial({ color: 0xf472b6, emissive: 0xf472b6, emissiveIntensity: 0.3 });
+    const eyeMat = new THREE.MeshLambertMaterial({ color: 0x10b981, emissive: 0x10b981, emissiveIntensity: 0.55 });
+    const pupilMat = new THREE.MeshLambertMaterial({ color: 0x090d16 });
+    const glintMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+    const collarSkyMat = new THREE.MeshLambertMaterial({ color: 0x38bdf8 });
+    const silverBellMat = new THREE.MeshLambertMaterial({ color: 0xe2e8f0, emissive: 0xe2e8f0, emissiveIntensity: 0.45 });
+    const whiskerMat = new THREE.MeshBasicMaterial({ color: 0xe2e8f0 });
+
+    // 1. Articulated Legs (Pivot at hip/shoulder y = 0.20)
+    const createCatLeg = (lx: number, lz: number) => {
+      const legGroup = new THREE.Group();
+      legGroup.position.set(lx, 0.20, lz);
+
+      // Slender pure white leg
+      const leg = new THREE.Mesh(boxGeo, furWhiteMat);
+      leg.scale.set(0.09, 0.16, 0.09);
+      leg.position.set(0, -0.06, 0);
+      leg.castShadow = true;
+      legGroup.add(leg);
+
+      // White paw with pink pad underneath
+      const paw = new THREE.Mesh(boxGeo, furCreamMat);
+      paw.scale.set(0.10, 0.05, 0.11);
+      paw.position.set(0, -0.15, 0.01);
+      paw.castShadow = true;
+      legGroup.add(paw);
+
+      const pad = new THREE.Mesh(boxGeo, pinkMat);
+      pad.scale.set(0.07, 0.015, 0.07);
+      pad.position.set(0, -0.178, 0.01);
+      legGroup.add(pad);
+
+      this.group.add(legGroup);
+      return legGroup;
+    };
+
+    this.legFL = createCatLeg(-0.13, -0.13);
+    this.legFR = createCatLeg(0.13, -0.13);
+    this.legBL = createCatLeg(-0.13, 0.13);
+    this.legBR = createCatLeg(0.13, 0.13);
+
+    // 2. Main Body Group
+    this.bodyGroup = new THREE.Group();
+    this.bodyGroup.position.set(0, 0, 0);
+    this.group.add(this.bodyGroup);
+
+    // Sleek white cat torso
+    const body = new THREE.Mesh(boxGeo, furWhiteMat);
+    body.scale.set(0.44, 0.22, 0.40);
+    body.position.set(0, 0.32, 0);
+    body.castShadow = true;
+    this.bodyGroup.add(body);
+
+    // Soft cream chest & belly fluff
+    const chest = new THREE.Mesh(boxGeo, furCreamMat);
+    chest.scale.set(0.32, 0.18, 0.12);
+    chest.position.set(0, 0.32, -0.16);
+    this.bodyGroup.add(chest);
+
+    // Sky-blue collar with tiny silver jingle bell
+    const collar = new THREE.Mesh(boxGeo, collarSkyMat);
+    collar.scale.set(0.32, 0.04, 0.14);
+    collar.position.set(0, 0.39, -0.15);
+    this.bodyGroup.add(collar);
+
+    const bell = new THREE.Mesh(boxGeo, silverBellMat);
+    bell.scale.set(0.05, 0.05, 0.05);
+    bell.position.set(0, 0.37, -0.23);
+    this.bodyGroup.add(bell);
+
+    // 3. Graceful Articulated S-Curved Tail
+    this.tailGroup = new THREE.Group();
+    this.tailGroup.position.set(0, 0.38, 0.20);
+    this.bodyGroup.add(this.tailGroup);
+
+    // Tail segment 1 (base, pointing slightly up & back)
+    this.tail1 = new THREE.Mesh(boxGeo, furWhiteMat);
+    this.tail1.scale.set(0.07, 0.15, 0.07);
+    this.tail1.position.set(0, 0.07, 0.04);
+    this.tail1.rotation.x = 0.45;
+    this.tailGroup.add(this.tail1);
+
+    // Tail segment 2 (mid, curving higher)
+    this.tail2 = new THREE.Mesh(boxGeo, furWhiteMat);
+    this.tail2.scale.set(0.065, 0.15, 0.065);
+    this.tail2.position.set(0, 0.18, 0.10);
+    this.tail2.rotation.x = 0.75;
+    this.tailGroup.add(this.tail2);
+
+    // Tail segment 3 (tip, curving forward like a question mark)
+    this.tail3 = new THREE.Mesh(boxGeo, furCreamMat);
+    this.tail3.scale.set(0.06, 0.12, 0.06);
+    this.tail3.position.set(0, 0.28, 0.12);
+    this.tail3.rotation.x = 0.20;
+    this.tailGroup.add(this.tail3);
+
+    // 4. Head Group
+    this.headGroup = new THREE.Group();
+    this.headGroup.position.set(0, 0.48, -0.18);
+    this.bodyGroup.add(this.headGroup);
+
+    // White cat head
+    const headMesh = new THREE.Mesh(boxGeo, furWhiteMat);
+    headMesh.scale.set(0.36, 0.28, 0.30);
+    headMesh.castShadow = true;
+    this.headGroup.add(headMesh);
+
+    // Small cute muzzle
+    const muzzle = new THREE.Mesh(boxGeo, furCreamMat);
+    muzzle.scale.set(0.20, 0.12, 0.12);
+    muzzle.position.set(0, -0.05, -0.16);
+    this.headGroup.add(muzzle);
+
+    // Tiny pink cat nose
+    const nose = new THREE.Mesh(boxGeo, pinkMat);
+    nose.scale.set(0.05, 0.04, 0.04);
+    nose.position.set(0, -0.02, -0.23);
+    this.headGroup.add(nose);
+
+    // Emerald Green Cat Eyes with vertical pupils & glints
+    [-0.10, 0.10].forEach((ex) => {
+      // Emerald iris
+      const eye = new THREE.Mesh(boxGeo, eyeMat);
+      eye.scale.set(0.07, 0.07, 0.03);
+      eye.position.set(ex, 0.04, -0.14);
+      this.headGroup.add(eye);
+
+      // Slit pupil
+      const pupil = new THREE.Mesh(boxGeo, pupilMat);
+      pupil.scale.set(0.022, 0.055, 0.035);
+      pupil.position.set(ex, 0.04, -0.145);
+      this.headGroup.add(pupil);
+
+      // Cute white catchlight glint
+      const glint = new THREE.Mesh(boxGeo, glintMat);
+      glint.scale.set(0.02, 0.02, 0.04);
+      glint.position.set(ex + 0.02, 0.055, -0.15);
+      this.headGroup.add(glint);
+    });
+
+    // Pointed Triangular Cat Ears with Pink Fluff Inlay
+    this.earsGroup = new THREE.Group();
+    [-0.13, 0.13].forEach((ex) => {
+      const ear = new THREE.Mesh(boxGeo, furWhiteMat);
+      ear.scale.set(0.09, 0.14, 0.08);
+      ear.position.set(ex, 0.18, -0.02);
+      ear.rotation.z = ex < 0 ? 0.20 : -0.20;
+      this.earsGroup.add(ear);
+
+      const earFluff = new THREE.Mesh(boxGeo, pinkMat);
+      earFluff.scale.set(0.05, 0.09, 0.02);
+      earFluff.position.set(ex, 0.17, -0.055);
+      earFluff.rotation.z = ex < 0 ? 0.20 : -0.20;
+      this.earsGroup.add(earFluff);
+    });
+    this.headGroup.add(this.earsGroup);
+
+    // Whiskers (Left & Right)
+    this.whiskersGroup = new THREE.Group();
+    [-1, 1].forEach((side) => {
+      [-0.02, 0.02].forEach((wy) => {
+        const whisker = new THREE.Mesh(boxGeo, whiskerMat);
+        whisker.scale.set(0.12, 0.01, 0.01);
+        whisker.position.set(side * 0.16, -0.05 + wy, -0.18);
+        whisker.rotation.z = side * wy * 1.5;
+        this.whiskersGroup.add(whisker);
+      });
+    });
+    this.headGroup.add(this.whiskersGroup);
+
+    // Tag for 3D raycasting and click interaction
+    this.group.traverse((obj) => {
+      (obj as any).agentId = 'cat';
+    });
+  }
+
+  public walkTo(targetX: number, targetZ: number) {
+    this.pathQueue = [{ x: targetX, z: targetZ }];
+    this.isWalking = true;
+  }
+
+  public update(delta: number, isBeingPet = false, onSpeechUpdate?: (text: string, timer: number) => void) {
+    this.animTimer += delta;
+
+    if (this.speechTimer > 0) {
+      this.speechTimer -= delta;
+    }
+
+    // 1. Being Pet Mode: Arch back, head bonk into hand, happy tail question mark curl
+    if (isBeingPet) {
+      this.currentActivity = 'being_pet';
+      this.isWalking = false;
+      this.waitTimer = Math.max(this.waitTimer, 3.5);
+
+      this.bodyGroup.position.y = 0.03 + Math.sin(this.animTimer * 6) * 0.02;
+      this.bodyGroup.rotation.x = -0.10; // arched back
+      this.headGroup.position.y = 0.52;
+      this.headGroup.rotation.x = -0.22; // chin up for scratches
+      this.headGroup.rotation.y = Math.sin(this.animTimer * 4) * 0.10;
+      this.tailGroup.rotation.x = 0.35 + Math.sin(this.animTimer * 5) * 0.15;
+      this.tailGroup.rotation.y = Math.sin(this.animTimer * 8) * 0.35;
+      this.earsGroup.rotation.z = Math.sin(this.animTimer * 4) * 0.06;
+
+      this.legFL.rotation.x *= 0.8;
+      this.legFR.rotation.x *= 0.8;
+      this.legBL.rotation.x *= 0.8;
+      this.legBR.rotation.x *= 0.8;
+      return;
+    }
+
+    // 2. Moving along Circuit
+    if (this.pathQueue.length > 0) {
+      this.isWalking = true;
+      const target = this.pathQueue[0];
+      const dx = target.x - this.group.position.x;
+      const dz = target.z - this.group.position.z;
+      const dist = Math.hypot(dx, dz);
+      const step = this.walkSpeed * delta;
+
+      const heading = Math.atan2(dx, dz) + Math.PI;
+      let diff = heading - this.group.rotation.y;
+      while (diff < -Math.PI) diff += Math.PI * 2;
+      while (diff > Math.PI) diff -= Math.PI * 2;
+      this.group.rotation.y += diff * Math.min(1, delta * 6);
+
+      if (dist <= step) {
+        this.group.position.x = target.x;
+        this.group.position.z = target.z;
+        this.currentX = target.x;
+        this.currentZ = target.z;
+        this.pathQueue.shift();
+
+        if (this.pathQueue.length === 0) {
+          this.isWalking = false;
+          const currentPoint = CAT_LOUNGE_CIRCUIT[this.circuitIndex];
+          this.currentActivity = currentPoint.activity;
+          this.waitTimer = currentPoint.wait;
+          this.speechText = currentPoint.speech;
+          this.speechTimer = 4.0;
+          if (onSpeechUpdate) {
+            onSpeechUpdate(currentPoint.speech, 4.0);
+          }
+        }
+      } else {
+        this.group.position.x += (dx / dist) * step;
+        this.group.position.z += (dz / dist) * step;
+        this.currentX = this.group.position.x;
+        this.currentZ = this.group.position.z;
+
+        // Feline Stealth Walk Gait
+        this.walkCycle += delta * 10;
+        this.legFL.rotation.x = Math.sin(this.walkCycle) * 0.55;
+        this.legBR.rotation.x = Math.sin(this.walkCycle) * 0.55;
+        this.legFR.rotation.x = -Math.sin(this.walkCycle) * 0.55;
+        this.legBL.rotation.x = -Math.sin(this.walkCycle) * 0.55;
+
+        // Feline spine flex & graceful tail swaying
+        this.bodyGroup.position.y = Math.abs(Math.sin(this.walkCycle)) * 0.02;
+        this.bodyGroup.rotation.y = Math.sin(this.walkCycle * 0.5) * 0.04;
+        this.tailGroup.rotation.y = Math.sin(this.walkCycle * 0.8) * 0.45;
+        this.headGroup.position.y = 0.48 + Math.sin(this.walkCycle) * 0.015;
+        this.headGroup.rotation.x = 0;
+      }
+    } else {
+      // 3. Resting / Idling / Napping / Grooming at Waypoint
+      this.isWalking = false;
+      this.legFL.rotation.x *= 0.85;
+      this.legFR.rotation.x *= 0.85;
+      this.legBL.rotation.x *= 0.85;
+      this.legBR.rotation.x *= 0.85;
+      this.bodyGroup.position.y *= 0.85;
+
+      const tailSway = Math.sin(this.animTimer * 2.5) * 0.35;
+      this.tailGroup.rotation.y = tailSway;
+
+      if (this.currentActivity === 'napping') {
+        // Curled donut nap on cushion
+        this.bodyGroup.position.y = -0.06;
+        this.bodyGroup.rotation.x = -0.12;
+        this.headGroup.position.y = 0.40;
+        this.headGroup.rotation.x = 0.18;
+        this.headGroup.rotation.y = 0.45;
+        this.tailGroup.rotation.y = 0.75;
+      } else if (this.currentActivity === 'grooming') {
+        // Raising front paw to lick face
+        this.legFL.rotation.x = 0.85 + Math.sin(this.animTimer * 6) * 0.15;
+        this.headGroup.position.y = 0.44;
+        this.headGroup.rotation.x = 0.20;
+        this.headGroup.rotation.y = -0.25 + Math.sin(this.animTimer * 6) * 0.08;
+      } else if (this.currentActivity === 'stretching') {
+        // Classic cat stretch: front down, back arched
+        this.bodyGroup.position.y = -0.02;
+        this.bodyGroup.rotation.x = 0.22;
+        this.tailGroup.rotation.x = -0.55;
+        this.headGroup.position.y = 0.42;
+        this.headGroup.rotation.x = 0.15;
+      } else if (this.currentActivity === 'sitting') {
+        // Sphinx / loaf posture
+        this.bodyGroup.position.y = -0.04;
+        this.bodyGroup.rotation.x = -0.12;
+        this.headGroup.position.y = 0.48;
+        this.headGroup.rotation.x = -0.08;
+        this.headGroup.rotation.y = Math.sin(this.animTimer * 1.5) * 0.08;
+      } else {
+        // Normal alert standing/sitting
+        this.headGroup.position.y = 0.48;
+        this.headGroup.rotation.x = 0;
+        this.headGroup.rotation.y = Math.sin(this.animTimer * 2) * 0.10;
+        this.bodyGroup.rotation.x = 0;
+      }
+
+      this.waitTimer -= delta;
+      if (this.waitTimer <= 0) {
+        this.circuitIndex = (this.circuitIndex + 1) % CAT_LOUNGE_CIRCUIT.length;
+        const nextPoint = CAT_LOUNGE_CIRCUIT[this.circuitIndex];
+        this.walkTo(nextPoint.x, nextPoint.z);
+      }
+    }
   }
 }
 
@@ -842,9 +1506,12 @@ export class VoxelCharacter3D {
     | 'delivering_coffee'
     | 'brewing_coffee'
     | 'petting_puppy'
+    | 'delivering_flowers'
+    | 'giving_flowers'
     | 'server_audit'
     | 'crash_cart_diagnostics'
-    | 'threat_map_review' = 'idle';
+    | 'threat_map_review'
+    | 'reporting_to_ceo' = 'idle';
 
   public eahStep:
     | 'relaxing'
@@ -860,6 +1527,18 @@ export class VoxelCharacter3D {
     | 'petting_puppy'
     | 'return_armchair' = 'relaxing';
   public eahCycleCount = 0;
+
+  // Dylan Caring Routines for Eah ("Just to Be Fair" 💖💐)
+  public dylanStep:
+    | 'idle'
+    | 'flower_walk'
+    | 'giving_flowers'
+    | 'cook_walk'
+    | 'cooking'
+    | 'deliver_food_walk'
+    | 'serving_food'
+    | 'return_desk' = 'idle';
+  public dylanCycleCount = 0;
 
   private upperBodyGroup: THREE.Group;
   private head: THREE.Mesh;
@@ -886,6 +1565,7 @@ export class VoxelCharacter3D {
   public servingTrayGroup: THREE.Group;
   public trayPlate: THREE.Group;
   public trayCoffee: THREE.Group;
+  public flowerBouquetGroup: THREE.Group;
   public speechText = '';
   public speechTimer = 0;
   private selectionRing: THREE.Mesh;
@@ -1480,10 +2160,8 @@ export class VoxelCharacter3D {
       depthWrite: false,
     });
     this.groundShadow = new THREE.Mesh(shadowGeo, shadowMat);
-    this.groundShadow.position.y = 0.02;
+    this.groundShadow.position.y = 0.035;
     this.group.add(this.groundShadow);
-
-
 
     // Selection Indicator Ring on Floor
     const ringGeo = new THREE.RingGeometry(0.55, 0.75, 24);
@@ -1495,7 +2173,7 @@ export class VoxelCharacter3D {
       opacity: 0.85,
     });
     this.selectionRing = new THREE.Mesh(ringGeo, ringMat);
-    this.selectionRing.position.y = 0.04;
+    this.selectionRing.position.y = 0.042;
     this.selectionRing.visible = false;
     this.group.add(this.selectionRing);
 
@@ -2035,6 +2713,70 @@ export class VoxelCharacter3D {
     this.servingTrayGroup.visible = false;
     this.group.add(this.servingTrayGroup);
 
+    // Luxury Flower Bouquet Prop (Wrapped Fresh Red Roses, Pink Peonies & Baby's Breath for Eah)
+    this.flowerBouquetGroup = new THREE.Group();
+    const bouquetWrapMat = new THREE.MeshLambertMaterial({ color: 0xd97706 }); // Kraft paper cone
+    const ribbonMat = new THREE.MeshLambertMaterial({ color: 0xffbe0b, emissive: 0xd97706, emissiveIntensity: 0.4 }); // Gold silk bow
+    const stemMat = new THREE.MeshLambertMaterial({ color: 0x15803d }); // Emerald stems & leaves
+    const redRoseMat = new THREE.MeshLambertMaterial({ color: 0xe11d48, emissive: 0x9f1239, emissiveIntensity: 0.3 }); // Rich red roses
+    const pinkRoseMat = new THREE.MeshLambertMaterial({ color: 0xf43f5e, emissive: 0xbe123c, emissiveIntensity: 0.25 }); // Blushing roses
+    const softPinkMat = new THREE.MeshLambertMaterial({ color: 0xfbcfe8 }); // Soft peony petals
+    const whiteBudMat = new THREE.MeshLambertMaterial({ color: 0xffffff }); // Baby's breath
+
+    const wrapCone = new THREE.Mesh(boxGeo, bouquetWrapMat);
+    wrapCone.scale.set(0.24, 0.26, 0.20);
+    wrapCone.position.set(0, -0.04, 0);
+    this.flowerBouquetGroup.add(wrapCone);
+
+    const bowMesh = new THREE.Mesh(boxGeo, ribbonMat);
+    bowMesh.scale.set(0.12, 0.08, 0.22);
+    bowMesh.position.set(0, -0.06, 0.02);
+    this.flowerBouquetGroup.add(bowMesh);
+
+    const greens = new THREE.Mesh(boxGeo, stemMat);
+    greens.scale.set(0.30, 0.10, 0.26);
+    greens.position.set(0, 0.10, 0);
+    this.flowerBouquetGroup.add(greens);
+
+    const rose1 = new THREE.Mesh(boxGeo, redRoseMat);
+    rose1.scale.set(0.10, 0.10, 0.10);
+    rose1.position.set(-0.07, 0.17, -0.04);
+    this.flowerBouquetGroup.add(rose1);
+
+    const rose2 = new THREE.Mesh(boxGeo, redRoseMat);
+    rose2.scale.set(0.10, 0.10, 0.10);
+    rose2.position.set(0.07, 0.17, 0.04);
+    this.flowerBouquetGroup.add(rose2);
+
+    const rose3 = new THREE.Mesh(boxGeo, pinkRoseMat);
+    rose3.scale.set(0.11, 0.11, 0.11);
+    rose3.position.set(0, 0.20, 0);
+    this.flowerBouquetGroup.add(rose3);
+
+    const peony1 = new THREE.Mesh(boxGeo, softPinkMat);
+    peony1.scale.set(0.08, 0.08, 0.08);
+    peony1.position.set(-0.06, 0.16, 0.06);
+    this.flowerBouquetGroup.add(peony1);
+
+    const peony2 = new THREE.Mesh(boxGeo, softPinkMat);
+    peony2.scale.set(0.08, 0.08, 0.08);
+    peony2.position.set(0.06, 0.16, -0.06);
+    this.flowerBouquetGroup.add(peony2);
+
+    const bud1 = new THREE.Mesh(boxGeo, whiteBudMat);
+    bud1.scale.set(0.04, 0.04, 0.04);
+    bud1.position.set(-0.11, 0.15, 0);
+    this.flowerBouquetGroup.add(bud1);
+
+    const bud2 = new THREE.Mesh(boxGeo, whiteBudMat);
+    bud2.scale.set(0.04, 0.04, 0.04);
+    bud2.position.set(0.11, 0.15, 0);
+    this.flowerBouquetGroup.add(bud2);
+
+    this.flowerBouquetGroup.position.set(0, 0.58, 0.34);
+    this.flowerBouquetGroup.visible = false;
+    this.group.add(this.flowerBouquetGroup);
+
     // Tag for Raycasting
     this.group.traverse((obj) => {
       (obj as any).agentId = id;
@@ -2092,7 +2834,11 @@ export class VoxelCharacter3D {
         if (this.pathQueue.length === 0) {
           this.isWalking = false;
           // Check if arrived back at working desk
-          if (Math.hypot(this.currentX - this.deskX, this.currentZ - this.deskZ) < 1.0) {
+          if (this.currentActivity === 'reporting_to_ceo' || (this.currentX <= 6.5 && this.currentZ >= 4.5 && this.currentZ <= 6.2)) {
+            this.isSeated = false;
+            this.currentActivity = 'reporting_to_ceo';
+            this.group.rotation.y = Math.PI; // Face North directly towards Dylan Ramos's CEO command desk!
+          } else if (Math.hypot(this.currentX - this.deskX, this.currentZ - this.deskZ) < 1.0) {
             this.isSeated = true;
             this.currentActivity = 'working';
             this.group.rotation.y = this.id === 'dylan' ? 0 : Math.PI; // Dylan faces Door (0), specialists face Desk (PI)
@@ -2285,34 +3031,44 @@ export class VoxelCharacter3D {
       this.tabletGroup.visible = false;
       this.skilletGroup.visible = false;
       this.servingTrayGroup.visible = false;
+      this.flowerBouquetGroup.visible = false;
       this.drinkPropGroup.visible = false;
       this.cueStickGroup.visible = false;
       this.head.rotation.set(0, 0, 0);
 
-      // Eah Special Activities (Cooking in Kitchen, Delivering to Dylan, Brewing Coffee, Petting Puppy)
-      if (this.id === 'eah') {
-        if (this.currentActivity === 'kitchen_cooking') {
-          this.skilletGroup.visible = true;
-          this.skilletGroup.position.set(0, 0.58 + Math.sin(this.animTimer * 16.0) * 0.01, 0.34);
-          this.leftArmGroup.rotation.x = -0.75;
-          this.leftArmGroup.rotation.z = -0.14;
-          this.rightArmGroup.rotation.x = -0.75 + Math.sin(this.animTimer * 7.0) * 0.22;
-          this.rightArmGroup.rotation.z = 0.14;
-          this.head.rotation.x = 0.24;
-          this.upperBodyGroup.rotation.x = 0.06;
-          return;
-        } else if (this.currentActivity === 'delivering_food' || this.currentActivity === 'delivering_coffee') {
-          this.servingTrayGroup.visible = true;
-          this.trayPlate.visible = this.currentActivity === 'delivering_food';
-          this.trayCoffee.visible = this.currentActivity === 'delivering_coffee' || this.currentActivity === 'delivering_food';
-          this.servingTrayGroup.position.set(0, 0.56, 0.34);
-          this.leftArmGroup.rotation.x = -0.85;
-          this.leftArmGroup.rotation.z = -0.15;
-          this.rightArmGroup.rotation.x = -0.85;
-          this.rightArmGroup.rotation.z = 0.15;
-          this.head.rotation.x = -0.08 + Math.sin(this.animTimer * 2.0) * 0.04;
-          return;
-        } else if (this.currentActivity === 'brewing_coffee') {
+      // Dylan & Eah Caring Activities (Flowers Bouquet, Kitchen Cooking, Serving Gourmet Platter)
+      if (this.currentActivity === 'delivering_flowers' || this.currentActivity === 'giving_flowers') {
+        this.flowerBouquetGroup.visible = true;
+        this.flowerBouquetGroup.position.set(0, 0.58 + Math.sin(this.animTimer * 6.0) * 0.015, 0.34);
+        this.leftArmGroup.rotation.x = -0.85;
+        this.leftArmGroup.rotation.z = -0.18;
+        this.rightArmGroup.rotation.x = -0.85;
+        this.rightArmGroup.rotation.z = 0.18;
+        this.head.rotation.x = -0.06;
+        return;
+      } else if (this.currentActivity === 'kitchen_cooking') {
+        this.skilletGroup.visible = true;
+        this.skilletGroup.position.set(0, 0.58 + Math.sin(this.animTimer * 16.0) * 0.01, 0.34);
+        this.leftArmGroup.rotation.x = -0.75;
+        this.leftArmGroup.rotation.z = -0.14;
+        this.rightArmGroup.rotation.x = -0.75 + Math.sin(this.animTimer * 7.0) * 0.22;
+        this.rightArmGroup.rotation.z = 0.14;
+        this.head.rotation.x = 0.24;
+        this.upperBodyGroup.rotation.x = 0.06;
+        return;
+      } else if (this.currentActivity === 'delivering_food' || this.currentActivity === 'delivering_coffee') {
+        this.servingTrayGroup.visible = true;
+        this.trayPlate.visible = this.currentActivity === 'delivering_food';
+        this.trayCoffee.visible = this.currentActivity === 'delivering_coffee' || (this.id === 'eah' && this.currentActivity === 'delivering_food');
+        this.servingTrayGroup.position.set(0, 0.56, 0.34);
+        this.leftArmGroup.rotation.x = -0.85;
+        this.leftArmGroup.rotation.z = -0.15;
+        this.rightArmGroup.rotation.x = -0.85;
+        this.rightArmGroup.rotation.z = 0.15;
+        this.head.rotation.x = -0.08 + Math.sin(this.animTimer * 2.0) * 0.04;
+        return;
+      } else if (this.id === 'eah') {
+        if (this.currentActivity === 'brewing_coffee') {
           this.drinkPropGroup.visible = true;
           this.coffeeMug.visible = true;
           this.leftArmGroup.rotation.x = -0.65;
@@ -2641,6 +3397,7 @@ export interface Office3DProps {
   onOpenActionModal?: (id?: string) => void;
   viewMode?: 'pixel' | 'voxel';
   onViewModeChange?: (mode: 'pixel' | 'voxel') => void;
+  onLock?: () => void;
 }
 
 export default function Office3D({
@@ -2649,6 +3406,7 @@ export default function Office3D({
   onOpenActionModal,
   viewMode = 'voxel',
   onViewModeChange,
+  onLock,
 }: Office3DProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const charactersRef = useRef<Record<string, VoxelCharacter3D>>({});
@@ -2660,9 +3418,6 @@ export default function Office3D({
   const [inRestMode, setInRestMode] = useState(false);
   const [isDylanSeated, setIsDylanSeated] = useState(true);
   const [soundEnabled, setSoundEnabled] = useState(false);
-  const [isCrispMode, setIsCrispMode] = useState(true);
-  const isCrispModeRef = useRef(true);
-  isCrispModeRef.current = isCrispMode;
   const inMeetingModeRef = useRef(false);
   inMeetingModeRef.current = inMeetingMode;
   const inRestModeRef = useRef(false);
@@ -2678,35 +3433,51 @@ export default function Office3D({
   const casualChatTimerRef = useRef(10.0);
   const pendingReplyRef = useRef<{ speaker: string; text: string; delay: number } | null>(null);
 
-  // Served meal/coffee on Dylan's desk & Puppy speech in 3D
+  // Served meal/coffee on Dylan's desk & Served flowers/food on Eah's table
   const servedDeskItemRef = useRef<'food' | 'coffee' | null>(null);
+  const servedEahTableItemRef = useRef<'flowers' | 'food' | null>(null);
   const puppySpeechRef = useRef<{ text: string; timer: number }>({ text: '', timer: 0 });
   const puppyRef = useRef<VoxelPuppy3D | null>(null);
+  const catSpeechRef = useRef<{ text: string; timer: number }>({ text: '', timer: 0 });
+  const catRef = useRef<VoxelCat3D | null>(null);
 
   // Floating RPG pop-up reactions & proximity action HUD
   const floatingPopupsRef = useRef<Array<{ id: number; text: string; x: number; y: number; z: number; color: string; life: number; maxLife: number }>>([]);
   const [screenPopups, setScreenPopups] = useState<Array<{ id: number; text: string; x: number; y: number; color: string; opacity: number }>>([]);
   const [proximityHUD, setProximityHUD] = useState<{
-    type: 'eah' | 'puppy' | 'arcade' | 'coffee' | 'server' | 'none';
+    type: 'eah' | 'puppy' | 'cat' | 'arcade' | 'coffee' | 'server' | 'water' | 'none';
     title: string;
     badge: string;
     color: string;
   } | null>(null);
+  const lastProximityTypeRef = useRef<string | null>(null);
+  const lastPopupCountRef = useRef<number>(0);
 
   // 3D Voxel Camera Tilt & Orbit Controls State
-  const [tiltMode, setTiltMode] = useState<'cinematic' | 'isometric' | 'topdown'>('cinematic');
+  const [tiltMode, setTiltMode] = useState<'cinematic' | 'isometric' | 'topdown' | 'front'>('cinematic');
+
+  // Responsive HUD Navigation & Viewport States
+  const [isHudMinimized, setIsHudMinimized] = useState<boolean>(false);
+  const [activeHudTab, setActiveHudTab] = useState<'all' | 'actions' | 'roster' | 'cameras'>('all');
+  const [windowWidth, setWindowWidth] = useState<number>(typeof window !== 'undefined' ? window.innerWidth : 1440);
   const cameraControlRef = useRef<{
-    setTilt: (pitchRad: number, mode: 'cinematic' | 'isometric' | 'topdown') => void;
+    setTilt: (pitchRad: number, mode: 'cinematic' | 'isometric' | 'topdown' | 'front') => void;
     rotateBy: (deltaYaw: number) => void;
+    snapCardinal: () => void;
     focusDylan: () => void;
     focusServerRoom: () => void;
     resetView: () => void;
+    zoomIn: () => void;
+    zoomOut: () => void;
   }>({
     setTilt: () => {},
     rotateBy: () => {},
+    snapCardinal: () => {},
     focusDylan: () => {},
     focusServerRoom: () => {},
     resetView: () => {},
+    zoomIn: () => {},
+    zoomOut: () => {},
   });
 
   const addFloatingPopup = (text: string, x: number, y: number, z: number, color = '#fb7185') => {
@@ -2783,7 +3554,7 @@ export default function Office3D({
     } catch {}
   }, [soundEnabled]);
 
-  const play8BitGameSound = useCallback((sound: 'click' | 'step' | 'coin' | 'heart' | 'bark' | 'quest') => {
+  const play8BitGameSound = useCallback((sound: 'click' | 'step' | 'coin' | 'heart' | 'bark' | 'meow' | 'purr' | 'quest') => {
     if (!soundEnabled) return;
     try {
       if (!audioCtxRef.current) {
@@ -2824,6 +3595,26 @@ export default function Office3D({
         gain.connect(ctx.destination);
         osc.start();
         osc.stop(now + 0.18);
+      } else if (sound === 'meow') {
+        osc.type = 'triangle';
+        osc.frequency.setValueAtTime(680, now);
+        osc.frequency.exponentialRampToValueAtTime(940, now + 0.08);
+        osc.frequency.exponentialRampToValueAtTime(580, now + 0.22);
+        gain.gain.setValueAtTime(0.08, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.22);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.22);
+      } else if (sound === 'purr') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(75, now);
+        gain.gain.setValueAtTime(0.04, now);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.35);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start();
+        osc.stop(now + 0.35);
       } else if (sound === 'quest') {
         osc.type = 'square';
         osc.frequency.setValueAtTime(440, now);
@@ -2882,6 +3673,37 @@ export default function Office3D({
       eah.setSpeech('Sure Dylan! Brewing your favorite hot coffee! ☕✨', 4.5);
       eah.walkTo(23.4, 18.6);
       addFloatingPopup('☕ Caramel Latte for Dylan Ramos! ✨ (+350 FOCUS)', eah.currentX, 2.8, eah.currentZ, '#f59e0b');
+      play8BitGameSound('quest');
+      playSfx('click');
+    }
+  }, [play8BitGameSound, playSfx]);
+
+  // Dylan caring actions for Eah (Flowers & Cooking with Love! 💖💐)
+  const handleDylanGiveFlowers = useCallback(() => {
+    const dylan = charactersRef.current.dylan;
+    const eah = charactersRef.current.eah;
+    if (dylan && eah) {
+      dylan.dylanStep = 'flower_walk';
+      dylan.isSeated = false;
+      dylan.currentActivity = 'delivering_flowers';
+      dylan.setSpeech('Surprising Eah with fresh flowers to brighten her day! 💐🌹', 4.5);
+      dylan.walkTo(OFFICE_3D_LAYOUT.CEO.eahSeat.x + 0.95, OFFICE_3D_LAYOUT.CEO.eahSeat.z);
+      addFloatingPopup('💐 Giving Fresh Flowers to Eah! 🌹 (+500 LOVE)', dylan.currentX, 2.8, dylan.currentZ, '#fb7185');
+      play8BitGameSound('heart');
+      playSfx('click');
+    }
+  }, [play8BitGameSound, playSfx]);
+
+  const handleDylanCookForEah = useCallback(() => {
+    const dylan = charactersRef.current.dylan;
+    const eah = charactersRef.current.eah;
+    if (dylan && eah) {
+      dylan.dylanStep = 'cook_walk';
+      dylan.isSeated = false;
+      dylan.currentActivity = 'working';
+      dylan.setSpeech('Eah always cooks for me—time to return the favor! 🍳✨', 4.5);
+      dylan.walkTo(4.8, 12.7);
+      addFloatingPopup('🍳 Dylan Cooking for Eah! 🥞 (+500 AFFECTION)', dylan.currentX, 2.8, dylan.currentZ, '#f59e0b');
       play8BitGameSound('quest');
       playSfx('click');
     }
@@ -3022,6 +3844,56 @@ export default function Office3D({
   const handleEndDirectiveMeetingRef = useRef(handleEndDirectiveMeeting);
   handleEndDirectiveMeetingRef.current = handleEndDirectiveMeeting;
 
+  // Autonomous or Manual Task Completion Reporting to CEO Room
+  const handleReportToCeo = useCallback((agentId?: string, taskTitle?: string) => {
+    const targetAgentId = agentId || selectedAgentId || 'alex';
+    const char = charactersRef.current[targetAgentId];
+    const dylan = charactersRef.current['dylan'];
+    if (!char || char.id === 'dylan') return;
+
+    play8BitGameSound('quest');
+    const taskName = taskTitle || 'Assigned Architecture & Code Directive';
+    addFloatingPopup(`📋 TASK COMPLETED: ${char.name} reporting to CEO Dylan!`, char.currentX, 2.8, char.currentZ, '#ffbe0b');
+
+    char.isSeated = false;
+    char.currentActivity = 'reporting_to_ceo';
+    char.setSpeech(`Heading to CEO Suite to report completed task to Dylan Ramos! 📋✨`, 4.5);
+    // Dylan's executive desk is at x=4.8, z=4.0. Stand at x=4.8, z=5.4 directly in front of desk facing north!
+    char.walkTo(4.8, 5.4);
+
+    const checkArrival = setInterval(() => {
+      if (char.pathQueue.length === 0 && Math.hypot(char.currentX - 4.8, char.currentZ - 5.4) < 1.4) {
+        clearInterval(checkArrival);
+        char.group.rotation.y = Math.PI; // Face north towards Dylan
+        char.setSpeech(`Dylan! Task completed 100%: "${taskName}"! All deliverables deployed! 🚀📋`, 6.0);
+        
+        play8BitGameSound('coin');
+        playSfx('bell');
+        addFloatingPopup(`🌟 TASK APPROVED BY CEO DYLAN RAMOS! ✨ (+1000 XP)`, 4.8, 3.2, 5.0, '#ffbe0b');
+
+        if (dylan) {
+          dylan.group.rotation.y = 0; // Dylan turns south in his executive chair to face worker
+          setTimeout(() => {
+            dylan.setSpeech(`Outstanding work ${char.name.split(' ')[0]}! Exceptional leadership for AVERO HQ! 🌟👑`, 6.0);
+          }, 1500);
+        }
+
+        setTimeout(() => {
+          if (char.currentActivity === 'reporting_to_ceo') {
+            char.setSpeech(`Thank you Dylan! Returning to my station with new directives! 💻✨`, 4.0);
+            char.walkTo(char.deskX, char.deskZ);
+            char.currentActivity = 'working';
+          }
+        }, 7500);
+      }
+    }, 500);
+
+    setTimeout(() => clearInterval(checkArrival), 20000);
+  }, [play8BitGameSound, playSfx, selectedAgentId]);
+
+  const handleReportToCeoRef = useRef(handleReportToCeo);
+  handleReportToCeoRef.current = handleReportToCeo;
+
   // All-Hands Rest & Relaxation in Coffee Lounge
   const handleToggleRestMode = () => {
     playSfx('drink');
@@ -3134,27 +4006,36 @@ export default function Office3D({
     const width = container.clientWidth || window.innerWidth;
     const height = container.clientHeight || window.innerHeight;
 
-    const renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
-    renderer.setSize(width, height);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    container.appendChild(renderer.domElement);
+    // Retina & 4K Super-Sampling Engine:
+    // Ensures crisp 1:1 hardware pixel mapping (minimum 2.0 DPR even on standard 1080p monitors)
+    const getTargetDpr = () => {
+      const native = typeof window !== 'undefined' ? (window.devicePixelRatio || 1) : 1;
+      return Math.min(native, 2);
+    };
 
-    // Pixel render target (480x320)
-    const pixelWidth = 480;
-    const pixelHeight = 320;
-    const renderTarget = new THREE.WebGLRenderTarget(pixelWidth, pixelHeight, {
-      minFilter: THREE.NearestFilter,
-      magFilter: THREE.NearestFilter,
-      format: THREE.RGBAFormat,
+    const targetDpr = getTargetDpr();
+    const renderer = new THREE.WebGLRenderer({
+      antialias: true,
+      powerPreference: 'high-performance',
+      stencil: false,
+      depth: true,
     });
+    renderer.setPixelRatio(targetDpr);
+    renderer.setSize(width, height, false);
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFShadowMap;
 
-    const postScene = new THREE.Scene();
-    const postCamera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
-    const postMaterial = new THREE.MeshBasicMaterial({ map: renderTarget.texture });
-    const postQuad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), postMaterial);
-    postScene.add(postQuad);
+    // Hard-lock canvas styling to prevent subpixel scaling blur
+    const dom = renderer.domElement;
+    dom.style.position = 'absolute';
+    dom.style.top = '0';
+    dom.style.left = '0';
+    dom.style.width = '100%';
+    dom.style.height = '100%';
+    dom.style.display = 'block';
+    dom.style.imageRendering = '-webkit-optimize-contrast';
+    dom.style.outline = 'none';
+    container.appendChild(dom);
 
     // --- 2. Tilted Voxel Camera Setup ---
     const aspect = width / height;
@@ -3168,7 +4049,7 @@ export default function Office3D({
       1000
     );
 
-    const centerPoint = new THREE.Vector3(18.5, 0, 11);
+    const centerPoint = new THREE.Vector3(19.225, 0, 10.75);
     const cameraRadius = 50;
     const initialPitch = 0.48; // ~27.5° Tilted Cinematic View (Rich 3D depth showing face details, furniture heights, and drop shadows)
     const initialYaw = Math.PI * 0.25; // 45° corner view
@@ -3187,13 +4068,15 @@ export default function Office3D({
     const dirLight = new THREE.DirectionalLight(0xfff6e6, 1.5);
     dirLight.position.set(35, 45, 25);
     dirLight.castShadow = true;
-    dirLight.shadow.mapSize.width = 1024;
-    dirLight.shadow.mapSize.height = 1024;
-    const sSize = 30;
+    dirLight.shadow.mapSize.width = 4096;
+    dirLight.shadow.mapSize.height = 4096;
+    const sSize = 28;
     dirLight.shadow.camera.left = -sSize;
     dirLight.shadow.camera.right = sSize;
     dirLight.shadow.camera.top = sSize;
     dirLight.shadow.camera.bottom = -sSize;
+    dirLight.shadow.bias = -0.0003;
+    dirLight.shadow.normalBias = 0.02;
     scene.add(dirLight);
 
     const fillLight = new THREE.DirectionalLight(0x4a6090, 0.45);
@@ -3228,9 +4111,12 @@ export default function Office3D({
       ceoRug: new THREE.MeshLambertMaterial({ color: 0x1e293b }),
       bullpenFloor: new THREE.MeshLambertMaterial({ color: 0x7a969e }),
       bullpenAlt: new THREE.MeshLambertMaterial({ color: 0x6f8b93 }),
-      boardroomFloor: new THREE.MeshLambertMaterial({ color: 0x543d2b }),
+      boardroomFloor: new THREE.MeshLambertMaterial({ color: 0x4e2f1d }), // Rich executive walnut
+      boardroomWoodDark: new THREE.MeshLambertMaterial({ color: 0x3d2314 }), // Deep executive walnut plank
+      boardroomWoodPlank: new THREE.MeshLambertMaterial({ color: 0x5a361e }), // Warm golden walnut parquet
+      boardroomWoodLight: new THREE.MeshLambertMaterial({ color: 0x6e4326 }), // Polished amber oak inlay
       outerBorder: new THREE.MeshLambertMaterial({ color: 0xf3e3c3 }),
-      glassWall: new THREE.MeshLambertMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.35 }),
+      glassWall: new THREE.MeshLambertMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.35, depthWrite: false }),
       wallTrim: new THREE.MeshLambertMaterial({ color: 0x0f172a }),
       whiteDesk: new THREE.MeshLambertMaterial({ color: 0xffffff }),
       deskTrim: new THREE.MeshLambertMaterial({ color: 0x334155 }),
@@ -3274,9 +4160,9 @@ export default function Office3D({
       bookshelf: new THREE.MeshLambertMaterial({ color: 0x78350f }),
       trophy: new THREE.MeshLambertMaterial({ color: 0xfbbf24, emissive: 0xfbbf24, emissiveIntensity: 0.7 }),
       sofaLeather: new THREE.MeshLambertMaterial({ color: 0x1e293b }),
-      tableGlass: new THREE.MeshLambertMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.45 }),
+      tableGlass: new THREE.MeshLambertMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.45, depthWrite: false }),
       coolerBase: new THREE.MeshLambertMaterial({ color: 0xe2e8f0 }),
-      coolerJug: new THREE.MeshLambertMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75 }),
+      coolerJug: new THREE.MeshLambertMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.75, depthWrite: false }),
       boardTable: new THREE.MeshLambertMaterial({ color: 0x2d1810 }),
       boardScreen: new THREE.MeshLambertMaterial({ color: 0x00f0ff, emissive: 0x00f0ff, emissiveIntensity: 0.9 }),
       duckYellow: new THREE.MeshLambertMaterial({ color: 0xfacc15 }),
@@ -3292,6 +4178,11 @@ export default function Office3D({
       dogFurBlack: new THREE.MeshLambertMaterial({ color: 0x18181b }), // Black husky/shiba fur
       dogFurWhite: new THREE.MeshLambertMaterial({ color: 0xf8fafc }), // White muzzle/chest blaze
       dogPinkTongue: new THREE.MeshLambertMaterial({ color: 0xf43f5e, emissive: 0xf43f5e, emissiveIntensity: 0.35 }),
+      catBedSky: new THREE.MeshLambertMaterial({ color: 0x38bdf8 }), // Sky-blue outer velvet rim
+      catBedFluff: new THREE.MeshLambertMaterial({ color: 0xffffff }), // Pure white cloud cushion
+      catFurWhite: new THREE.MeshLambertMaterial({ color: 0xffffff }), // Pure white cat fur
+      catPinkNose: new THREE.MeshLambertMaterial({ color: 0xf472b6, emissive: 0xf472b6, emissiveIntensity: 0.3 }),
+      catEyeEmerald: new THREE.MeshLambertMaterial({ color: 0x10b981, emissive: 0x10b981, emissiveIntensity: 0.6 }),
       arcadeBody: new THREE.MeshLambertMaterial({ color: 0x1e1b4b }),
       arcadeScreen: new THREE.MeshLambertMaterial({ color: 0xec4899, emissive: 0xec4899, emissiveIntensity: 0.95 }),
       arcadeMarquee: new THREE.MeshLambertMaterial({ color: 0xffbe0b, emissive: 0xffbe0b, emissiveIntensity: 0.8 }),
@@ -3334,11 +4225,20 @@ export default function Office3D({
       doorThreshold: new THREE.MeshLambertMaterial({ color: 0x64748b }),
       doorSealDark: new THREE.MeshLambertMaterial({ color: 0x090d16 }),
       // Zone 6 Server Vault & Cyber Security Room Materials
-      serverFloorDark: new THREE.MeshLambertMaterial({ color: 0x1e293b }),
-      serverFloorAlt: new THREE.MeshLambertMaterial({ color: 0x134e35 }),
-      serverRackDark: new THREE.MeshLambertMaterial({ color: 0x0b0f17 }),
-      serverRackTrim: new THREE.MeshLambertMaterial({ color: 0x1e293b }),
-      serverRackDoor: new THREE.MeshLambertMaterial({ color: 0x111827 }),
+      serverFloorDark: new THREE.MeshLambertMaterial({ color: 0x0f172a }),
+      serverFloorAlt: new THREE.MeshLambertMaterial({ color: 0x1e293b }),
+      serverFloorGrate: new THREE.MeshLambertMaterial({ color: 0x0a101d }), // Perforated cold aisle airflow floor grate
+      serverRackDark: new THREE.MeshLambertMaterial({ color: 0x080c14 }),  // 42U Heavy steel chassis
+      serverRackTrim: new THREE.MeshLambertMaterial({ color: 0x334155 }),  // Vertical U-rails / corner posts
+      serverRackDoor: new THREE.MeshLambertMaterial({ color: 0x0f172a, transparent: true, opacity: 0.88 }), // Smoked mesh/glass door
+      serverMeshGrill: new THREE.MeshLambertMaterial({ color: 0x1e293b }), // Intake honeycomb mesh
+      serverDriveCaddy: new THREE.MeshLambertMaterial({ color: 0x475569 }), // 2.5" enterprise drive caddies
+      serverPduChassis: new THREE.MeshLambertMaterial({ color: 0x1e1b4b }), // Zero-U vertical PDU body
+      serverFanHub: new THREE.MeshLambertMaterial({ color: 0x0284c7, emissive: 0x0284c7, emissiveIntensity: 0.5 }), // Top exhaust fan hub
+      fiberDuctYellow: new THREE.MeshLambertMaterial({ color: 0xfacc15 }), // Industrial yellow fiber duct raceway
+      fiberDuctCover: new THREE.MeshLambertMaterial({ color: 0xfef08a, transparent: true, opacity: 0.75 }),
+      fiberAqua: new THREE.MeshLambertMaterial({ color: 0x06b6d4, emissive: 0x06b6d4, emissiveIntensity: 0.9 }),
+      fiberOrange: new THREE.MeshLambertMaterial({ color: 0xf97316, emissive: 0xf97316, emissiveIntensity: 0.9 }),
       serverLedGreen: new THREE.MeshLambertMaterial({ color: 0x00f59b, emissive: 0x00f59b, emissiveIntensity: 0.95 }),
       serverLedCyan: new THREE.MeshLambertMaterial({ color: 0x00f0ff, emissive: 0x00f0ff, emissiveIntensity: 0.95 }),
       serverLedAmber: new THREE.MeshLambertMaterial({ color: 0xf59e0b, emissive: 0xf59e0b, emissiveIntensity: 0.95 }),
@@ -3350,6 +4250,11 @@ export default function Office3D({
       serverCableGlow: new THREE.MeshLambertMaterial({ color: 0x06b6d4, emissive: 0x06b6d4, emissiveIntensity: 0.75 }),
       crashCartSteel: new THREE.MeshLambertMaterial({ color: 0x334155 }),
       crashCartScreen: new THREE.MeshLambertMaterial({ color: 0x00f59b, emissive: 0x00f59b, emissiveIntensity: 0.9 }),
+      cracChillerBody: new THREE.MeshLambertMaterial({ color: 0x1e293b }), // Industrial In-Row CRAC Chiller
+      cracChillerLouver: new THREE.MeshLambertMaterial({ color: 0x0f172a }),
+      cracChillerColdGlow: new THREE.MeshLambertMaterial({ color: 0x38bdf8, emissive: 0x38bdf8, emissiveIntensity: 0.75 }),
+      fireCylinderRed: new THREE.MeshLambertMaterial({ color: 0xdc2626 }), // FM-200 Fire Clean Agent
+      fireManifoldBrass: new THREE.MeshLambertMaterial({ color: 0xd97706 }),
     };
 
     const ceoSensorMat = new THREE.MeshLambertMaterial({
@@ -3358,6 +4263,16 @@ export default function Office3D({
       emissiveIntensity: 0.9,
     });
     const boardSensorMat = new THREE.MeshLambertMaterial({
+      color: 0x00f0ff,
+      emissive: 0x00f0ff,
+      emissiveIntensity: 0.9,
+    });
+    const serverSensorMat = new THREE.MeshLambertMaterial({
+      color: 0x00f0ff,
+      emissive: 0x00f0ff,
+      emissiveIntensity: 0.9,
+    });
+    const meetingSensorMat = new THREE.MeshLambertMaterial({
       color: 0x00f0ff,
       emissive: 0x00f0ff,
       emissiveIntensity: 0.9,
@@ -3373,49 +4288,343 @@ export default function Office3D({
       return mesh;
     }
 
-    // --- 5. Build Floors & Glass Partition Walls Matching Pixel View ---
-    const { GRID_WIDTH, GRID_HEIGHT } = OFFICE_3D_LAYOUT;
+    // --- Smart Adaptive Cutaway Perimeter Groups (Architectural Section Cut) ---
+    // Prevents exterior walls from blocking the interior when camera orbits or tilts
+    const northWallGroup = new THREE.Group();
+    const southWallGroup = new THREE.Group();
+    const eastWallGroup = new THREE.Group();
+    const westWallGroup = new THREE.Group();
+    scene.add(northWallGroup);
+    scene.add(southWallGroup);
+    scene.add(eastWallGroup);
+    scene.add(westWallGroup);
 
-    for (let x = 0; x < GRID_WIDTH; x++) {
-      for (let z = 0; z < GRID_HEIGHT; z++) {
-        let fMat = mats.outerBorder;
+    let northPlaqueBg: THREE.Mesh | null = null;
+    let northPlaqueGold: THREE.Mesh | null = null;
+    let eastCableTray: THREE.Mesh | null = null;
+    let eastCableGlow: THREE.Mesh | null = null;
 
-        // ZONE 6: High-Tech Cyber Security & Server Vault (Zone 6, East Wing: x > 29 && z <= 11)
-        if (x > 29 && z <= 11) {
-          fMat = ((x + z) % 2 === 0) ? mats.serverFloorDark : mats.serverFloorAlt;
-        }
-        // ZONE 1: CEO Suite
-        else if (x <= 10 && z <= 11) {
-          fMat = (x >= 2 && x <= 8 && z >= 2 && z <= 8) ? mats.ceoRug : mats.ceoNavyFloor;
-        }
-        // ZONE 2: Team Bullpen (Chevron teal)
-        else if (x > 10 && z <= 11) {
-          fMat = ((x + z) % 2 === 0) ? mats.bullpenFloor : mats.bullpenAlt;
-        }
-        // ZONE 5A: Gourmet Pantry & Kitchen (Indoor: x < 8, z in 11..16)
-        else if (x < 8 && z > 11 && z <= 16) {
-          fMat = (x + z) % 2 === 0 ? mats.kitchenTileLight : mats.kitchenTileDark;
-        }
-        // ZONE 5B: Outdoor Zen Garden & Patio Terrace (Outdoor: x < 8, z > 16)
-        else if (x < 8 && z > 16) {
-          if (x >= 2 && x <= 7 && z >= 17 && z <= 20) {
-            fMat = mats.gardenDeck;
-          } else {
-            fMat = (x === 1 || z === 21) ? mats.gardenGrass : mats.gardenPaver;
-          }
-        }
-        // ZONE 3: Rest Area & Coffee Lounge (Muted sage-teal rug in center suite: x: 8..21, z > 11)
-        else if (x >= 8 && x <= 21 && z > 11) {
-          fMat = (x >= 9 && x <= 20 && z >= 13 && z <= 20) ? mats.loungeRug : mats.bullpenFloor;
-        }
-        // ZONE 4: Executive Boardroom (Mahogany wood in bottom-right suite: x > 21, z > 11)
-        else if (z > 11) {
-          fMat = mats.boardroomFloor;
+    function addVoxelToGroup(
+      group: THREE.Group,
+      x: number,
+      y: number,
+      z: number,
+      mat: THREE.Material,
+      sx = 1,
+      sy = 1,
+      sz = 1,
+      shadow = true
+    ) {
+      const mesh = new THREE.Mesh(boxGeo, mat);
+      mesh.position.set(x, y, z);
+      mesh.scale.set(sx, sy, sz);
+      mesh.castShadow = shadow;
+      mesh.receiveShadow = true;
+      group.add(mesh);
+      return mesh;
+    }
+
+    // --- 5. High-Resolution Custom Architectural Plaques (AVERO Brand Signage) ---
+    function createPlaqueTexture(title: string, subtitle?: string, accentColor = '#ffbe0b') {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 320;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        // Dark obsidian background
+        ctx.fillStyle = '#0a0f1d';
+        ctx.fillRect(0, 0, 1024, 320);
+
+        // Gold/Cyan perimeter trim
+        ctx.strokeStyle = accentColor;
+        ctx.lineWidth = 18;
+        ctx.strokeRect(18, 18, 988, 284);
+
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(34, 34, 956, 252);
+
+        // Title text
+        ctx.fillStyle = '#f8fafc';
+        ctx.font = '900 86px monospace';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(title, 512, subtitle ? 116 : 160);
+
+        // Subtitle
+        if (subtitle) {
+          ctx.fillStyle = accentColor;
+          ctx.font = '700 42px monospace';
+          ctx.fillText(subtitle, 512, 226);
         }
 
-        addVoxel(x, -0.5, z, fMat, 1, 1, 1, false);
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.needsUpdate = true;
+        tex.minFilter = THREE.LinearMipmapLinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.generateMipmaps = true;
+        try {
+          tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        } catch {}
+        return tex;
+      } catch {
+        return null;
       }
     }
+
+    const averoCeoTex = createPlaqueTexture('AVERO', 'EXECUTIVE SUITE', '#ffbe0b');
+    const averoCeoMat = averoCeoTex ? new THREE.MeshBasicMaterial({ map: averoCeoTex }) : mats.goldAccent;
+
+    const averoBuildingTex = createPlaqueTexture('★ AVERO HQ ★', 'AUTONOMOUS AI VIRTUAL OFFICE', '#00f0ff');
+    const averoBuildingMat = averoBuildingTex ? new THREE.MeshBasicMaterial({ map: averoBuildingTex }) : mats.goldAccent;
+
+    // Procedural High-Definition Seamless Tile & Parquet Textures (Zero Seams, Zero Glitching, Zero Z-Fighting!)
+    function createKitchenTileTexture() {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 1024;
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        const cols = 8;
+        const rows = 5;
+        const colW = canvas.width / cols;
+        const rowH = canvas.height / rows;
+
+        for (let c = 0; c < cols; c++) {
+          for (let r = 0; r < rows; r++) {
+            const isLight = (c + r) % 2 === 0;
+            const x = c * colW;
+            const y = r * rowH;
+
+            // Base tile ceramic fill
+            ctx.fillStyle = isLight ? '#f8fafc' : '#1e293b';
+            ctx.fillRect(x, y, colW, rowH);
+
+            // Subtle 3D beveled edge highlight & shadow
+            if (isLight) {
+              ctx.fillStyle = '#ffffff';
+              ctx.fillRect(x + 2, y + 2, colW - 4, 3);
+              ctx.fillRect(x + 2, y + 2, 3, rowH - 4);
+              ctx.fillStyle = '#e2e8f0';
+              ctx.fillRect(x + colW - 5, y + 2, 3, rowH - 4);
+              ctx.fillRect(x + 2, y + rowH - 5, colW - 4, 3);
+            } else {
+              ctx.fillStyle = '#334155';
+              ctx.fillRect(x + 2, y + 2, colW - 4, 3);
+              ctx.fillRect(x + 2, y + 2, 3, rowH - 4);
+              ctx.fillStyle = '#0f172a';
+              ctx.fillRect(x + colW - 5, y + 2, 3, rowH - 4);
+              ctx.fillRect(x + 2, y + rowH - 5, colW - 4, 3);
+            }
+
+            // Crisp clean mortar/grout line
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 2;
+            ctx.strokeRect(x + 1, y + 1, colW - 2, rowH - 2);
+          }
+        }
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.needsUpdate = true;
+        tex.minFilter = THREE.LinearMipmapLinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.generateMipmaps = true;
+        try {
+          tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        } catch {}
+        return tex;
+      } catch {
+        return null;
+      }
+    }
+
+    function createBoardroomTileTexture() {
+      try {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2048;
+        canvas.height = 1024;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return null;
+
+        const cols = 17;
+        const rows = 10;
+        const colW = canvas.width / cols;
+        const rowH = canvas.height / rows;
+
+        for (let c = 0; c < cols; c++) {
+          for (let r = 0; r < rows; r++) {
+            const isInlay = c >= 2 && c <= 14 && r >= 2 && r <= 7;
+            const isAlt = (c + r) % 2 === 0;
+            const x = c * colW;
+            const y = r * rowH;
+
+            if (isInlay) {
+              // Table inlay: Warm amber oak & golden walnut
+              ctx.fillStyle = isAlt ? '#6e4326' : '#5a361e';
+              ctx.fillRect(x, y, colW, rowH);
+
+              // Subtle horizontal wood grain slats
+              ctx.fillStyle = isAlt ? '#7d4c2b' : '#663d22';
+              ctx.fillRect(x + 6, y + rowH * 0.25, colW - 12, 1.5);
+              ctx.fillRect(x + 6, y + rowH * 0.50, colW - 12, 1.5);
+              ctx.fillRect(x + 6, y + rowH * 0.75, colW - 12, 1.5);
+            } else {
+              // Perimeter: Deep executive walnut parquet
+              ctx.fillStyle = isAlt ? '#5a361e' : '#3d2314';
+              ctx.fillRect(x, y, colW, rowH);
+
+              // Subtle vertical wood grain slats
+              ctx.fillStyle = isAlt ? '#663d22' : '#4a2b19';
+              ctx.fillRect(x + colW * 0.25, y + 6, 1.5, rowH - 12);
+              ctx.fillRect(x + colW * 0.50, y + 6, 1.5, rowH - 12);
+              ctx.fillRect(x + colW * 0.75, y + 6, 1.5, rowH - 12);
+            }
+
+            // Fine parquet groove line
+            ctx.strokeStyle = '#26140b';
+            ctx.lineWidth = 1.5;
+            ctx.strokeRect(x + 0.75, y + 0.75, colW - 1.5, rowH - 1.5);
+          }
+        }
+
+        // Luxurious Brass Inlay Border enclosing columns 2..14 and rows 2..7
+        const inlayX0 = 2 * colW;
+        const inlayY0 = 2 * rowH;
+        const inlayW = 13 * colW;
+        const inlayH = 6 * rowH;
+        ctx.strokeStyle = '#fbbf24';
+        ctx.lineWidth = 4;
+        ctx.strokeRect(inlayX0 + 2, inlayY0 + 2, inlayW - 4, inlayH - 4);
+
+        const tex = new THREE.CanvasTexture(canvas);
+        tex.needsUpdate = true;
+        tex.minFilter = THREE.LinearMipmapLinearFilter;
+        tex.magFilter = THREE.LinearFilter;
+        tex.generateMipmaps = true;
+        try {
+          tex.anisotropy = renderer.capabilities.getMaxAnisotropy();
+        } catch {}
+        return tex;
+      } catch {
+        return null;
+      }
+    }
+
+    const kitchenTileTex = createKitchenTileTexture();
+    const boardroomTileTex = createBoardroomTileTexture();
+
+    // Helper: Ultra-Flush Seamless Textured Floor (Guaranteed zero seams and zero Z-fighting)
+    function addFloorSurface(
+      xMid: number,
+      zMid: number,
+      width: number,
+      depth: number,
+      texture: THREE.Texture | null,
+      fallbackMat: THREE.Material
+    ) {
+      // 1. Foundation rim slab sitting at y = 0.010 with height 0.020 (top is at y = 0.020 - 11mm cleanly BELOW floor quad)
+      addVoxel(xMid, 0.010, zMid, mats.wallTrim, width, 0.02, depth, false);
+
+      // 2. Ultra-flush top surface quad (y: 0.031, polygonOffset enabled to guarantee absolute depth priority over any base geometry)
+      const planeGeo = new THREE.PlaneGeometry(width, depth);
+      const baseMat = texture
+        ? new THREE.MeshLambertMaterial({ map: texture, side: THREE.FrontSide })
+        : (fallbackMat as THREE.Material).clone();
+      const mat = baseMat as THREE.MeshLambertMaterial;
+      mat.polygonOffset = true;
+      mat.polygonOffsetFactor = -2.0;
+      mat.polygonOffsetUnits = -4.0;
+      const mesh = new THREE.Mesh(planeGeo, mat);
+      mesh.position.set(xMid, 0.031, zMid);
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.receiveShadow = true;
+      scene.add(mesh);
+      return mesh;
+    }
+
+    // --- 5B. Build Architectural Foundation Base & Interior Room Floors ---
+    // A. Architectural Foundation Base Plinth (Unified flush solid base slab under entire office)
+    // Strictly below y = 0.00 (from y = -1.21 to -0.01) so foundation never fights with floor bottom
+    addVoxel(19.225, -0.61, 10.75, mats.wallTrim, 37.55, 1.20, 20.60, false);
+
+    // B. Interior Room Floor Voxels - Clean Non-Overlapping Precision Grid
+    function createRoomFloor(
+      xMin: number,
+      xMax: number,
+      zMin: number,
+      zMax: number,
+      cols: number,
+      rows: number,
+      getMaterial: (col: number, row: number, xMid: number, zMid: number) => THREE.Material
+    ) {
+      const width = xMax - xMin;
+      const depth = zMax - zMin;
+      const dx = width / cols;
+      const dz = depth / rows;
+
+      for (let c = 0; c < cols; c++) {
+        const x0 = xMin + c * dx;
+        const x1 = xMin + (c + 1) * dx;
+        const xMid = (x0 + x1) / 2;
+        const sx = x1 - x0;
+
+        for (let r = 0; r < rows; r++) {
+          const z0 = zMin + r * dz;
+          const z1 = zMin + (r + 1) * dz;
+          const zMid = (z0 + z1) / 2;
+          const sz = z1 - z0;
+
+          const mat = getMaterial(c, r, xMid, zMid);
+          addVoxel(xMid, 0.015, zMid, mat, sx, 0.03, sz, false);
+        }
+      }
+    }
+
+    // 1. CEO Executive Suite (x: 0.45..10.0, z: 0.45..11.0)
+    createRoomFloor(0.45, 10.0, 0.45, 11.0, 10, 11, (_c, _r, x, z) => {
+      // Dylan's Executive Command Desk Rug
+      if (x >= 2.0 && x <= 8.0 && z >= 2.0 && z <= 8.0) return mats.ceoRug;
+      return mats.ceoNavyFloor;
+    });
+
+    // 2. Team Open Bullpen (x: 10.0..26.0, z: 0.45..11.0)
+    createRoomFloor(10.0, 26.0, 0.45, 11.0, 16, 11, (c, r) => {
+      return (c + r) % 2 === 0 ? mats.bullpenFloor : mats.bullpenAlt;
+    });
+
+    // 3. Cyber Security & Server Vault (x: 26.0..38.0, z: 0.45..11.0)
+    createRoomFloor(26.0, 38.0, 0.45, 11.0, 12, 11, (c, r, x, z) => {
+      // Cold-Aisle Raised Airflow Floor Grates directly in front of the 4 server racks
+      if (z >= 2.5 && z <= 3.5 && x >= 27.2 && x <= 36.8) return mats.serverFloorGrate;
+      // High-tech terminal workstation rug under Alex & Zane's desks
+      if (x >= 27.2 && x <= 36.8 && z >= 6.0 && z <= 9.2) return mats.ceoRug;
+      return (c + r) % 2 === 0 ? mats.serverFloorDark : mats.serverFloorAlt;
+    });
+
+    // 4. Gourmet Pantry & Kitchen Suite (x: 0.45..8.0, z: 11.0..16.0)
+    // French Bistro Checkerboard Ceramic Tiles - 100% Seamless & Glitch-Free Single Surface!
+    addFloorSurface(4.225, 13.5, 7.55, 5.0, kitchenTileTex, mats.kitchenTileLight);
+
+    // 5. Outdoor Zen Garden & Patio Terrace (x: 0.45..8.0, z: 16.0..21.05)
+    createRoomFloor(0.45, 8.0, 16.0, 21.05, 8, 5, (c, r, x, z) => {
+      if (x >= 2.0 && x <= 6.5 && z >= 16.8 && z <= 19.8) return mats.gardenDeck; // Warm teak slatted outdoor patio deck
+      if (c === 0 || r === 4) return mats.gardenGrass; // Outdoor lush grass border
+      return mats.gardenPaver; // Natural stone pavers
+    });
+
+    // 6. Team Relaxation & Coffee Lounge (x: 8.0..21.0, z: 11.0..21.05)
+    createRoomFloor(8.0, 21.0, 11.0, 21.05, 13, 10, (c, r, x, z) => {
+      if (x >= 9.5 && x <= 19.5 && z >= 13.0 && z <= 20.0) return mats.loungeRug; // Luxurious sage-teal area rug
+      return (c + r) % 2 === 0 ? mats.bullpenFloor : mats.bullpenAlt;
+    });
+
+    // 7. Executive Boardroom / Meeting Room (x: 21.0..38.0, z: 11.0..21.05)
+    // Rich warm executive walnut hardwood parquet & brass inlay - 100% Seamless & Glitch-Free Single Surface!
+    addFloorSurface(29.5, 16.025, 17.0, 10.05, boardroomTileTex, mats.boardroomWoodPlank);
 
     // =========================================================================
     // 5A. ARCHITECTURAL DIVIDING WALLS & FLUSH PARTITIONS (100% UNIFIED 2.40M)
@@ -3431,15 +4640,15 @@ export default function Office3D({
     addVoxel(10.0, 1.10, 10.525, mats.glassWall, 0.20, 2.20, 0.75);
     addVoxel(10.0, 0.08, 10.525, mats.wallTrim, 0.24, 0.16, 0.75);
 
-    // 2. Vertical Security Glass Wall between Bullpen & Server Room (x = 29.0, z: 0.45..10.90)
+    // 2. Vertical Security Glass Wall between Bullpen & Server Room (x = 26.0, z: 0.45..10.90)
     // Continuous overhead lintel spanning from North wall (z = 0.45) to Center horizontal wall (z = 10.90)
-    addVoxel(29.0, 2.30, 5.675, mats.wallTrim, 0.24, 0.20, 10.45);
-    // North glass section before doorway (z: 0.45..4.85)
-    addVoxel(29.0, 1.10, 2.65, mats.glassWall, 0.20, 2.20, 4.40);
-    addVoxel(29.0, 0.08, 2.65, mats.wallTrim, 0.24, 0.16, 4.40);
-    // South glass section after doorway (z: 8.15..10.90 - connects flush into z = 11 wall)
-    addVoxel(29.0, 1.10, 9.525, mats.glassWall, 0.20, 2.20, 2.75);
-    addVoxel(29.0, 0.08, 9.525, mats.wallTrim, 0.24, 0.16, 2.75);
+    addVoxel(26.0, 2.30, 5.675, mats.wallTrim, 0.24, 0.20, 10.45);
+    // North glass section before doorway (z: 0.45..5.20)
+    addVoxel(26.0, 1.10, 2.825, mats.glassWall, 0.20, 2.20, 4.75);
+    addVoxel(26.0, 0.08, 2.825, mats.wallTrim, 0.24, 0.16, 4.75);
+    // South glass section after doorway (z: 7.80..10.90 - connects flush into z = 11 wall)
+    addVoxel(26.0, 1.10, 9.35, mats.glassWall, 0.20, 2.20, 3.10);
+    addVoxel(26.0, 0.08, 9.35, mats.wallTrim, 0.24, 0.16, 3.10);
 
     // 3. Main Center Dividing Wall along z = 11.0 (Spans full building from x = 0.45 to x = 37.90)
     // Section A: Gourmet Pantry Back Acoustic Wall (x: 0.45..10.0, width = 9.55m)
@@ -3455,12 +4664,30 @@ export default function Office3D({
     // Section C: Lounge Entrance Double Sliding Doors (x: 16.5..20.5, width = 4.0m)
     addVoxel(18.5, 2.30, 11.0, mats.wallTrim, 4.0, 0.20, 0.24);
     addVoxel(18.5, 2.10, 11.0, mats.doorFrameDark, 3.82, 0.20, 0.24); // Flush transom header under lintel
-    addVoxel(18.5, 0.015, 11.0, mats.doorThreshold, 4.0, 0.03, 0.26);
+    // Glowing AVERO HQ Corporate Marquee Sign above Central Double Entrance (Both Sides Visible)
+    addVoxel(18.5, 2.48, 11.0, mats.wallTrim, 3.6, 0.26, 0.08);
+    addVoxel(18.5, 2.48, 11.05, averoBuildingMat, 3.4, 0.22, 0.02, false); // facing Lounge (+z)
+    addVoxel(18.5, 2.48, 10.95, averoBuildingMat, 3.4, 0.22, 0.02, false); // facing Bullpen (-z)
 
-    // Section D: Bullpen / Boardroom Glass Divider (x: 20.5..27.5, width = 7.0m)
-    addVoxel(24.0, 1.10, 11.0, mats.glassWall, 7.0, 2.20, 0.20);
-    addVoxel(24.0, 2.30, 11.0, mats.wallTrim, 7.0, 0.20, 0.24);
-    addVoxel(24.0, 0.08, 11.0, mats.wallTrim, 7.0, 0.16, 0.24);
+    // Section D: Bullpen / Boardroom Solid Acoustic Private Wall (x: 20.5..26.0, width = 5.50m)
+    // 100% Solid Soundproof Private Architecture (Zero Glass)
+    addVoxel(23.25, 1.10, 11.0, mats.doorFrameDark, 5.50, 2.20, 0.20);
+    // Boardroom side (+z): Executive acoustic walnut slat paneling facing the meeting table
+    addVoxel(23.25, 1.10, 11.10, mats.bookshelf, 5.46, 2.04, 0.02);
+    for (let bx = 20.9; bx <= 25.8; bx += 0.55) {
+      addVoxel(bx, 1.10, 11.115, mats.boardroomWoodDark, 0.06, 2.04, 0.02);
+    }
+    // Bullpen side (-z): Sleek architectural dark finish with baseboard
+    addVoxel(23.25, 1.10, 10.90, mats.doorFrameDark, 5.46, 2.04, 0.02);
+    addVoxel(23.25, 2.30, 11.0, mats.wallTrim, 5.50, 0.20, 0.24);
+    addVoxel(23.25, 0.08, 11.0, mats.wallTrim, 5.50, 0.16, 0.24);
+
+    // Section D2: Server Room / Boardroom Solid Acoustic Wall (x: 26.0..27.5, width = 1.50m)
+    addVoxel(26.75, 1.10, 11.0, mats.doorFrameDark, 1.50, 2.20, 0.20);
+    addVoxel(26.75, 1.10, 11.10, mats.bookshelf, 1.46, 2.04, 0.02);
+    addVoxel(26.75, 1.10, 10.90, mats.serverRackDark, 1.46, 2.04, 0.02);
+    addVoxel(26.75, 2.30, 11.0, mats.wallTrim, 1.50, 0.20, 0.24);
+    addVoxel(26.75, 0.08, 11.0, mats.wallTrim, 1.50, 0.16, 0.24);
 
     // Section E: Boardroom Acoustic Media Backing Wall behind Ultra-HD Screen (x: 27.5..31.5, width = 4.0m)
     addVoxel(29.5, 1.10, 11.0, mats.doorFrameDark, 4.0, 2.20, 0.20);
@@ -3471,15 +4698,18 @@ export default function Office3D({
     addVoxel(29.5, 2.30, 11.0, mats.wallTrim, 4.0, 0.20, 0.24);
     addVoxel(29.5, 0.08, 11.0, mats.wallTrim, 4.0, 0.16, 0.24);
 
-    // Section F: Smart Acoustic Glass Wall between Server Room & Boardroom (x: 31.5..37.90, width = 6.40m)
-    // Seamlessly touches East wall inner surface at x = 37.90 (ZERO gap, ZERO step)
-    addVoxel(34.70, 1.10, 11.0, mats.glassWall, 6.40, 2.20, 0.20);
-    addVoxel(34.70, 1.10, 11.0, mats.doorFrostedBand, 6.40, 0.55, 0.21);
+    // Section F: Solid Acoustic Soundproof Wall between Server Room & Boardroom (x: 31.5..37.90, width = 6.40m)
+    // Seamlessly touches East wall inner surface at x = 37.90 (ZERO gap, ZERO step, 100% Solid Private)
+    addVoxel(34.70, 1.10, 11.0, mats.doorFrameDark, 6.40, 2.20, 0.20);
+    // Boardroom side (+z): Executive acoustic walnut slats
+    addVoxel(34.70, 1.10, 11.10, mats.bookshelf, 6.36, 2.04, 0.02);
+    for (let mx = 32.0; mx <= 37.5; mx += 0.55) {
+      addVoxel(mx, 1.10, 11.115, mats.boardroomWoodDark, 0.06, 2.04, 0.02);
+    }
+    // Server room side (-z): Dark steel server vault finish
+    addVoxel(34.70, 1.10, 10.90, mats.serverRackDark, 6.36, 2.04, 0.02);
     addVoxel(34.70, 2.30, 11.0, mats.wallTrim, 6.40, 0.20, 0.24);
     addVoxel(34.70, 0.08, 11.0, mats.wallTrim, 6.40, 0.16, 0.24);
-    for (let mx = 32.6; mx <= 37.0; mx += 1.1) {
-      addVoxel(mx, 1.10, 11.0, mats.doorJambDark, 0.08, 2.20, 0.22);
-    }
     // Flush East Wall junction post meeting East Wall
     addVoxel(37.90, 1.10, 11.0, mats.doorJambDark, 0.16, 2.20, 0.22);
     addVoxel(37.90, 2.30, 11.0, mats.wallTrim, 0.16, 0.20, 0.24);
@@ -3491,10 +4721,10 @@ export default function Office3D({
     addVoxel(10.0, 2.30, 11.0, mats.wallTrim, 0.26, 0.20, 0.26);
     addVoxel(10.0, 0.08, 11.0, mats.wallTrim, 0.26, 0.16, 0.26);
 
-    // Bullpen / Server Room / Boardroom junction at x = 29.0, z = 11.0
-    addVoxel(29.0, 1.10, 11.0, mats.doorJambDark, 0.24, 2.20, 0.24);
-    addVoxel(29.0, 2.30, 11.0, mats.wallTrim, 0.26, 0.20, 0.26);
-    addVoxel(29.0, 0.08, 11.0, mats.wallTrim, 0.26, 0.16, 0.26);
+    // Bullpen / Server Room / Boardroom junction at x = 26.0, z = 11.0
+    addVoxel(26.0, 1.10, 11.0, mats.doorJambDark, 0.24, 2.20, 0.24);
+    addVoxel(26.0, 2.30, 11.0, mats.wallTrim, 0.26, 0.20, 0.26);
+    addVoxel(26.0, 0.08, 11.0, mats.wallTrim, 0.26, 0.16, 0.26);
 
     // 4. Vertical Wall between Pantry & Lounge / Zen Garden (x = 8.0, z: 11.10..21.05)
     // Continuous overhead lintel spanning from z = 11.10 to z = 21.05
@@ -3506,7 +4736,6 @@ export default function Office3D({
     addVoxel(8.0, 1.10, 12.80, mats.doorJambDark, 0.24, 2.20, 0.16); // Left jamb post
     addVoxel(8.0, 1.10, 15.20, mats.doorJambDark, 0.24, 2.20, 0.16); // Right jamb post
     addVoxel(8.0, 2.10, 14.00, mats.doorFrameDark, 0.22, 0.20, 2.24); // Overhead transom header (NO GAP!)
-    addVoxel(8.0, 0.015, 14.00, mats.doorThreshold, 0.28, 0.03, 2.40); // Floor threshold
     // Post between kitchen door and patio door (z: 15.20..16.0)
     addVoxel(8.0, 1.10, 15.60, mats.glassWall, 0.20, 2.20, 0.80);
     addVoxel(8.0, 0.08, 15.60, mats.wallTrim, 0.24, 0.16, 0.80);
@@ -3527,24 +4756,40 @@ export default function Office3D({
     addVoxel(3.00, 1.10, 16.0, mats.doorJambDark, 0.16, 2.20, 0.24); // Left jamb post
     addVoxel(5.50, 1.10, 16.0, mats.doorJambDark, 0.16, 2.20, 0.24); // Right jamb post
     addVoxel(4.25, 2.10, 16.0, mats.doorTrackSilver, 2.34, 0.20, 0.24); // Overhead transom & track (NO GAP!)
-    addVoxel(4.25, 0.015, 16.0, mats.doorThreshold, 2.50, 0.03, 0.26);
+    addVoxel(4.25, 0.022, 16.0, mats.doorThreshold, 2.50, 0.035, 0.26);
     // East glass panel (x: 5.50..8.00)
     addVoxel(6.75, 1.10, 16.0, mats.doorGlass, 2.50, 2.20, 0.20);
     addVoxel(6.75, 0.08, 16.0, mats.wallTrim, 2.50, 0.16, 0.24);
 
-    // 6. Vertical Glass Divider between Boardroom & Lounge (x = 21.0, z: 11.10..21.05)
+    // 6. Solid Acoustic Private Dividing Wall between Boardroom & Lounge (x = 21.0, z: 11.10..21.05)
+    // 100% Solid Private Architecture (Zero Glass) for Confidential Meeting Space
     addVoxel(21.0, 2.30, 16.075, mats.wallTrim, 0.24, 0.20, 9.95); // Continuous overhead lintel
-    // North glass panel (z: 11.10..13.00)
-    addVoxel(21.0, 1.10, 12.05, mats.glassWall, 0.20, 2.20, 1.90);
-    addVoxel(21.0, 0.08, 12.05, mats.wallTrim, 0.24, 0.16, 1.90);
-    // Doorway opening frame (z: 13.00..15.50)
-    addVoxel(21.0, 1.10, 13.00, mats.doorJambDark, 0.24, 2.20, 0.16); // Left jamb post
-    addVoxel(21.0, 1.10, 15.50, mats.doorJambDark, 0.24, 2.20, 0.16); // Right jamb post
-    addVoxel(21.0, 2.10, 14.25, mats.doorFrameDark, 0.22, 0.20, 2.34); // Overhead transom header (NO GAP!)
-    addVoxel(21.0, 0.015, 14.25, mats.doorThreshold, 0.26, 0.03, 2.50);
-    // South glass panel (z: 15.50..21.05)
-    addVoxel(21.0, 1.10, 18.275, mats.glassWall, 0.20, 2.20, 5.55);
-    addVoxel(21.0, 0.08, 18.275, mats.wallTrim, 0.24, 0.16, 5.55);
+    // North Solid Acoustic Panel (z: 11.10..14.825, length = 3.725m)
+    addVoxel(21.0, 1.10, 12.9625, mats.doorFrameDark, 0.20, 2.20, 3.725);
+    // Boardroom side (+x): Warm acoustic walnut paneling & vertical slats
+    addVoxel(21.10, 1.10, 12.9625, mats.bookshelf, 0.02, 2.04, 3.68);
+    for (let wz = 11.50; wz <= 14.50; wz += 0.45) {
+      addVoxel(21.115, 1.10, wz, mats.boardroomWoodDark, 0.02, 2.04, 0.06);
+    }
+    // Lounge side (-x): Dark architectural finish with warm caramel reveal lines
+    addVoxel(20.90, 1.10, 12.9625, mats.doorFrameDark, 0.02, 2.04, 3.68);
+    addVoxel(20.89, 1.10, 12.9625, mats.caramelWood, 0.01, 0.08, 3.66);
+    addVoxel(20.89, 1.90, 12.9625, mats.caramelWood, 0.01, 0.04, 3.66);
+    addVoxel(21.0, 0.08, 12.9625, mats.wallTrim, 0.24, 0.16, 3.725);
+
+    // South Solid Acoustic Panel (z: 17.325..21.05, length = 3.725m)
+    addVoxel(21.0, 1.10, 19.1875, mats.doorFrameDark, 0.20, 2.20, 3.725);
+    // Boardroom side (+x): Warm acoustic walnut paneling & vertical slats
+    addVoxel(21.10, 1.10, 19.1875, mats.bookshelf, 0.02, 2.04, 3.68);
+    for (let wz = 17.70; wz <= 20.70; wz += 0.45) {
+      addVoxel(21.115, 1.10, wz, mats.boardroomWoodDark, 0.02, 2.04, 0.06);
+    }
+    // Lounge side (-x): Boutique lounge acoustic finish with double caramel reveal lines
+    addVoxel(20.90, 1.10, 19.1875, mats.doorFrameDark, 0.02, 2.04, 3.68);
+    addVoxel(20.89, 1.10, 19.1875, mats.caramelWood, 0.01, 0.08, 3.66);
+    addVoxel(20.89, 1.90, 19.1875, mats.caramelWood, 0.01, 0.04, 3.66);
+    addVoxel(21.0, 0.08, 19.1875, mats.wallTrim, 0.24, 0.16, 3.725);
+
     // Corner junction post meeting South wall at x = 21.0, z = 21.05
     addVoxel(21.0, 1.10, 21.05, mats.doorJambDark, 0.24, 2.20, 0.24);
     addVoxel(21.0, 2.30, 21.05, mats.wallTrim, 0.26, 0.20, 0.26);
@@ -3577,24 +4822,24 @@ export default function Office3D({
     addVoxel(10.0, 1.10, 10.15, mats.doorJambDark, 0.26, 2.20, 0.20);
     // Flush Transom Header filling y: 2.00..2.20 directly beneath the 2.40m lintel
     addVoxel(10.0, 2.10, 8.5, mats.doorFrameDark, 0.26, 0.20, 3.10);
-    // Overhead heavy-duty sliding guide track
-    addVoxel(10.0, 1.95, 8.5, mats.doorTrackSilver, 0.28, 0.10, 3.48);
+    // Overhead heavy-duty sliding guide track (Spanning Northward to accommodate slide into glass partition)
+    addVoxel(10.0, 1.95, 7.6, mats.doorTrackSilver, 0.28, 0.10, 5.20);
     // Flush floor threshold guide plate
-    addVoxel(10.0, 0.015, 8.5, mats.doorThreshold, 0.32, 0.03, 3.40);
+    addVoxel(10.0, 0.020, 8.5, mats.doorThreshold, 0.32, 0.034, 3.40);
     // Top PIR presence sensor housing & dynamic LED
     addVoxel(10.0, 2.18, 8.5, mats.doorJambDark, 0.30, 0.08, 0.36);
     addVoxel(10.16, 2.18, 8.5, ceoSensorMat, 0.04, 0.04, 0.12, false); // facing bullpen
     addVoxel(9.84, 2.18, 8.5, ceoSensorMat, 0.04, 0.04, 0.12, false);  // facing CEO suite
 
-    // CEO Executive Wall Plaque
+    // CEO Executive Wall Plaque (AVERO Brand Plaque)
     // Facing Bullpen (x = 10.14)
-    addVoxel(10.14, 1.70, 6.45, mats.deskTrimBrass, 0.04, 0.32, 0.88);
-    addVoxel(10.16, 1.70, 6.45, mats.doorFrameDark, 0.03, 0.24, 0.80);
-    addVoxel(10.18, 1.70, 6.45, mats.goldAccent, 0.02, 0.10, 0.68, false); // Engraved text bar
+    addVoxel(10.14, 1.70, 6.45, mats.deskTrimBrass, 0.04, 0.36, 0.94);
+    addVoxel(10.16, 1.70, 6.45, mats.doorFrameDark, 0.03, 0.28, 0.86);
+    addVoxel(10.18, 1.70, 6.45, averoCeoMat, 0.02, 0.24, 0.82, false); // Engraved AVERO executive plaque
     // Facing CEO Suite (x = 9.86)
-    addVoxel(9.86, 1.70, 6.45, mats.deskTrimBrass, 0.04, 0.32, 0.88);
-    addVoxel(9.84, 1.70, 6.45, mats.doorFrameDark, 0.03, 0.24, 0.80);
-    addVoxel(9.82, 1.70, 6.45, mats.goldAccent, 0.02, 0.10, 0.68, false);
+    addVoxel(9.86, 1.70, 6.45, mats.deskTrimBrass, 0.04, 0.36, 0.94);
+    addVoxel(9.84, 1.70, 6.45, mats.doorFrameDark, 0.03, 0.28, 0.86);
+    addVoxel(9.82, 1.70, 6.45, averoCeoMat, 0.02, 0.24, 0.82, false);
 
     // Dynamic Sliding Door Leaf Group
     const ceoDoorGroup = new THREE.Group();
@@ -3614,15 +4859,21 @@ export default function Office3D({
     addDoorVoxel(ceoDoorGroup, 0, 1.05, 0, mats.doorFrostedBand, 0.08, 0.30, 2.80);
     addDoorVoxel(ceoDoorGroup, 0, 1.30, 0, mats.doorFrostedBand, 0.08, 0.04, 2.80);
     addDoorVoxel(ceoDoorGroup, 0, 0.80, 0, mats.doorFrostedBand, 0.08, 0.04, 2.80);
-    // Chrome vertical architectural pull handles (on both sides)
-    // Bullpen side:
+    // Chrome vertical architectural pull handles (on both sides & both ends)
+    // North end handles:
     addDoorVoxel(ceoDoorGroup, 0.08, 1.0, -1.1, mats.chairChrome, 0.03, 0.76, 0.03);
     addDoorVoxel(ceoDoorGroup, 0.05, 1.32, -1.1, mats.chairChrome, 0.05, 0.03, 0.03);
     addDoorVoxel(ceoDoorGroup, 0.05, 0.68, -1.1, mats.chairChrome, 0.05, 0.03, 0.03);
-    // CEO side:
     addDoorVoxel(ceoDoorGroup, -0.08, 1.0, -1.1, mats.chairChrome, 0.03, 0.76, 0.03);
     addDoorVoxel(ceoDoorGroup, -0.05, 1.32, -1.1, mats.chairChrome, 0.05, 0.03, 0.03);
     addDoorVoxel(ceoDoorGroup, -0.05, 0.68, -1.1, mats.chairChrome, 0.05, 0.03, 0.03);
+    // South end handles:
+    addDoorVoxel(ceoDoorGroup, 0.08, 1.0, 1.1, mats.chairChrome, 0.03, 0.76, 0.03);
+    addDoorVoxel(ceoDoorGroup, 0.05, 1.32, 1.1, mats.chairChrome, 0.05, 0.03, 0.03);
+    addDoorVoxel(ceoDoorGroup, 0.05, 0.68, 1.1, mats.chairChrome, 0.05, 0.03, 0.03);
+    addDoorVoxel(ceoDoorGroup, -0.08, 1.0, 1.1, mats.chairChrome, 0.03, 0.76, 0.03);
+    addDoorVoxel(ceoDoorGroup, -0.05, 1.32, 1.1, mats.chairChrome, 0.05, 0.03, 0.03);
+    addDoorVoxel(ceoDoorGroup, -0.05, 0.68, 1.1, mats.chairChrome, 0.05, 0.03, 0.03);
     // Top roller trolley brackets
     addDoorVoxel(ceoDoorGroup, 0, 1.96, -0.9, mats.chairChrome, 0.12, 0.05, 0.08);
     addDoorVoxel(ceoDoorGroup, 0, 1.96, 0.9, mats.chairChrome, 0.12, 0.05, 0.08);
@@ -3636,7 +4887,7 @@ export default function Office3D({
     // Overhead heavy-duty double sliding track
     addVoxel(18.5, 1.95, 11.0, mats.doorTrackSilver, 4.16, 0.10, 0.28);
     // Flush floor threshold guide plate
-    addVoxel(18.5, 0.015, 11.0, mats.doorThreshold, 4.10, 0.03, 0.32);
+    addVoxel(18.5, 0.020, 11.0, mats.doorThreshold, 4.10, 0.034, 0.32);
     // Overhead center motion sensor housing & dynamic LED
     addVoxel(18.5, 2.18, 11.0, mats.doorJambDark, 0.36, 0.08, 0.30);
     addVoxel(18.5, 2.18, 11.16, boardSensorMat, 0.12, 0.04, 0.04, false); // facing bullpen
@@ -3699,23 +4950,118 @@ export default function Office3D({
     addDoorVoxel(boardDoorRightGroup, -0.55, 1.96, 0, mats.chairChrome, 0.08, 0.05, 0.12);
     addDoorVoxel(boardDoorRightGroup, 0.55, 1.96, 0, mats.chairChrome, 0.08, 0.05, 0.12);
 
-    // 3. BOARDROOM INNER ENTRANCE PORTAL (x = 21.0, z = 14.0)
-    // Dark steel doorway jamb posts
-    addVoxel(21.0, 1.0, 12.8, mats.doorJambDark, 0.24, 2.0, 0.18);
-    addVoxel(21.0, 1.0, 15.2, mats.doorJambDark, 0.24, 2.0, 0.18);
-    // Overhead heavy-duty header frame & flush floor threshold
-    addVoxel(21.0, 2.05, 14.0, mats.doorFrameDark, 0.26, 0.12, 2.40);
-    addVoxel(21.0, 0.015, 14.0, mats.doorThreshold, 0.30, 0.03, 2.40);
-    // Boardroom Illuminated Acrylic Sign above doorway (x = 21.0, z = 14.0)
-    addVoxel(21.0, 2.18, 14.0, mats.doorJambDark, 0.04, 0.18, 1.60);
-    addVoxel(20.97, 2.18, 14.0, mats.boardScreen, 0.02, 0.10, 1.45, false); // facing lounge
-    addVoxel(21.03, 2.18, 14.0, mats.boardScreen, 0.02, 0.10, 1.45, false); // facing boardroom
+    // 3. SERVER ROOM HIGH-TECH CYBER SECURITY SLIDING DOOR (x = 26.0, doorway z: 5.20..7.80, center z = 6.50)
+    // Full 2.20m Flush Doorway Jamb Posts:
+    addVoxel(26.0, 1.10, 5.20, mats.doorJambDark, 0.26, 2.20, 0.18);
+    addVoxel(26.0, 1.10, 7.80, mats.doorJambDark, 0.26, 2.20, 0.18);
+    // Flush Transom Header filling y: 2.00..2.20 directly beneath the 2.40m lintel
+    addVoxel(26.0, 2.10, 6.50, mats.doorFrameDark, 0.26, 0.20, 2.44);
+    // Overhead heavy-duty sliding guide track (Spanning Northward into the 4.75m glass partition)
+    addVoxel(26.0, 1.95, 5.60, mats.doorTrackSilver, 0.28, 0.10, 4.40);
+    // Flush floor threshold guide plate
+    addVoxel(26.0, 0.020, 6.50, mats.doorThreshold, 0.32, 0.034, 2.62);
+    // Top Motion & Presence Sensor housing & dynamic LED
+    addVoxel(26.0, 2.18, 6.50, mats.doorJambDark, 0.30, 0.08, 0.36);
+    addVoxel(25.84, 2.18, 6.50, serverSensorMat, 0.04, 0.04, 0.12, false); // facing bullpen
+    addVoxel(26.16, 2.18, 6.50, serverSensorMat, 0.04, 0.04, 0.12, false); // facing server room
+
+    // Biometric Handprint & NFC Keycard Access Terminal on South Jamb Post
+    addVoxel(25.85, 1.25, 7.65, mats.serverRackDark, 0.05, 0.36, 0.18); // Reader casing
+    addVoxel(25.82, 1.32, 7.65, serverSensorMat, 0.02, 0.10, 0.10, false); // Biometric fingerprint scanner
+    addVoxel(25.82, 1.18, 7.65, mats.serverLedGreen, 0.02, 0.04, 0.10, false); // Status indicator LED
+    // Inside egress push-to-exit plate
+    addVoxel(26.15, 1.25, 7.65, mats.serverRackDark, 0.05, 0.36, 0.18);
+    addVoxel(26.18, 1.25, 7.65, mats.serverLedGreen, 0.02, 0.14, 0.10, false);
+
+    // Illuminated Cyber Security Sign above doorway
+    addVoxel(26.0, 2.36, 6.50, mats.doorJambDark, 0.04, 0.18, 1.80);
+    addVoxel(25.97, 2.36, 6.50, mats.threatMapBoard, 0.02, 0.12, 1.64, false); // facing bullpen
+    addVoxel(25.96, 2.36, 6.50, mats.serverLedCyan, 0.01, 0.05, 1.40, false); // glowing text badge
+    addVoxel(26.03, 2.36, 6.50, mats.threatMapBoard, 0.02, 0.12, 1.64, false); // facing server room
+    addVoxel(26.04, 2.36, 6.50, mats.serverLedCyan, 0.01, 0.05, 1.40, false);
+
+    // Dynamic Server Room Sliding Door Leaf Group
+    const serverDoorGroup = new THREE.Group();
+    serverDoorGroup.position.set(26.0, 0, 6.50);
+    scene.add(serverDoorGroup);
+
+    // Door Leaf Construction (relative to group center)
+    // Smoked security glass panel
+    addDoorVoxel(serverDoorGroup, 0, 0.98, 0, mats.serverRackDoor, 0.07, 1.84, 2.42);
+    // Dark titanium steel chassis perimeter frame
+    addDoorVoxel(serverDoorGroup, 0, 1.91, 0, mats.serverRackDark, 0.11, 0.06, 2.46);
+    addDoorVoxel(serverDoorGroup, 0, 0.08, 0, mats.serverRackDark, 0.11, 0.14, 2.46);
+    addDoorVoxel(serverDoorGroup, 0, 0.99, -1.20, mats.serverRackDark, 0.11, 1.78, 0.06);
+    addDoorVoxel(serverDoorGroup, 0, 0.99, 1.20, mats.serverRackDark, 0.11, 1.78, 0.06);
+    // Cyber manifestation & frosted stripes
+    addDoorVoxel(serverDoorGroup, 0, 1.05, 0, mats.serverLedCyan, 0.08, 0.04, 2.40, false);
+    addDoorVoxel(serverDoorGroup, 0, 0.85, 0, mats.doorFrostedBand, 0.08, 0.20, 2.40);
+    addDoorVoxel(serverDoorGroup, 0, 1.25, 0, mats.doorFrostedBand, 0.08, 0.04, 2.40);
+    // Vertical chrome architectural pull handles on both sides
+    addDoorVoxel(serverDoorGroup, 0.08, 1.0, 0.95, mats.chairChrome, 0.03, 0.76, 0.03);
+    addDoorVoxel(serverDoorGroup, 0.05, 1.32, 0.95, mats.chairChrome, 0.05, 0.03, 0.03);
+    addDoorVoxel(serverDoorGroup, 0.05, 0.68, 0.95, mats.chairChrome, 0.05, 0.03, 0.03);
+    addDoorVoxel(serverDoorGroup, -0.08, 1.0, 0.95, mats.chairChrome, 0.03, 0.76, 0.03);
+    addDoorVoxel(serverDoorGroup, -0.05, 1.32, 0.95, mats.chairChrome, 0.05, 0.03, 0.03);
+    addDoorVoxel(serverDoorGroup, -0.05, 0.68, 0.95, mats.chairChrome, 0.05, 0.03, 0.03);
+    // Roller trolley brackets
+    addDoorVoxel(serverDoorGroup, 0, 1.96, -0.7, mats.chairChrome, 0.12, 0.05, 0.08);
+    addDoorVoxel(serverDoorGroup, 0, 1.96, 0.7, mats.chairChrome, 0.12, 0.05, 0.08);
+
+    // 4. MEETING ROOM / EXECUTIVE BOARDROOM SLIDING DOOR (x = 21.0, doorway z: 14.825..17.325, center z = 16.075)
+    // Full 2.20m Flush Doorway Jamb Posts:
+    addVoxel(21.0, 1.10, 14.825, mats.doorJambDark, 0.24, 2.20, 0.18);
+    addVoxel(21.0, 1.10, 17.325, mats.doorJambDark, 0.24, 2.20, 0.18);
+    // Flush Transom Header filling y: 2.00..2.20 directly beneath the 2.40m lintel
+    addVoxel(21.0, 2.10, 16.075, mats.doorFrameDark, 0.24, 0.20, 2.34);
+    // Overhead heavy-duty sliding guide track (Spanning Southward over the sliding leaf)
+    addVoxel(21.0, 1.95, 17.00, mats.doorTrackSilver, 0.28, 0.10, 4.40);
+    // Flush floor threshold guide plate
+    addVoxel(21.0, 0.020, 16.075, mats.doorThreshold, 0.30, 0.034, 2.50);
+    // Top Motion & Presence Sensor housing & dynamic LED
+    addVoxel(21.0, 2.18, 16.075, mats.doorJambDark, 0.30, 0.08, 0.36);
+    addVoxel(20.84, 2.18, 16.075, meetingSensorMat, 0.04, 0.04, 0.12, false); // facing lounge
+    addVoxel(21.16, 2.18, 16.075, meetingSensorMat, 0.04, 0.04, 0.12, false); // facing boardroom
+
+    // Boardroom Illuminated Acrylic Sign above doorway
+    addVoxel(21.0, 2.36, 16.075, mats.doorJambDark, 0.04, 0.18, 1.80);
+    addVoxel(20.97, 2.36, 16.075, mats.boardScreen, 0.02, 0.10, 1.60, false); // facing lounge
+    addVoxel(21.03, 2.36, 16.075, mats.boardScreen, 0.02, 0.10, 1.60, false); // facing boardroom
+
+    // Dynamic Meeting Room Sliding Door Leaf Group
+    const meetingDoorGroup = new THREE.Group();
+    meetingDoorGroup.position.set(21.0, 0, 16.075);
+    scene.add(meetingDoorGroup);
+
+    // Door Leaf Construction (relative to group center)
+    // 100% Solid Executive Walnut Acoustic Door Leaf (Zero Glass - Full Soundproof Privacy)
+    addDoorVoxel(meetingDoorGroup, 0, 0.98, 0, mats.boardroomWoodDark, 0.08, 1.86, 2.38);
+    // Inset acoustic fluted walnut panels on both sides
+    addDoorVoxel(meetingDoorGroup, 0.045, 0.98, 0, mats.bookshelf, 0.02, 1.72, 2.22);
+    addDoorVoxel(meetingDoorGroup, -0.045, 0.98, 0, mats.boardroomWoodDark, 0.02, 1.72, 2.22);
+    // Executive brushed brass / gold center vertical accent strip
+    addDoorVoxel(meetingDoorGroup, 0.056, 0.98, 0, mats.goldAccent, 0.01, 1.72, 0.06);
+    addDoorVoxel(meetingDoorGroup, -0.056, 0.98, 0, mats.goldAccent, 0.01, 1.72, 0.06);
+    // Heavy architectural dark bronze perimeter frame & kickplate
+    addDoorVoxel(meetingDoorGroup, 0, 1.91, 0, mats.doorFrameDark, 0.11, 0.06, 2.40);
+    addDoorVoxel(meetingDoorGroup, 0, 0.08, 0, mats.doorFrameDark, 0.11, 0.14, 2.40);
+    addDoorVoxel(meetingDoorGroup, 0, 0.99, -1.17, mats.doorFrameDark, 0.11, 1.78, 0.06);
+    addDoorVoxel(meetingDoorGroup, 0, 0.99, 1.17, mats.doorFrameDark, 0.11, 1.78, 0.06);
+    // Soundproof perimeter compression acoustic seal
+    addDoorVoxel(meetingDoorGroup, 0, 0.02, 0, mats.doorSealDark, 0.09, 0.04, 2.38);
+    // Chrome vertical architectural pull handles (inner & outer)
+    addDoorVoxel(meetingDoorGroup, 0.08, 1.0, -0.92, mats.chairChrome, 0.03, 0.76, 0.03);
+    addDoorVoxel(meetingDoorGroup, 0.05, 1.32, -0.92, mats.chairChrome, 0.05, 0.03, 0.03);
+    addDoorVoxel(meetingDoorGroup, 0.05, 0.68, -0.92, mats.chairChrome, 0.05, 0.03, 0.03);
+    addDoorVoxel(meetingDoorGroup, -0.08, 1.0, -0.92, mats.chairChrome, 0.03, 0.76, 0.03);
+    addDoorVoxel(meetingDoorGroup, -0.05, 1.32, -0.92, mats.chairChrome, 0.05, 0.03, 0.03);
+    addDoorVoxel(meetingDoorGroup, -0.05, 0.68, -0.92, mats.chairChrome, 0.05, 0.03, 0.03);
+    // Heavy-duty roller trolley brackets
+    addDoorVoxel(meetingDoorGroup, 0, 1.96, -0.7, mats.chairChrome, 0.12, 0.05, 0.08);
+    addDoorVoxel(meetingDoorGroup, 0, 1.96, 0.7, mats.chairChrome, 0.12, 0.05, 0.08);
 
     // 4. GOURMET KITCHEN & PANTRY ENTRANCE PORTAL (x = 8.0, z = 14.0)
-    addVoxel(8.0, 1.0, 12.8, mats.doorJambDark, 0.24, 2.0, 0.18);
-    addVoxel(8.0, 1.0, 15.2, mats.doorJambDark, 0.24, 2.0, 0.18);
-    addVoxel(8.0, 2.05, 14.0, mats.doorFrameDark, 0.26, 0.12, 2.40);
-    addVoxel(8.0, 0.015, 14.0, mats.doorThreshold, 0.30, 0.03, 2.40);
+    addVoxel(8.0, 0.020, 14.0, mats.doorThreshold, 0.30, 0.034, 2.40);
     // Kitchen Illuminated Acrylic Sign above doorway (x = 8.0, z = 14.0)
     addVoxel(8.0, 2.18, 14.0, mats.doorJambDark, 0.04, 0.18, 1.60);
     addVoxel(8.03, 2.18, 14.0, mats.rgbTowerOrange, 0.02, 0.10, 1.45, false); // facing lounge
@@ -4372,14 +5718,114 @@ export default function Office3D({
     servedDeskGroup.visible = false;
     scene.add(servedDeskGroup);
 
+    // Eah's Side Table Served Flowers & Gourmet Meal Group (from Dylan Ramos "Just to Be Fair" 💖)
+    const servedEahTableGroup = new THREE.Group();
+    servedEahTableGroup.position.set(eahSeatPos.x, 0.46, eahSeatPos.z - 0.85);
+
+    // 1. Crystal Vase with Blooming Red Roses & Pink Peonies (Flowers from Dylan)
+    const eahVaseGroup = new THREE.Group();
+    const glassMat = new THREE.MeshLambertMaterial({
+      color: 0x38bdf8,
+      transparent: true,
+      opacity: 0.75,
+    });
+    const vaseMesh = new THREE.Mesh(boxGeo, glassMat);
+    vaseMesh.scale.set(0.14, 0.22, 0.14);
+    vaseMesh.position.y = 0.11;
+    eahVaseGroup.add(vaseMesh);
+
+    const waterMesh = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0x0284c7, transparent: true, opacity: 0.6 }));
+    waterMesh.scale.set(0.12, 0.14, 0.12);
+    waterMesh.position.y = 0.08;
+    eahVaseGroup.add(waterMesh);
+
+    const foliageMesh = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0x15803d }));
+    foliageMesh.scale.set(0.24, 0.08, 0.24);
+    foliageMesh.position.y = 0.24;
+    eahVaseGroup.add(foliageMesh);
+
+    const vaseRose1 = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xe11d48, emissive: 0x9f1239, emissiveIntensity: 0.35 }));
+    vaseRose1.scale.set(0.10, 0.10, 0.10);
+    vaseRose1.position.set(-0.06, 0.30, -0.04);
+    eahVaseGroup.add(vaseRose1);
+
+    const vaseRose2 = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xf43f5e, emissive: 0xbe123c, emissiveIntensity: 0.3 }));
+    vaseRose2.scale.set(0.11, 0.11, 0.11);
+    vaseRose2.position.set(0.06, 0.31, 0.04);
+    eahVaseGroup.add(vaseRose2);
+
+    const vaseRose3 = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xfbcfe8 }));
+    vaseRose3.scale.set(0.08, 0.08, 0.08);
+    vaseRose3.position.set(0, 0.33, 0);
+    eahVaseGroup.add(vaseRose3);
+
+    const eahSparkleMat = new THREE.MeshBasicMaterial({ color: 0xfef08a });
+    const eahSparkles: THREE.Mesh[] = [];
+    for (let i = 0; i < 3; i++) {
+      const sp = new THREE.Mesh(boxGeo, eahSparkleMat);
+      sp.scale.set(0.025, 0.025, 0.025);
+      sp.position.set((i - 1) * 0.08, 0.35 + i * 0.04, ((i % 2) - 0.5) * 0.08);
+      eahVaseGroup.add(sp);
+      eahSparkles.push(sp);
+    }
+    servedEahTableGroup.add(eahVaseGroup);
+
+    // 2. Gourmet Food Plate (Golden Soufflé Pancakes with Strawberry cooked by Dylan)
+    const eahFoodGroup = new THREE.Group();
+    const eahPlateBase = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xffffff }));
+    eahPlateBase.scale.set(0.28, 0.02, 0.28);
+    eahFoodGroup.add(eahPlateBase);
+
+    const eahPancakes = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xf59e0b }));
+    eahPancakes.scale.set(0.20, 0.05, 0.20);
+    eahPancakes.position.y = 0.035;
+    eahFoodGroup.add(eahPancakes);
+
+    const eahStrawberry = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xef4444, emissive: 0xb91c1c, emissiveIntensity: 0.3 }));
+    eahStrawberry.scale.set(0.06, 0.06, 0.06);
+    eahStrawberry.position.set(0, 0.08, 0);
+    eahFoodGroup.add(eahStrawberry);
+
+    const eahButter = new THREE.Mesh(boxGeo, new THREE.MeshLambertMaterial({ color: 0xfef08a, emissive: 0xfde047, emissiveIntensity: 0.2 }));
+    eahButter.scale.set(0.05, 0.025, 0.05);
+    eahButter.position.set(0.04, 0.065, 0.04);
+    eahFoodGroup.add(eahButter);
+
+    const eahFoodSteamPuffs: THREE.Mesh[] = [];
+    for (let i = 0; i < 3; i++) {
+      const puff = new THREE.Mesh(boxGeo, steamMat);
+      puff.scale.set(0.03, 0.03, 0.03);
+      puff.position.set(0, 0.12 + i * 0.05, 0);
+      eahFoodGroup.add(puff);
+      eahFoodSteamPuffs.push(puff);
+    }
+    servedEahTableGroup.add(eahFoodGroup);
+
+    servedEahTableGroup.visible = false;
+    scene.add(servedEahTableGroup);
+
     // Ficus Palm Plant in CEO Suite
     addVoxel(OFFICE_3D_LAYOUT.CEO.plant.x, 0.4, OFFICE_3D_LAYOUT.CEO.plant.z, mats.potOrange, 0.7, 0.8, 0.7);
     addVoxel(OFFICE_3D_LAYOUT.CEO.plant.x, 1.3, OFFICE_3D_LAYOUT.CEO.plant.z, mats.plantGreen, 1.2, 1.2, 1.2);
 
-    // Water Cooler on Right Wall
+    // Modern Commercial Water Cooler in Bullpen (Relocated to x = 24.2, z = 4.2 to expand Server Room!)
     const wc = OFFICE_3D_LAYOUT.AMENITIES.waterCooler;
-    addVoxel(wc.x, 0.6, wc.z, mats.coolerBase, 0.8, 1.2, 0.8);
-    addVoxel(wc.x, 1.5, wc.z, mats.coolerJug, 0.6, 0.7, 0.6);
+    // 1. Sleek Obsidian / Slate pedestal stand with chrome plinth
+    addVoxel(wc.x, 0.02, wc.z, mats.chairChrome, 0.58, 0.04, 0.58);
+    addVoxel(wc.x, 0.50, wc.z, mats.doorFrameDark, 0.54, 0.96, 0.54);
+    addVoxel(wc.x, 0.96, wc.z, mats.wallTrim, 0.56, 0.04, 0.56);
+    // 2. Recessed Dispensing Alcove & Chrome Drip Tray
+    addVoxel(wc.x, 0.76, wc.z + 0.14, mats.doorSealDark, 0.38, 0.32, 0.18);
+    addVoxel(wc.x, 0.62, wc.z + 0.16, mats.chairChrome, 0.36, 0.04, 0.16);
+    // 3. Dual Cold (Cyan) & Hot (Red) Dispensing Levers
+    addVoxel(wc.x - 0.08, 0.86, wc.z + 0.12, mats.serverLedCyan, 0.04, 0.07, 0.05, false); // Cold Tap
+    addVoxel(wc.x + 0.08, 0.86, wc.z + 0.12, mats.espressoRed, 0.04, 0.07, 0.05, false);  // Hot Tap
+    // 4. Inverted 5-Gallon Crystal Blue Water Jug
+    addVoxel(wc.x, 1.01, wc.z, mats.chairChrome, 0.30, 0.06, 0.30); // Collar ring
+    addVoxel(wc.x, 1.34, wc.z, mats.coolerJug, 0.46, 0.60, 0.46);   // Main water reservoir
+    addVoxel(wc.x, 1.66, wc.z, mats.coolerJug, 0.36, 0.06, 0.36);   // Inverted bottle base
+    // 5. Cylindrical Disposable Cup Dispenser on Side
+    addVoxel(wc.x - 0.30, 0.90, wc.z, mats.coolerJug, 0.08, 0.50, 0.08);
 
     // C. Team Relaxation & Coffee Lounge (Zone 3, Bottom-Center: x: 8..21, z: 11..21)
     const ra = OFFICE_3D_LAYOUT.REST_AREA;
@@ -4425,10 +5871,36 @@ export default function Office3D({
     addVoxel(dogX + 0.72, 0.06, dogZ + 0.35, mats.dogPinkTongue, 0.10, 0.10, 0.18);
     addVoxel(dogX + 0.98, 0.06, dogZ + 0.35, mats.dogPinkTongue, 0.10, 0.10, 0.18);
 
-    // Living Animated Voxel Puppy
-    const puppy3D = new VoxelPuppy3D(dogX, dogZ);
+    // Living Animated Voxel Puppy (Mochi) - Patrols & Wanders Lounge Area
+    const puppy3D = new VoxelPuppy3D(dogX, dogZ + 1.0);
     scene.add(puppy3D.group);
     puppyRef.current = puppy3D;
+
+    // 3B. Snowy\'s Deluxe White Cat Sanctuary & Scratching Tower (Zone 3: x = 18.2, z = 18.8)
+    const catX = ra.catBed.x;
+    const catZ = ra.catBed.z;
+    // Circular Sky-Blue Velvet Cat Basket with Fluffy White Cloud Cushion
+    addVoxel(catX, 0.10, catZ, mats.catBedSky, 1.10, 0.16, 1.10);
+    addVoxel(catX, 0.16, catZ, mats.catBedFluff, 0.85, 0.14, 0.85);
+    // Sisal Scratching Tree Post with Sisal Rope Texture
+    addVoxel(catX + 0.65, 0.45, catZ + 0.25, mats.caramelWood, 0.16, 0.90, 0.16);
+    // Upper Elevated Cat Perch Platform
+    addVoxel(catX + 0.65, 0.92, catZ + 0.25, mats.boardTable, 0.52, 0.06, 0.52);
+    addVoxel(catX + 0.65, 0.96, catZ + 0.25, mats.catBedFluff, 0.44, 0.04, 0.44);
+    // Dangling Pink Sisal Yarn Ball Toy
+    addVoxel(catX + 0.52, 0.72, catZ + 0.25, mats.catPinkNose, 0.10, 0.10, 0.10);
+    addVoxel(catX + 0.52, 0.82, catZ + 0.25, mats.chairChrome, 0.015, 0.12, 0.015);
+    // Porcelain White Cat Saucer with Fresh Milk
+    addVoxel(catX - 0.75, 0.06, catZ + 0.25, mats.whiteDesk, 0.28, 0.08, 0.28);
+    addVoxel(catX - 0.75, 0.10, catZ + 0.25, mats.catBedFluff, 0.20, 0.02, 0.20);
+    // Salmon Fish Treat Bowl
+    addVoxel(catX - 0.75, 0.06, catZ - 0.25, mats.espressoRed, 0.28, 0.08, 0.28);
+    addVoxel(catX - 0.75, 0.10, catZ - 0.25, mats.potOrange, 0.20, 0.03, 0.20);
+
+    // Living Animated Voxel White Cat (Snowy) - Wanders Lounge, Zen Garden & CEO Wing
+    const cat3D = new VoxelCat3D(catX, catZ);
+    scene.add(cat3D.group);
+    catRef.current = cat3D;
 
     // 4. Framed Heart Photo & Miniature Succulent (Near Lounge Wall)
     addVoxel(ra.framedHeartPhoto.x, 0.18, ra.framedHeartPhoto.z, mats.bookshelf, 0.40, 0.36, 0.12);      // Wooden easel stand
@@ -4545,17 +6017,11 @@ export default function Office3D({
     addVoxel(scr.x, 2.06, scr.z + 0.06, mats.chairChrome, 0.08, 0.04, 0.03, false);
 
     // Modern Wood Slat Acoustic Accent Wall along East Perimeter Wall (x: 37.85, z: 11.0 to 21.05)
-    // Solid architectural backing wall (Unified 2.40m flush height matching all dividing walls):
-    addVoxel(38.0, 1.10, 16.025, mats.doorFrameDark, 0.20, 2.20, 10.05);
-    addVoxel(38.0, 2.30, 16.025, mats.wallTrim, 0.24, 0.20, 10.05);
-    addVoxel(38.0, 0.08, 16.025, mats.wallTrim, 0.24, 0.16, 10.05);
+    // Solid architectural backing wall:
+    addVoxelToGroup(eastWallGroup, 38.0, 1.10, 16.025, mats.doorFrameDark, 0.20, 2.20, 10.05);
     for (let sl = 11.5; sl <= 20.5; sl += 0.5) {
-      addVoxel(37.85, 1.18, sl, mats.bookshelf, 0.06, 2.04, 0.22);
+      addVoxelToGroup(eastWallGroup, 37.85, 1.18, sl, mats.bookshelf, 0.06, 2.04, 0.22);
     }
-    // Southeast Corner Structural Post at x = 38.0, z = 21.05 (Unites East Wall & South Glass Wall flush)
-    addVoxel(38.0, 1.10, 21.05, mats.doorJambDark, 0.24, 2.20, 0.24);
-    addVoxel(38.0, 2.30, 21.05, mats.wallTrim, 0.26, 0.20, 0.26);
-    addVoxel(38.0, 0.08, 21.05, mats.wallTrim, 0.26, 0.16, 0.26);
 
     // Clean Architectural Cool White Boardroom Light (Centered directly above conference table)
     const boardLight = new THREE.PointLight(0xe0f2fe, 2.0, 12, 1.8);
@@ -4565,6 +6031,44 @@ export default function Office3D({
     // Corner Executive Ficus Plant in Boardroom (South-East Corner at x = 36.8, z = 19.6)
     addVoxel(36.8, 0.5, 19.6, mats.potOrange, 0.8, 1.0, 0.8);
     addVoxel(36.8, 1.6, 19.6, mats.plantGreen, 1.2, 1.5, 1.2);
+
+    // Executive Mineral Water Dispenser in Boardroom (Northwest Corner at x = 22.4, z = 11.8)
+    const bWc = OFFICE_3D_LAYOUT.BOARDROOM.waterDispenser;
+    // 1. Sleek Obsidian Pedestal Chassis
+    addVoxel(bWc.x, 0.48, bWc.z, mats.doorFrameDark, 0.56, 0.96, 0.52);
+    // Brushed Chrome Floor Plinth
+    addVoxel(bWc.x, 0.02, bWc.z, mats.chairChrome, 0.58, 0.04, 0.54);
+    // Beveled Upper Trim
+    addVoxel(bWc.x, 0.94, bWc.z, mats.wallTrim, 0.56, 0.04, 0.52);
+
+    // 2. Recessed Dispensing Alcove
+    addVoxel(bWc.x, 0.78, bWc.z + 0.12, mats.doorSealDark, 0.40, 0.30, 0.22);
+    // Chrome Drip Tray & Perforated Grill
+    addVoxel(bWc.x, 0.65, bWc.z + 0.14, mats.chairChrome, 0.38, 0.04, 0.20);
+    // Dual Cold & Hot Water Taps
+    addVoxel(bWc.x - 0.08, 0.90, bWc.z + 0.10, mats.rgbTowerCyan, 0.05, 0.08, 0.08, false); // Cold Blue Tap
+    addVoxel(bWc.x + 0.08, 0.90, bWc.z + 0.10, mats.espressoRed, 0.05, 0.08, 0.08, false);  // Hot Red Tap
+    // Status Indicator LEDs
+    addVoxel(bWc.x - 0.08, 0.98, bWc.z + 0.23, mats.serverLedCyan, 0.04, 0.02, 0.01, false);
+    addVoxel(bWc.x + 0.08, 0.98, bWc.z + 0.23, mats.serverLedAmber, 0.04, 0.02, 0.01, false);
+
+    // 3. Inverted 5-Gallon Crystal Clear Mineral Water Bottle
+    addVoxel(bWc.x, 1.00, bWc.z, mats.chairChrome, 0.38, 0.06, 0.38); // Chrome Collar Neck
+    addVoxel(bWc.x, 1.06, bWc.z, mats.coolerBase, 0.44, 0.08, 0.44);   // Lower Reservoir Housing
+    addVoxel(bWc.x, 1.38, bWc.z, mats.coolerJug, 0.46, 0.56, 0.46);    // Translucent Blue Bottle
+    addVoxel(bWc.x, 1.36, bWc.z, mats.rgbTowerCyan, 0.38, 0.50, 0.38, false); // Glowing Mineral Water Interior
+    addVoxel(bWc.x, 1.68, bWc.z, mats.coolerJug, 0.36, 0.08, 0.36);    // Rounded Bottle Top
+
+    // 4. Side-Mounted Paper Cup Dispenser (Facing East into room)
+    addVoxel(bWc.x + 0.31, 0.94, bWc.z, mats.chairChrome, 0.06, 0.10, 0.08); // Chrome Bracket
+    addVoxel(bWc.x + 0.31, 1.02, bWc.z, mats.tableGlass, 0.14, 0.54, 0.14);  // Clear Plastic Tube
+    addVoxel(bWc.x + 0.31, 0.98, bWc.z, mats.whiteDesk, 0.12, 0.44, 0.12);   // Stack of White Paper Cups
+    addVoxel(bWc.x + 0.31, 0.72, bWc.z, mats.rgbTowerCyan, 0.14, 0.06, 0.14, false); // Bottom Pull Ring
+    addVoxel(bWc.x + 0.31, 1.30, bWc.z, mats.chairChrome, 0.15, 0.04, 0.15); // Chrome Top Lid
+
+    // 5. Ready Glass Tumbler on Drip Tray
+    addVoxel(bWc.x - 0.08, 0.73, bWc.z + 0.14, mats.tableGlass, 0.10, 0.12, 0.10);
+    addVoxel(bWc.x - 0.08, 0.71, bWc.z + 0.14, mats.rgbTowerCyan, 0.07, 0.07, 0.07, false);
 
     // E. ZONE 5A: GOURMET PANTRY & KITCHEN SUITE (Indoor: x: 1..8, z: 11..16)
     // 1. Double-Door Stainless Smart Refrigerator with Glass Water/Ice Dispenser (x: 1.6, z: 11.6)
@@ -4718,164 +6222,312 @@ export default function Office3D({
     addVoxel(1.8, 0.40, 20.2, mats.potOrange, 0.7, 0.8, 0.7);
     addVoxel(1.8, 1.45, 20.2, mats.plantGreen, 1.4, 1.6, 1.4);
 
-    // 7. Panoramic Penthouse Glass Balustrade with Polished Chrome Handrail (100% Continuous, Zero Gaps)
-    // West Balustrade: spans continuously from West Wall (z = 16.0) to Southwest Corner (z = 21.05) along x = 0.45
-    addVoxel(0.45, 0.55, 18.525, mats.glassWall, 0.08, 1.10, 5.05);
-    addVoxel(0.45, 1.12, 18.525, mats.chairChrome, 0.12, 0.05, 5.05);
-    addVoxel(0.45, 0.05, 18.525, mats.wallTrim, 0.12, 0.10, 5.05);
-    // West Balustrade Posts: flush junction with West solid wall at z = 16.0, mid-post at z = 18.525, corner post at z = 21.05
-    addVoxel(0.45, 0.58, 16.0, mats.chairChrome, 0.10, 1.16, 0.10);
-    addVoxel(0.45, 0.58, 18.525, mats.chairChrome, 0.10, 1.16, 0.10);
-    addVoxel(0.45, 0.58, 21.05, mats.chairChrome, 0.10, 1.16, 0.10);
-
-    // South Balustrade: spans continuously from Southwest Corner (x = 0.45) to Lounge Divider (x = 8.0) along z = 21.05
-    addVoxel(4.225, 0.55, 21.05, mats.glassWall, 7.55, 1.10, 0.08);
-    addVoxel(4.225, 1.12, 21.05, mats.chairChrome, 7.55, 0.05, 0.12);
-    addVoxel(4.225, 0.05, 21.05, mats.wallTrim, 7.55, 0.10, 0.12);
-    // South Balustrade Intermediate Posts
-    for (let px = 2.0; px <= 6.5; px += 2.0) {
-      addVoxel(px, 0.58, 21.05, mats.chairChrome, 0.10, 1.16, 0.10);
-    }
-    // Solid Transition Junction Pillar at x = 8.0, z = 21.05 (Unites 1.10m balustrade and 2.40m Lounge wall with ZERO gap)
-    addVoxel(8.0, 1.10, 21.05, mats.doorJambDark, 0.24, 2.20, 0.24);
-    addVoxel(8.0, 2.30, 21.05, mats.wallTrim, 0.26, 0.20, 0.26);
-    addVoxel(8.0, 0.08, 21.05, mats.wallTrim, 0.26, 0.16, 0.26);
-
     // =========================================================================
-    // G. ZONE 6: HIGH-TECH CYBER SECURITY OPERATIONS CENTER & SERVER VAULT
-    // (East Wing: x: 29.5..38.5, z: 0.5..11.5)
-    // =========================================================================
-
     // 0. Complete Exterior Building Perimeter Architecture (Unified Flush 2.40m Height)
-    // A. North Perimeter Wall (z = 0.45, x: 0.45..38.0)
+    // 100% True Rectangle: North/South = 37.55m, East/West = 20.60m, all 4 corners 90°
+    // =========================================================================
+
+    // A. North Perimeter Wall (z = 0.45, x: 0.45..38.00 - Total width: 37.55m)
+    // Northwest Corner Structural Pillar (x = 0.45, z = 0.45)
+    addVoxelToGroup(northWallGroup, 0.45, 1.10, 0.45, mats.doorJambDark, 0.24, 2.20, 0.24);
+    addVoxelToGroup(northWallGroup, 0.45, 2.30, 0.45, mats.wallTrim, 0.26, 0.20, 0.26);
+    addVoxelToGroup(northWallGroup, 0.45, 0.08, 0.45, mats.wallTrim, 0.26, 0.16, 0.26);
+    // Northeast Corner Structural Pillar (x = 38.00, z = 0.45)
+    addVoxelToGroup(northWallGroup, 38.0, 1.10, 0.45, mats.doorJambDark, 0.24, 2.20, 0.24);
+    addVoxelToGroup(northWallGroup, 38.0, 2.30, 0.45, mats.wallTrim, 0.26, 0.20, 0.26);
+    addVoxelToGroup(northWallGroup, 38.0, 0.08, 0.45, mats.wallTrim, 0.26, 0.16, 0.26);
+
     // CEO Executive Suite North Wall (x: 0.45..10.0)
-    addVoxel(5.225, 1.10, 0.45, mats.ceoNavyFloor, 9.55, 2.20, 0.20);
-    addVoxel(5.225, 2.30, 0.45, mats.wallTrim, 9.55, 0.20, 0.24);
-    addVoxel(5.225, 0.08, 0.45, mats.wallTrim, 9.55, 0.16, 0.24);
+    addVoxelToGroup(northWallGroup, 5.225, 1.10, 0.45, mats.ceoNavyFloor, 9.55, 2.20, 0.20);
+    addVoxelToGroup(northWallGroup, 5.225, 2.30, 0.45, mats.wallTrim, 9.55, 0.20, 0.24);
+    addVoxelToGroup(northWallGroup, 5.225, 0.08, 0.45, mats.wallTrim, 9.55, 0.16, 0.24);
 
-    // Bullpen Workspace North Wall (x: 10.0..29.0)
-    addVoxel(19.5, 1.10, 0.45, mats.whiteDesk, 19.0, 2.20, 0.20);
-    addVoxel(19.5, 2.30, 0.45, mats.wallTrim, 19.0, 0.20, 0.24);
-    addVoxel(19.5, 0.08, 0.45, mats.wallTrim, 19.0, 0.16, 0.24);
-    // Bullpen "PRODUCT TEAM" title plaque from PixelOffice
-    addVoxel(19.5, 1.95, 0.56, mats.wallTrim, 4.2, 0.35, 0.03);
-    addVoxel(19.5, 1.95, 0.58, mats.goldAccent, 4.0, 0.28, 0.01);
+    // Bullpen Workspace North Wall (x: 10.0..26.0, width = 16.0m)
+    addVoxelToGroup(northWallGroup, 18.0, 1.10, 0.45, mats.whiteDesk, 16.0, 2.20, 0.20);
+    addVoxelToGroup(northWallGroup, 18.0, 2.30, 0.45, mats.wallTrim, 16.0, 0.20, 0.24);
+    addVoxelToGroup(northWallGroup, 18.0, 0.08, 0.45, mats.wallTrim, 16.0, 0.16, 0.24);
+    // Bullpen "AVERO HQ" title plaque (Centered on Bullpen North Wall at x = 18.0)
+    northPlaqueBg = addVoxelToGroup(northWallGroup, 18.0, 1.95, 0.56, mats.wallTrim, 4.2, 0.35, 0.03);
+    northPlaqueGold = addVoxelToGroup(northWallGroup, 18.0, 1.95, 0.58, averoBuildingMat, 4.0, 0.28, 0.01, false);
 
-    // Server Room North Perimeter Security Vault Wall (x: 29.0..38.0)
-    addVoxel(33.5, 1.10, 0.45, mats.doorFrameDark, 9.0, 2.20, 0.20);
-    addVoxel(33.5, 2.30, 0.45, mats.wallTrim, 9.0, 0.20, 0.24);
-    addVoxel(33.5, 0.08, 0.45, mats.wallTrim, 9.0, 0.16, 0.24);
+    // North Wall / Divider Structural Junction Post at x = 26.0, z = 0.45
+    addVoxelToGroup(northWallGroup, 26.0, 1.10, 0.45, mats.doorJambDark, 0.24, 2.20, 0.24);
+    addVoxelToGroup(northWallGroup, 26.0, 2.30, 0.45, mats.wallTrim, 0.26, 0.20, 0.26);
+    addVoxelToGroup(northWallGroup, 26.0, 0.08, 0.45, mats.wallTrim, 0.26, 0.16, 0.26);
 
-    // B. West Perimeter Solid Wall (x = 0.45, z: 0.45..16.0 - CEO Suite & Gourmet Pantry)
-    addVoxel(0.45, 1.10, 8.225, mats.doorFrameDark, 0.20, 2.20, 15.55);
-    addVoxel(0.45, 2.30, 8.225, mats.wallTrim, 0.24, 0.20, 15.55);
-    addVoxel(0.45, 0.08, 8.225, mats.wallTrim, 0.24, 0.16, 15.55);
+    // Server Room North Perimeter Security Vault Wall (x: 26.0..38.0, width = 12.0m)
+    addVoxelToGroup(northWallGroup, 32.0, 1.10, 0.45, mats.doorFrameDark, 12.0, 2.20, 0.20);
+    addVoxelToGroup(northWallGroup, 32.0, 2.30, 0.45, mats.wallTrim, 12.0, 0.20, 0.24);
+    addVoxelToGroup(northWallGroup, 32.0, 0.08, 0.45, mats.wallTrim, 12.0, 0.16, 0.24);
 
-    // C. East Perimeter Wall (x = 38.0, z: 0.45..11.0 - Server Room Vault)
-    addVoxel(38.0, 1.10, 5.725, mats.serverRackDark, 0.20, 2.20, 10.55);
-    addVoxel(38.0, 2.30, 5.725, mats.wallTrim, 0.24, 0.20, 10.55);
-    addVoxel(38.0, 0.08, 5.725, mats.wallTrim, 0.24, 0.16, 10.55);
-    // East wall heavy-duty cable trunk & cyber telemetry conduit
-    addVoxel(37.88, 1.70, 5.725, mats.serverCableTray, 0.06, 0.16, 8.4);
-    addVoxel(37.84, 1.70, 5.725, mats.serverCableGlow, 0.03, 0.06, 8.2, false);
-
-    // D. South Perimeter Floor-to-Ceiling Panoramic Windows (z = 21.05, x: 8.0..38.0)
-    addVoxel(23.0, 1.10, 21.05, mats.glassWall, 30.0, 2.20, 0.12);
-    addVoxel(23.0, 2.30, 21.05, mats.wallTrim, 30.0, 0.20, 0.24);
-    addVoxel(23.0, 0.08, 21.05, mats.wallTrim, 30.0, 0.16, 0.24);
-    for (let mx = 8.0; mx <= 38.0; mx += 2.0) {
-      addVoxel(mx, 1.10, 21.05, mats.doorJambDark, 0.08, 2.20, 0.16);
+    // B. West Perimeter Wall (x = 0.45)
+    // CEO Suite & Gourmet Pantry Solid Architectural Wall section (z: 0.45..16.00 - Total indoor length: 15.55m)
+    addVoxelToGroup(westWallGroup, 0.45, 0.08, 8.225, mats.wallTrim, 0.24, 0.16, 15.55);
+    addVoxelToGroup(westWallGroup, 0.45, 2.30, 8.225, mats.wallTrim, 0.24, 0.20, 15.55);
+    addVoxelToGroup(westWallGroup, 0.45, 1.10, 8.225, mats.doorFrameDark, 0.20, 2.20, 15.55);
+    // Terminal indoor structural post where kitchen ends at x = 0.45, z = 16.00
+    addVoxelToGroup(westWallGroup, 0.45, 1.10, 16.0, mats.doorJambDark, 0.24, 2.20, 0.24);
+    addVoxelToGroup(westWallGroup, 0.45, 2.30, 16.0, mats.wallTrim, 0.26, 0.20, 0.26);
+    addVoxelToGroup(westWallGroup, 0.45, 0.08, 16.0, mats.wallTrim, 0.26, 0.16, 0.26);
+    // Outdoor Zen Garden West Balustrade (z: 16.00..21.05, length = 5.05m) - NO FIREWALL, Authentic Outdoor Terrace!
+    addVoxelToGroup(westWallGroup, 0.45, 0.55, 18.525, mats.glassWall, 0.10, 1.10, 5.05);
+    addVoxelToGroup(westWallGroup, 0.45, 1.12, 18.525, mats.chairChrome, 0.14, 0.05, 5.05);
+    addVoxelToGroup(westWallGroup, 0.45, 0.04, 18.525, mats.wallTrim, 0.16, 0.08, 5.05);
+    // Exterior Solid Foundation Facade below west balustrade (Zero Z-Fighting, Zero Glitching)
+    addVoxelToGroup(westWallGroup, 0.44, -0.50, 18.525, mats.wallTrim, 0.10, 1.00, 5.05, false);
+    for (let rz = 17.5; rz <= 20.0; rz += 1.25) {
+      addVoxelToGroup(westWallGroup, 0.45, 0.56, rz, mats.chairChrome, 0.08, 1.12, 0.08);
     }
 
-    // Clean Architectural Datacenter Overhead LED Light Troffers (Suspended at y = 2.8)
-    // Front aisle luminaire over server racks
-    addVoxel(34.2, 2.82, 3.6, mats.wallTrim, 5.6, 0.06, 0.22);
-    addVoxel(34.2, 2.78, 3.6, mats.boardScreen, 5.4, 0.03, 0.16, false);
+    // C. East Perimeter Wall (x = 38.00, z: 0.45..21.05 - Total length: 20.60m)
+    // Continuous baseboard and top lintel spanning full 20.60m length
+    addVoxelToGroup(eastWallGroup, 38.0, 0.08, 10.75, mats.wallTrim, 0.24, 0.16, 20.60);
+    addVoxelToGroup(eastWallGroup, 38.0, 2.30, 10.75, mats.wallTrim, 0.24, 0.20, 20.60);
+    // Server Room Vault Section (z: 0.45..11.00)
+    addVoxelToGroup(eastWallGroup, 38.0, 1.10, 5.725, mats.serverRackDark, 0.20, 2.20, 10.55);
+    // East wall heavy-duty cable trunk & cyber telemetry conduit
+    eastCableTray = addVoxelToGroup(eastWallGroup, 37.88, 1.70, 5.725, mats.serverCableTray, 0.06, 0.16, 8.4);
+    eastCableGlow = addVoxelToGroup(eastWallGroup, 37.84, 1.70, 5.725, mats.serverCableGlow, 0.03, 0.06, 8.2, false);
+
+    // D. South Perimeter Wall & Windows (z = 21.05)
+    // Indoor South Perimeter Floor-to-Ceiling Windows (x: 8.00..38.00, width = 30.00m)
+    addVoxelToGroup(southWallGroup, 23.0, 0.08, 21.05, mats.wallTrim, 30.0, 0.16, 0.24);
+    addVoxelToGroup(southWallGroup, 23.0, 2.30, 21.05, mats.wallTrim, 30.0, 0.20, 0.24);
+    addVoxelToGroup(southWallGroup, 23.0, 1.10, 21.05, mats.glassWall, 30.0, 2.20, 0.12);
+    // Architectural vertical mullions every 2.0m across indoor south facade
+    for (let mx = 10.0; mx <= 36.0; mx += 2.0) {
+      addVoxelToGroup(southWallGroup, mx, 1.10, 21.05, mats.doorJambDark, 0.08, 2.20, 0.16);
+    }
+    // Structural transition junction pillar at x = 8.0, z = 21.05 where indoor building meets outdoor terrace
+    addVoxelToGroup(southWallGroup, 8.0, 1.10, 21.05, mats.doorJambDark, 0.24, 2.20, 0.24);
+    addVoxelToGroup(southWallGroup, 8.0, 2.30, 21.05, mats.wallTrim, 0.26, 0.20, 0.26);
+    addVoxelToGroup(southWallGroup, 8.0, 0.08, 21.05, mats.wallTrim, 0.26, 0.16, 0.26);
+    // Southeast Corner Structural Pillar (x = 38.00, z = 21.05)
+    addVoxelToGroup(southWallGroup, 38.0, 1.10, 21.05, mats.doorJambDark, 0.24, 2.20, 0.24);
+    addVoxelToGroup(southWallGroup, 38.0, 2.30, 21.05, mats.wallTrim, 0.26, 0.20, 0.26);
+    addVoxelToGroup(southWallGroup, 38.0, 0.08, 21.05, mats.wallTrim, 0.26, 0.16, 0.26);
+
+    // Outdoor Zen Garden South Balustrade (x: 0.45..8.00, width = 7.55m) - NO FIREWALL, Authentic Open Balustrade!
+    addVoxelToGroup(southWallGroup, 4.225, 0.55, 21.05, mats.glassWall, 7.55, 1.10, 0.10);
+    addVoxelToGroup(southWallGroup, 4.225, 1.12, 21.05, mats.chairChrome, 7.55, 0.05, 0.14);
+    addVoxelToGroup(southWallGroup, 4.225, 0.04, 21.05, mats.wallTrim, 7.55, 0.08, 0.16);
+    // Exterior Solid Foundation Facade below south balustrade (Zero Z-Fighting, Zero Glitching)
+    addVoxelToGroup(southWallGroup, 4.225, -0.50, 21.06, mats.wallTrim, 7.55, 1.00, 0.10, false);
+    // Southwest Corner Chrome Balustrade Post (x = 0.45, z = 21.05)
+    addVoxelToGroup(southWallGroup, 0.45, 0.56, 21.05, mats.chairChrome, 0.14, 1.12, 0.14);
+    for (let rx = 2.0; rx <= 6.5; rx += 1.5) {
+      addVoxelToGroup(southWallGroup, rx, 0.56, 21.05, mats.chairChrome, 0.08, 1.12, 0.08);
+    }
+
+    // Clean Architectural Datacenter Overhead LED Light Troffers (Suspended at y = 2.8, centered across 12m room at x = 32.0)
+    // Front cold aisle luminaire over server racks
+    addVoxel(32.0, 2.82, 3.6, mats.wallTrim, 8.5, 0.06, 0.22);
+    addVoxel(32.0, 2.78, 3.6, mats.boardScreen, 8.3, 0.03, 0.16, false);
     // Workstation aisle luminaire over Alex & Zane's desks
-    addVoxel(34.2, 2.82, 6.2, mats.wallTrim, 5.6, 0.06, 0.22);
-    addVoxel(34.2, 2.78, 6.2, mats.boardScreen, 5.4, 0.03, 0.16, false);
+    addVoxel(32.0, 2.82, 6.2, mats.wallTrim, 8.5, 0.06, 0.22);
+    addVoxel(32.0, 2.78, 6.2, mats.boardScreen, 8.3, 0.03, 0.16, false);
 
-    // 1. Heavy-Duty Biometric Access Control & Security Threshold at Doorway (x = 29.0, z = 6.5)
-    // Dark steel doorway jamb posts (Full 2.20m flush height - ZERO GAP)
-    addVoxel(29.0, 1.10, 4.85, mats.doorJambDark, 0.26, 2.20, 0.20);
-    addVoxel(29.0, 1.10, 8.15, mats.doorJambDark, 0.26, 2.20, 0.20);
-    // Overhead heavy-duty transom header (Fills y: 2.00..2.20 flush under lintel - ZERO VOID)
-    addVoxel(29.0, 2.10, 6.5, mats.doorFrameDark, 0.26, 0.20, 3.10);
-    // Overhead guide rail
-    addVoxel(29.0, 1.95, 6.5, mats.doorFrameDark, 0.28, 0.10, 3.48);
-    // Flush threshold plate
-    addVoxel(29.0, 0.015, 6.5, mats.doorThreshold, 0.32, 0.03, 3.40);
     // Biometric RFID Badge Scanner with glowing LED (Bullpen side facing west)
-    addVoxel(28.84, 1.40, 7.9, mats.wallTrim, 0.05, 0.24, 0.14);
-    addVoxel(28.81, 1.44, 7.9, mats.serverLedGreen, 0.02, 0.06, 0.08, false); // Active green status
-    addVoxel(28.81, 1.34, 7.9, mats.serverLedCyan, 0.02, 0.04, 0.08, false);  // Keypad
+    addVoxel(25.84, 1.40, 7.6, mats.wallTrim, 0.05, 0.24, 0.14);
+    addVoxel(25.81, 1.44, 7.6, mats.serverLedGreen, 0.02, 0.06, 0.08, false); // Active green status
+    addVoxel(25.81, 1.34, 7.6, mats.serverLedCyan, 0.02, 0.04, 0.08, false);  // Keypad
     // Security Warning Plaque above doorway
-    addVoxel(28.84, 1.95, 6.5, mats.deskTrimBrass, 0.04, 0.18, 1.6);
-    addVoxel(28.82, 1.95, 6.5, mats.threatMapBoard, 0.02, 0.14, 1.54);
-    addVoxel(28.80, 1.95, 6.5, mats.serverLedGreen, 0.01, 0.06, 1.4, false);
+    addVoxel(25.84, 1.95, 6.5, mats.deskTrimBrass, 0.04, 0.18, 1.6);
+    addVoxel(25.82, 1.95, 6.5, mats.threatMapBoard, 0.02, 0.14, 1.54);
+    addVoxel(25.80, 1.95, 6.5, mats.serverLedGreen, 0.01, 0.06, 1.4, false);
 
-    // 2. 4x 42U Enterprise Server Cabinets (Along North Wall at z = 1.6, flush 2.15m height under 2.40m lintel)
+    // 2. 4x 42U Enterprise Server Cabinets (Ultra-Realistic Datacenter Hardware from All Angles!)
+    // Spaced along z = 2.0 at x = 27.8, 30.4, 33.0, 35.6
     const serverRacks = OFFICE_3D_LAYOUT.SERVER_ROOM.racks;
     serverRacks.forEach((rack, rIdx) => {
       const rx = rack.x;
       const rz = rack.z;
 
-      // Heavy matte black steel chassis (42U)
-      addVoxel(rx, 1.075, rz, mats.serverRackDark, 1.35, 2.15, 0.85);
-      // Outer frame bevel / corner pillars
-      addVoxel(rx - 0.65, 1.075, rz - 0.40, mats.serverRackTrim, 0.06, 2.15, 0.06);
-      addVoxel(rx + 0.65, 1.075, rz - 0.40, mats.serverRackTrim, 0.06, 2.15, 0.06);
-      addVoxel(rx - 0.65, 1.075, rz + 0.40, mats.serverRackTrim, 0.06, 2.15, 0.06);
-      addVoxel(rx + 0.65, 1.075, rz + 0.40, mats.serverRackTrim, 0.06, 2.15, 0.06);
+      // A. Heavy Matte Black Steel Chassis (42U 600mm x 1000mm)
+      addVoxel(rx, 1.075, rz, mats.serverRackDark, 1.34, 2.14, 0.88);
 
-      // Perforated smoked glass door facing south (+z)
-      addVoxel(rx, 1.075, rz + 0.43, mats.serverRackDoor, 1.28, 2.08, 0.04);
-      addVoxel(rx, 1.075, rz + 0.44, mats.doorFrostedBand, 1.20, 2.00, 0.01);
+      // B. 4x Vertical Corner Structural Posts / 42U Equipment Mounting Rails
+      addVoxel(rx - 0.67, 1.075, rz - 0.44, mats.serverRackTrim, 0.06, 2.15, 0.06);
+      addVoxel(rx + 0.67, 1.075, rz - 0.44, mats.serverRackTrim, 0.06, 2.15, 0.06);
+      addVoxel(rx - 0.67, 1.075, rz + 0.44, mats.serverRackTrim, 0.06, 2.15, 0.06);
+      addVoxel(rx + 0.67, 1.075, rz + 0.44, mats.serverRackTrim, 0.06, 2.15, 0.06);
 
-      // 6 Individual 2U/4U Server Blades with Status Lights inside each rack
-      for (let blade = 0; blade < 6; blade++) {
-        const by = 0.28 + blade * 0.29;
-        // Blade faceplate
-        addVoxel(rx, by, rz + 0.40, mats.doorSealDark, 1.18, 0.24, 0.03);
-        // Intake airflow honeycombs
-        addVoxel(rx - 0.22, by, rz + 0.41, mats.wallTrim, 0.60, 0.18, 0.01);
+      // C. Heavy-Duty Leveling Feet / Casters at Base Corners
+      addVoxel(rx - 0.65, 0.02, rz - 0.42, mats.doorTrackSilver, 0.08, 0.04, 0.08);
+      addVoxel(rx + 0.65, 0.02, rz - 0.42, mats.doorTrackSilver, 0.08, 0.04, 0.08);
+      addVoxel(rx - 0.65, 0.02, rz + 0.42, mats.doorTrackSilver, 0.08, 0.04, 0.08);
+      addVoxel(rx + 0.65, 0.02, rz + 0.42, mats.doorTrackSilver, 0.08, 0.04, 0.08);
 
-        // Dynamic status LED clusters (Green, Cyan, Amber, Red)
-        const ledMat1 = (rIdx + blade) % 3 === 0 ? mats.serverLedCyan : mats.serverLedGreen;
-        const ledMat2 = blade === 5 && rIdx === 2 ? mats.serverLedAmber : mats.serverLedGreen;
-        const ledMat3 = (rIdx * 2 + blade) % 5 === 0 ? mats.serverLedAmber : mats.serverLedCyan;
+      // D. ROOF TOP PANEL (CRITICAL FOR ISOMETRIC & TOP-DOWN VIEWS!)
+      // Recessed top ventilation deck
+      addVoxel(rx, 2.15, rz, mats.serverFloorGrate, 1.32, 0.02, 0.86);
+      // Outer beveled roof perimeter trim
+      addVoxel(rx, 2.16, rz - 0.43, mats.serverRackTrim, 1.36, 0.03, 0.04);
+      addVoxel(rx, 2.16, rz + 0.43, mats.serverRackTrim, 1.36, 0.03, 0.04);
+      addVoxel(rx - 0.66, 2.16, rz, mats.serverRackTrim, 0.04, 0.03, 0.86);
+      addVoxel(rx + 0.66, 2.16, rz, mats.serverRackTrim, 0.04, 0.03, 0.86);
 
-        addVoxel(rx + 0.22, by + 0.05, rz + 0.42, ledMat1, 0.06, 0.04, 0.01, false);
-        addVoxel(rx + 0.32, by + 0.05, rz + 0.42, ledMat2, 0.06, 0.04, 0.01, false);
-        addVoxel(rx + 0.42, by + 0.05, rz + 0.42, ledMat3, 0.06, 0.04, 0.01, false);
-        addVoxel(rx + 0.22, by - 0.05, rz + 0.42, mats.serverLedGreen, 0.06, 0.04, 0.01, false);
-        addVoxel(rx + 0.32, by - 0.05, rz + 0.42, mats.serverLedGreen, 0.06, 0.04, 0.01, false);
-        addVoxel(rx + 0.42, by - 0.05, rz + 0.42, mats.serverLedCyan, 0.06, 0.04, 0.01, false);
+      // 4x 140mm Heavy-Duty Exhaust Fan Blowers in 2x2 grid on the roof!
+      const fanOffsets = [
+        { fx: rx - 0.32, fz: rz - 0.18 },
+        { fx: rx + 0.32, fz: rz - 0.18 },
+        { fx: rx - 0.32, fz: rz + 0.18 },
+        { fx: rx + 0.32, fz: rz + 0.18 },
+      ];
+      fanOffsets.forEach((fan) => {
+        // Recessed circular fan well
+        addVoxel(fan.fx, 2.16, fan.fz, mats.doorSealDark, 0.34, 0.015, 0.34);
+        // Central fan hub with subtle cooling air flow glow
+        addVoxel(fan.fx, 2.165, fan.fz, mats.serverFanHub, 0.14, 0.02, 0.14, false);
+        // Cross protective grill spokes
+        addVoxel(fan.fx, 2.162, fan.fz, mats.serverRackTrim, 0.30, 0.01, 0.04);
+        addVoxel(fan.fx, 2.162, fan.fz, mats.serverRackTrim, 0.04, 0.01, 0.30);
+      });
+      // Top Cable Brush Entry Grommets (rear of roof)
+      addVoxel(rx, 2.165, rz - 0.34, mats.doorSealDark, 0.42, 0.02, 0.10);
+
+      // E. REAR CABINET (LOOKING NORTH TOWARDS WALL - CRITICAL FOR CAMERA ANGLE!)
+      // Perforated honeycomb mesh rear door
+      addVoxel(rx, 1.075, rz - 0.45, mats.serverRackDoor, 1.28, 2.06, 0.02);
+      // Rear door industrial latch handle
+      addVoxel(rx + 0.54, 1.05, rz - 0.47, mats.doorTrackSilver, 0.04, 0.16, 0.03);
+
+      // Dual Vertical Zero-U Power Distribution Units (PDUs) mounted inside rear posts
+      // PDU A (Left rear post)
+      addVoxel(rx - 0.58, 1.075, rz - 0.42, mats.serverPduChassis, 0.08, 1.95, 0.05);
+      // PDU B (Right rear post)
+      addVoxel(rx + 0.58, 1.075, rz - 0.42, mats.serverPduChassis, 0.08, 1.95, 0.05);
+      // PDU Digital Load Readout Displays (Amber / Green)
+      addVoxel(rx - 0.58, 1.85, rz - 0.45, mats.serverLedAmber, 0.05, 0.06, 0.01, false);
+      addVoxel(rx + 0.58, 1.85, rz - 0.45, mats.serverLedGreen, 0.05, 0.06, 0.01, false);
+      // C13/C19 Outlet Bank status indicators along PDU height
+      for (let ob = 0; ob < 4; ob++) {
+        const oy = 0.45 + ob * 0.38;
+        addVoxel(rx - 0.58, oy, rz - 0.45, mats.serverLedCyan, 0.04, 0.04, 0.01, false);
+        addVoxel(rx + 0.58, oy, rz - 0.45, mats.serverLedGreen, 0.04, 0.04, 0.01, false);
       }
+      // Bundled black heavy-duty PDU drop cables running vertically
+      addVoxel(rx - 0.62, 1.075, rz - 0.40, mats.doorSealDark, 0.04, 2.0, 0.04);
+      addVoxel(rx + 0.62, 1.075, rz - 0.40, mats.doorSealDark, 0.04, 2.0, 0.04);
 
-      // Illuminated Rack Header Badge (e.g. "PROD-DB-CLUSTER", "AI-GPU-MAINFRAME")
-      addVoxel(rx, 2.08, rz + 0.42, mats.threatMapBoard, 1.15, 0.12, 0.04);
-      addVoxel(rx, 2.08, rz + 0.44, mats.serverLedGreen, 1.05, 0.05, 0.01, false);
+      // F. SIDE PANELS (LOOKING EAST / WEST)
+      // Embossed cooling vents
+      addVoxel(rx - 0.68, 1.075, rz, mats.serverMeshGrill, 0.01, 1.90, 0.60);
+      addVoxel(rx + 0.68, 1.075, rz, mats.serverMeshGrill, 0.01, 1.90, 0.60);
+      // Industrial cabinet stencil badge
+      addVoxel(rx - 0.685, 1.90, rz, mats.threatMapBoard, 0.01, 0.12, 0.40);
+      addVoxel(rx - 0.686, 1.90, rz, mats.serverLedCyan, 0.01, 0.04, 0.36, false);
+
+      // G. FRONT FACE (LOOKING SOUTH INTO SERVER ROOM)
+      // Perforated smoked glass / lockable door
+      addVoxel(rx, 1.075, rz + 0.45, mats.doorGlass, 1.28, 2.06, 0.02);
+      // Brushed titanium front door handle
+      addVoxel(rx + 0.54, 1.05, rz + 0.47, mats.doorTrackSilver, 0.04, 0.18, 0.03);
+
+      // Illuminated OLED Header Marquee with rack name
+      addVoxel(rx, 2.08, rz + 0.44, mats.threatMapBoard, 1.24, 0.10, 0.03);
+      addVoxel(rx, 2.08, rz + 0.46, mats.serverLedCyan, 1.16, 0.05, 0.01, false);
+
+      // H. HETEROGENEOUS ENTERPRISE HARDWARE TIERS (Inside Rack)
+      // Tier 1: 2x 1U 100GbE Cisco Spine Switches (Top, Units 39-42)
+      addVoxel(rx, 1.94, rz + 0.40, mats.serverRackDark, 1.22, 0.08, 0.05);
+      addVoxel(rx, 1.84, rz + 0.40, mats.serverRackDark, 1.22, 0.08, 0.05);
+      // 48x SFP+/QSFP fiber ports with dense blinking LEDs
+      addVoxel(rx - 0.25, 1.94, rz + 0.43, mats.serverLedCyan, 0.55, 0.03, 0.01, false);
+      addVoxel(rx + 0.30, 1.94, rz + 0.43, mats.serverLedGreen, 0.45, 0.03, 0.01, false);
+      addVoxel(rx - 0.25, 1.84, rz + 0.43, mats.serverLedGreen, 0.55, 0.03, 0.01, false);
+      addVoxel(rx + 0.30, 1.84, rz + 0.43, mats.serverLedCyan, 0.45, 0.03, 0.01, false);
+      // Looped fiber patch cords
+      addVoxel(rx - 0.54, 1.89, rz + 0.43, mats.fiberAqua, 0.05, 0.14, 0.03, false);
+      addVoxel(rx + 0.54, 1.89, rz + 0.43, mats.fiberOrange, 0.05, 0.14, 0.03, false);
+
+      // Tier 2: 1U KVM Rack Console Drawer (Units 35-36)
+      addVoxel(rx, 1.72, rz + 0.41, mats.crashCartSteel, 1.22, 0.05, 0.06);
+      addVoxel(rx, 1.72, rz + 0.44, mats.serverLedGreen, 0.25, 0.02, 0.01, false);
+
+      // Tier 3: 2x 4U NVIDIA DGX Supercomputing AI Nodes (Units 21-32)
+      // DGX Node A
+      addVoxel(rx, 1.48, rz + 0.39, mats.serverRackDark, 1.22, 0.24, 0.08);
+      addVoxel(rx - 0.56, 1.48, rz + 0.44, mats.doorTrackSilver, 0.04, 0.16, 0.03); // Left handle
+      addVoxel(rx + 0.56, 1.48, rz + 0.44, mats.doorTrackSilver, 0.04, 0.16, 0.03); // Right handle
+      addVoxel(rx, 1.48, rz + 0.42, mats.serverMeshGrill, 0.95, 0.18, 0.01);
+      addVoxel(rx - 0.20, 1.54, rz + 0.43, mats.serverLedGreen, 0.35, 0.02, 0.01, false);
+      addVoxel(rx + 0.20, 1.54, rz + 0.43, mats.serverLedCyan, 0.35, 0.02, 0.01, false);
+
+      // DGX Node B
+      addVoxel(rx, 1.21, rz + 0.39, mats.serverRackDark, 1.22, 0.24, 0.08);
+      addVoxel(rx - 0.56, 1.21, rz + 0.44, mats.doorTrackSilver, 0.04, 0.16, 0.03); // Left handle
+      addVoxel(rx + 0.56, 1.21, rz + 0.44, mats.doorTrackSilver, 0.04, 0.16, 0.03); // Right handle
+      addVoxel(rx, 1.21, rz + 0.42, mats.serverMeshGrill, 0.95, 0.18, 0.01);
+      addVoxel(rx - 0.20, 1.27, rz + 0.43, mats.serverLedAmber, 0.35, 0.02, 0.01, false);
+      addVoxel(rx + 0.20, 1.27, rz + 0.43, mats.serverLedGreen, 0.35, 0.02, 0.01, false);
+
+      // Tier 4: Enterprise SAN 24-Bay NVMe Storage Shelves (Units 9-20)
+      // Storage Shelf 1
+      addVoxel(rx, 0.89, rz + 0.39, mats.serverRackDark, 1.22, 0.20, 0.08);
+      addVoxel(rx, 0.89, rz + 0.42, mats.serverDriveCaddy, 1.10, 0.16, 0.02);
+      addVoxel(rx - 0.25, 0.93, rz + 0.44, mats.serverLedGreen, 0.50, 0.025, 0.01, false);
+      addVoxel(rx + 0.25, 0.93, rz + 0.44, mats.serverLedAmber, 0.50, 0.025, 0.01, false);
+      addVoxel(rx - 0.25, 0.85, rz + 0.44, mats.serverLedGreen, 0.50, 0.025, 0.01, false);
+      addVoxel(rx + 0.25, 0.85, rz + 0.44, mats.serverLedCyan, 0.50, 0.025, 0.01, false);
+
+      // Storage Shelf 2
+      addVoxel(rx, 0.66, rz + 0.39, mats.serverRackDark, 1.22, 0.18, 0.08);
+      addVoxel(rx, 0.66, rz + 0.42, mats.serverDriveCaddy, 1.10, 0.14, 0.02);
+      addVoxel(rx - 0.25, 0.70, rz + 0.44, mats.serverLedGreen, 0.50, 0.025, 0.01, false);
+      addVoxel(rx + 0.25, 0.70, rz + 0.44, mats.serverLedGreen, 0.50, 0.025, 0.01, false);
+
+      // Tier 5: 3U Online Double-Conversion UPS Backup Battery Unit (Units 1-8)
+      addVoxel(rx, 0.28, rz + 0.39, mats.doorFrameDark, 1.22, 0.38, 0.08);
+      // Digital LCD status display ("100% ONLINE // 48.2V")
+      addVoxel(rx - 0.32, 0.36, rz + 0.43, mats.serverLedCyan, 0.28, 0.08, 0.01, false);
+      // Heavy-duty test switches & status LEDs
+      addVoxel(rx + 0.30, 0.36, rz + 0.43, mats.serverLedGreen, 0.12, 0.04, 0.01, false);
+      addVoxel(rx + 0.45, 0.36, rz + 0.43, mats.serverLedAmber, 0.08, 0.04, 0.01, false);
     });
 
-    // 3. Overhead High-Capacity Cable Trays / Ladder with Fiber Trunks (Flush under 2.40m ceiling)
-    // Spans from x: 31.0 to 37.6 at y: 2.22, z: 1.6
-    addVoxel(34.3, 2.22, 1.6, mats.serverCableTray, 6.8, 0.06, 0.45);
-    // Ladder cross rungs
-    for (let lx = 31.2; lx <= 37.4; lx += 0.6) {
-      addVoxel(lx, 2.24, 1.6, mats.serverRackTrim, 0.06, 0.03, 0.42);
+    // 3. Overhead High-Capacity Yellow Fiber Duct Raceway ("Fiber Runner") System
+    // Spans continuously across all 4 racks from x = 27.0 to 36.4 at y = 2.22, z = 2.0
+    addVoxel(31.7, 2.22, 2.0, mats.fiberDuctYellow, 9.8, 0.08, 0.42);
+    addVoxel(31.7, 2.27, 2.0, mats.fiberDuctCover, 9.7, 0.02, 0.40);
+    // Ceiling trapeze support brackets every 1.6m
+    for (let bx = 27.2; bx <= 36.2; bx += 1.6) {
+      addVoxel(bx, 2.33, 2.0, mats.crashCartSteel, 0.05, 0.14, 0.44);
     }
-    // Bundles of glowing cyan & neon green fiber optic lines running across tray
-    addVoxel(34.3, 2.27, 1.52, mats.serverCableGlow, 6.7, 0.03, 0.06, false);
-    addVoxel(34.3, 2.27, 1.60, mats.serverLedGreen, 6.6, 0.03, 0.05, false);
-    addVoxel(34.3, 2.27, 1.68, mats.serverCableGlow, 6.7, 0.03, 0.06, false);
-    // Vertical cable drops into racks 1, 2, 3, 4
-    addVoxel(31.6, 2.18, 1.58, mats.serverCableGlow, 0.06, 0.12, 0.06, false);
-    addVoxel(33.4, 2.18, 1.58, mats.serverLedGreen, 0.06, 0.12, 0.06, false);
-    addVoxel(35.2, 2.18, 1.58, mats.serverCableGlow, 0.06, 0.12, 0.06, false);
-    addVoxel(37.0, 2.18, 1.58, mats.serverLedGreen, 0.06, 0.12, 0.06, false);
+    // High-density glowing OM4 fiber trunks running inside raceway
+    addVoxel(31.7, 2.24, 1.94, mats.fiberAqua, 9.6, 0.025, 0.06, false);
+    addVoxel(31.7, 2.24, 2.00, mats.fiberOrange, 9.6, 0.025, 0.06, false);
+    addVoxel(31.7, 2.24, 2.06, mats.serverLedGreen, 9.6, 0.025, 0.06, false);
+    // Yellow vertical drop funnels (spillways) feeding fiber into top of each rack
+    serverRacks.forEach((rack) => {
+      addVoxel(rack.x, 2.19, 2.0, mats.fiberDuctYellow, 0.22, 0.06, 0.22);
+      addVoxel(rack.x, 2.18, 1.95, mats.fiberAqua, 0.06, 0.06, 0.06, false);
+      addVoxel(rack.x, 2.18, 2.05, mats.fiberOrange, 0.06, 0.06, 0.06, false);
+    });
 
-    // 4. Massive SOC Cyber Threat Map Wall Array (North Wall Center: x = 34.3, z = 0.8, flush under 2.40m lintel)
+    // 4. Industrial In-Row CRAC (Computer Room Air Conditioning) Chiller Unit (East Wall at x = 37.3, z = 4.5)
+    addVoxel(37.3, 1.10, 4.5, mats.cracChillerBody, 0.85, 2.20, 1.20);
+    // Front service door facing west (-x)
+    addVoxel(36.86, 1.10, 4.5, mats.doorSealDark, 0.03, 2.10, 1.14);
+    // Dual vertical cooling airflow intake louvers
+    addVoxel(36.84, 0.70, 4.5, mats.cracChillerLouver, 0.02, 0.90, 0.95);
+    addVoxel(36.84, 1.55, 4.5, mats.cracChillerLouver, 0.02, 0.60, 0.95);
+    // Digital HVAC Climate Control Panel (Displaying 18.5°C | 45% RH)
+    addVoxel(36.84, 1.95, 4.5, mats.cracChillerColdGlow, 0.02, 0.12, 0.45, false);
+    addVoxel(36.84, 1.95, 4.15, mats.serverLedGreen, 0.02, 0.04, 0.04, false);
+
+    // 5. FM-200 Fire Suppression Clean Agent System (North Wall at x = 26.8, z = 0.8)
+    // Dual pressurized red cylinders
+    addVoxel(26.65, 0.95, 0.85, mats.fireCylinderRed, 0.32, 1.50, 0.32);
+    addVoxel(27.05, 0.95, 0.85, mats.fireCylinderRed, 0.32, 1.50, 0.32);
+    // Brass distribution manifold & overhead release pipe
+    addVoxel(26.85, 1.80, 0.85, mats.fireManifoldBrass, 0.75, 0.08, 0.08);
+    addVoxel(26.85, 2.05, 0.85, mats.fireManifoldBrass, 0.08, 0.42, 0.08);
+    // Analog pressure gauges (Green nominal zone)
+    addVoxel(26.65, 1.75, 0.70, mats.serverLedGreen, 0.08, 0.08, 0.02, false);
+    addVoxel(27.05, 1.75, 0.70, mats.serverLedGreen, 0.08, 0.08, 0.02, false);
+
+    // 6. Massive SOC Cyber Threat Map Wall Array (North Wall Center: x = 32.0, z = 0.8, flush under 2.40m lintel)
     const tmPos = OFFICE_3D_LAYOUT.SERVER_ROOM.threatMap;
     // Dark matte stealth wall bezel
     addVoxel(tmPos.x, 1.48, tmPos.z, mats.wallTrim, 4.8, 1.25, 0.08);
@@ -4900,7 +6552,7 @@ export default function Office3D({
     // Top Threat Status Banner
     addVoxel(tmPos.x, 2.05, tmPos.z + 0.06, mats.threatMapGlow, 3.8, 0.06, 0.01, false);
 
-    // 5. Mobile Diagnostic Crash Cart (x = 31.4, z = 4.2)
+    // 7. Mobile Diagnostic Crash Cart (x = 27.2, z = 4.5)
     const cartPos = OFFICE_3D_LAYOUT.SERVER_ROOM.crashCart;
     // Rolling caster legs
     addVoxel(cartPos.x - 0.40, 0.08, cartPos.z - 0.30, mats.wallTrim, 0.08, 0.16, 0.08);
@@ -4923,22 +6575,22 @@ export default function Office3D({
     // Diagnostic Terminal Display facing south (+z)
     addVoxel(cartPos.x, 1.30, cartPos.z - 0.15, mats.wallTrim, 0.78, 0.56, 0.06);
     addVoxel(cartPos.x, 1.30, cartPos.z - 0.12, mats.crashCartScreen, 0.72, 0.50, 0.02);
-    // Diagnostic cable linking crash cart (x = 30.5, z = 3.6) to Rack 1 (x = 31.6, z = 1.6)
-    addVoxel(31.0, 0.95, 2.6, mats.serverCableGlow, 0.06, 0.06, 2.0, false);
+    // Diagnostic coiled cable linking crash cart (x = 27.2, z = 4.5) to Rack 1 (x = 27.8, z = 2.0)
+    addVoxel(27.5, 0.95, 3.25, mats.serverCableGlow, 0.06, 0.06, 2.5, false);
 
-    // 6. Central DevOps & SecOps Command Console Bridge (Connecting Alex & Zane's workstations)
-    // Sits at x: 34.2, z: 7.2 between Alex (x: 32.2) and Zane (x: 36.2)
-    addVoxel(34.2, 0.72, 7.2, mats.deskMatBlack, 1.8, 0.06, 1.1);
-    addVoxel(34.2, 0.36, 7.2, mats.deskTrimBrass, 0.08, 0.72, 0.08); // Support pedestal
+    // 8. Central DevOps & SecOps Command Console Bridge (Connecting Alex & Zane's workstations)
+    // Sits at x = 31.3, z = 7.2 between Alex (x = 28.8) and Zane (x = 33.8)
+    addVoxel(31.3, 0.72, 7.2, mats.deskMatBlack, 1.8, 0.06, 1.1);
+    addVoxel(31.3, 0.36, 7.2, mats.deskTrimBrass, 0.08, 0.72, 0.08); // Support pedestal
     // 100GbE High-Speed Fiber Optic Distribution Switch & Patch Bay
-    addVoxel(34.2, 0.82, 7.0, mats.serverRackDark, 1.5, 0.14, 0.45);
-    addVoxel(34.2, 0.82, 7.23, mats.serverRackDoor, 1.4, 0.10, 0.02);
+    addVoxel(31.3, 0.82, 7.0, mats.serverRackDark, 1.5, 0.14, 0.45);
+    addVoxel(31.3, 0.82, 7.23, mats.serverRackDoor, 1.4, 0.10, 0.02);
     // Dynamic pulsing LEDs across switch channels
-    addVoxel(33.7, 0.82, 7.24, mats.serverLedGreen, 0.35, 0.04, 0.01, false);
-    addVoxel(34.2, 0.82, 7.24, mats.serverLedCyan, 0.35, 0.04, 0.01, false);
-    addVoxel(34.7, 0.82, 7.24, mats.serverLedAmber, 0.35, 0.04, 0.01, false);
-    // Glowing fiber trunk running directly from switch into overhead tray at z = 1.6
-    addVoxel(34.2, 1.75, 4.4, mats.serverCableGlow, 0.06, 0.06, 5.4, false);
+    addVoxel(30.8, 0.82, 7.24, mats.serverLedGreen, 0.35, 0.04, 0.01, false);
+    addVoxel(31.3, 0.82, 7.24, mats.serverLedCyan, 0.35, 0.04, 0.01, false);
+    addVoxel(31.8, 0.82, 7.24, mats.serverLedAmber, 0.35, 0.04, 0.01, false);
+    // Glowing fiber trunk running directly from switch into overhead yellow raceway at z = 2.0
+    addVoxel(31.3, 1.75, 4.6, mats.serverCableGlow, 0.06, 0.06, 5.2, false);
 
     // --- 7. Spawn the 10 3D Characters (Dylan Ramos CEO + 9 Specialized Autonomous Agents) ---
     const characters: Record<string, VoxelCharacter3D> = {
@@ -5091,6 +6743,18 @@ export default function Office3D({
       } catch {}
     });
 
+    sse.addEventListener('agent:task:completed', (e: MessageEvent) => {
+      try {
+        const data = JSON.parse(e.data);
+        handleReportToCeoRef.current(data.agentId, data.taskTitle);
+      } catch {}
+    });
+
+    const onReportEvent = (e: any) => {
+      handleReportToCeoRef.current(e.detail?.agentId, e.detail?.taskTitle);
+    };
+    window.addEventListener('office:report:ceo', onReportEvent);
+
     // --- 9. Smooth Orbit, Tilt & Pan Camera Controls ---
     const raycaster = new THREE.Raycaster();
     let isDragging = false;
@@ -5099,22 +6763,50 @@ export default function Office3D({
     let prevMouseY = 0;
     let downPos = { x: 0, y: 0 };
 
-    const targetCenter = new THREE.Vector3(18.5, 0, 11);
-    const currentCenter = new THREE.Vector3(18.5, 0, 11);
+    const targetCenter = new THREE.Vector3(19.225, 0, 10.75);
+    const currentCenter = new THREE.Vector3(19.225, 0, 10.75);
     let targetYaw = Math.PI * 0.25;
     let currentYaw = Math.PI * 0.25;
     let targetPitch = 0.48; // ~27.5° Tilted Cinematic View
     let currentPitch = 0.48;
 
     cameraControlRef.current = {
-      setTilt: (pitchRad: number, mode: 'cinematic' | 'isometric' | 'topdown') => {
-        targetPitch = pitchRad;
+      setTilt: (pitchRad: number, mode: 'cinematic' | 'isometric' | 'topdown' | 'front') => {
+        if (mode === 'front') {
+          // 0° Front Elevation - 100% True Rectangle with perfectly parallel vertical walls (Zero Trapezoid Distortion)
+          targetPitch = 0.38;
+          targetYaw = 0;
+          targetCenter.set(19.225, 0, 10.75);
+          camera.zoom = 1.0;
+          camera.updateProjectionMatrix();
+          addFloatingPopup('📐 FRONT VIEW: 0° True Rectangle (Zero Trapezoid Distortion)', currentCenter.x, 2.8, currentCenter.z, '#00f0ff');
+        } else if (mode === 'topdown') {
+          // True 90° Top-Down blueprint plan - 100% true 90-degree rectangle with zero distortion!
+          targetPitch = Math.PI * 0.5 - 0.0001;
+          const step = Math.PI * 0.5;
+          targetYaw = Math.round(targetYaw / step) * step;
+        } else if (mode === 'isometric') {
+          // True 35.264° Isometric - symmetric axonometric projection with 45° diagonal yaw
+          targetPitch = 0.6155;
+          targetYaw = (Math.round((targetYaw - Math.PI * 0.25) / (Math.PI * 0.5)) * Math.PI * 0.5) + Math.PI * 0.25;
+        } else {
+          // Cinematic 27.5° Tilt with symmetric 45° corner alignment
+          targetPitch = 0.48;
+          targetYaw = (Math.round((targetYaw - Math.PI * 0.25) / (Math.PI * 0.5)) * Math.PI * 0.5) + Math.PI * 0.25;
+        }
         setTiltMode(mode);
         play8BitGameSound('click');
       },
       rotateBy: (deltaYaw: number) => {
         targetYaw += deltaYaw;
         play8BitGameSound('click');
+      },
+      snapCardinal: () => {
+        // Snap to nearest 90° right angle (0, 90°, 180°, 270°) - guaranteed 100% straight rectangle!
+        const step = Math.PI * 0.5;
+        targetYaw = Math.round(targetYaw / step) * step;
+        play8BitGameSound('click');
+        addFloatingPopup('📐 SNAP: True 90° Orthogonal Alignment!', currentCenter.x, 2.8, currentCenter.z, '#00f0ff');
       },
       focusDylan: () => {
         const d = charactersRef.current['dylan'];
@@ -5130,10 +6822,24 @@ export default function Office3D({
         addFloatingPopup('🛡️ CAMERA: Focused on Cyber Security Server Vault', 34.0, 2.8, 5.5, '#22c55e');
       },
       resetView: () => {
-        targetCenter.set(18.5, 0, 11);
+        targetCenter.set(19.225, 0, 10.75);
         targetYaw = Math.PI * 0.25;
         targetPitch = 0.48;
+        camera.zoom = 1.0;
+        camera.updateProjectionMatrix();
         setTiltMode('cinematic');
+        play8BitGameSound('click');
+      },
+      zoomIn: () => {
+        camera.zoom = Math.min(camera.zoom * 1.25, 3.2);
+        camera.updateProjectionMatrix();
+        addFloatingPopup(`🔍 ZOOM: ${Math.round(camera.zoom * 100)}% (Ultra Sharp)`, currentCenter.x, 2.8, currentCenter.z, '#00f0ff');
+        play8BitGameSound('click');
+      },
+      zoomOut: () => {
+        camera.zoom = Math.max(camera.zoom * 0.8, 0.45);
+        camera.updateProjectionMatrix();
+        addFloatingPopup(`🔍 ZOOM: ${Math.round(camera.zoom * 100)}%`, currentCenter.x, 2.8, currentCenter.z, '#00f0ff');
         play8BitGameSound('click');
       },
     };
@@ -5168,7 +6874,8 @@ export default function Office3D({
       } else {
         // Left-Click Drag: TILT vertically & ORBIT horizontally!
         targetYaw -= deltaX * 0.007;
-        targetPitch = Math.max(0.18, Math.min(1.22, targetPitch + deltaY * 0.005));
+        // Allow pitch up to 90° true top-down plan view
+        targetPitch = Math.max(0.35, Math.min(Math.PI * 0.5 - 0.0001, targetPitch + deltaY * 0.005));
       }
     };
 
@@ -5179,6 +6886,24 @@ export default function Office3D({
     const onPointerUp = (e: MouseEvent) => {
       isDragging = false;
       const dist = Math.hypot(e.clientX - downPos.x, e.clientY - downPos.y);
+
+      // If user finished rotating the camera (dragged):
+      if (dist >= 6) {
+        if (targetPitch > 1.35) {
+          // Snap to true 90° top-down plan view
+          targetPitch = Math.PI * 0.5 - 0.0001;
+          const step = Math.PI * 0.5;
+          targetYaw = Math.round(targetYaw / step) * step;
+          setTiltMode('topdown');
+        } else {
+          // If within ~5° of a cardinal or 45° angle, snap exactly to keep lines straight
+          const step = Math.PI * 0.25;
+          const nearest = Math.round(targetYaw / step) * step;
+          if (Math.abs(targetYaw - nearest) < 0.09) {
+            targetYaw = nearest;
+          }
+        }
+      }
 
       if (dist < 6) {
         // Clean Click: Raycast into scene
@@ -5221,9 +6946,17 @@ export default function Office3D({
             addFloatingPopup('✨ TALK WITH EAH ILAGAN! 💖', characters.eah.currentX, 2.8, characters.eah.currentZ, '#fb7185');
             play8BitGameSound('heart');
           } else if (clickedAgentId === 'puppy') {
+            const pupX = puppyRef.current ? puppyRef.current.group.position.x : 19.2;
+            const pupZ = puppyRef.current ? puppyRef.current.group.position.z : 14.8;
             puppySpeechRef.current = { text: 'Arf arf! 🐶💕 *happy puppy tail wag & kisses for Dylan & Eah*', timer: 5.0 };
-            addFloatingPopup('🐶 +150 HAPPINESS! *happy puppy kisses!*', 27.6, 1.6, 13.8, '#f59e0b');
+            addFloatingPopup('🐶 +150 HAPPINESS! *happy puppy kisses!*', pupX, 1.6, pupZ, '#f59e0b');
             play8BitGameSound('bark');
+          } else if (clickedAgentId === 'cat') {
+            const catX = catRef.current ? catRef.current.group.position.x : 18.2;
+            const catZ = catRef.current ? catRef.current.group.position.z : 18.8;
+            catSpeechRef.current = { text: 'Purrrrrrr... Nyaa~ 💕 *Snowy leans in for warm chin scratches & purrs happily*', timer: 5.0 };
+            addFloatingPopup('🐱 +150 HAPPINESS! *soft purring & cozy headbonk!*', catX, 1.6, catZ, '#38bdf8');
+            play8BitGameSound('meow');
           } else {
             const char = characters[clickedAgentId];
             if (char) {
@@ -5233,11 +6966,21 @@ export default function Office3D({
           }
           playSfx('click');
         } else if (groundHit) {
-          const distPuppy = Math.hypot(groundHit.x - OFFICE_3D_LAYOUT.REST_AREA.dogBed.x, groundHit.z - OFFICE_3D_LAYOUT.REST_AREA.dogBed.z);
+          const pupX = puppyRef.current ? puppyRef.current.group.position.x : OFFICE_3D_LAYOUT.REST_AREA.dogBed.x;
+          const pupZ = puppyRef.current ? puppyRef.current.group.position.z : OFFICE_3D_LAYOUT.REST_AREA.dogBed.z;
+          const distPuppy = Math.hypot(groundHit.x - pupX, groundHit.z - pupZ);
+          const catX = catRef.current ? catRef.current.group.position.x : OFFICE_3D_LAYOUT.REST_AREA.catBed.x;
+          const catZ = catRef.current ? catRef.current.group.position.z : OFFICE_3D_LAYOUT.REST_AREA.catBed.z;
+          const distCat = Math.hypot(groundHit.x - catX, groundHit.z - catZ);
           if (distPuppy < 1.4) {
             puppySpeechRef.current = { text: 'Arf arf! 🐶💕 *happy puppy kisses & tail wag*', timer: 5.0 };
-            addFloatingPopup('🐶 +150 HAPPINESS! *happy puppy kisses!*', 27.6, 1.6, 13.8, '#f59e0b');
+            addFloatingPopup('🐶 +150 HAPPINESS! *happy puppy kisses!*', pupX, 1.6, pupZ, '#f59e0b');
             play8BitGameSound('bark');
+            playSfx('click');
+          } else if (distCat < 1.4) {
+            catSpeechRef.current = { text: 'Purrrrrrr... Nyaa~ 💕 *Snowy leans in for warm chin scratches & purrs happily*', timer: 5.0 };
+            addFloatingPopup('🐱 +150 HAPPINESS! *soft purring & cozy headbonk!*', catX, 1.6, catZ, '#38bdf8');
+            play8BitGameSound('meow');
             playSfx('click');
           } else if (!isTileBlocked3D(groundHit.x, groundHit.z)) {
             // Player Click-to-Move for Dylan Ramos in 3D
@@ -5253,17 +6996,47 @@ export default function Office3D({
 
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
-      const zoomFactor = e.deltaY > 0 ? 0.92 : 1.08;
-      camera.zoom = Math.max(0.5, Math.min(camera.zoom * zoomFactor, 2.5));
+      const zoomFactor = e.deltaY > 0 ? 0.90 : 1.10;
+      camera.zoom = Math.max(0.45, Math.min(camera.zoom * zoomFactor, 3.2));
       camera.updateProjectionMatrix();
     };
 
-    const dom = renderer.domElement;
+    // Touch & Pinch-to-Zoom Support for Mobile / Trackpad
+    let initialTouchDist = 0;
+    let initialZoom = 1.0;
+    const onTouchStart = (e: TouchEvent) => {
+      if (e.touches.length === 2) {
+        initialTouchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        initialZoom = camera.zoom;
+      }
+    };
+    const onTouchMove = (e: TouchEvent) => {
+      if (e.touches.length === 2 && initialTouchDist > 0) {
+        e.preventDefault();
+        const dist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const factor = dist / initialTouchDist;
+        camera.zoom = Math.max(0.45, Math.min(initialZoom * factor, 3.2));
+        camera.updateProjectionMatrix();
+      }
+    };
+    const onTouchEnd = () => {
+      initialTouchDist = 0;
+    };
+
     dom.addEventListener('contextmenu', onContextMenu);
     dom.addEventListener('mousedown', onPointerDown);
     window.addEventListener('mousemove', onPointerMove);
     window.addEventListener('mouseup', onPointerUp);
     dom.addEventListener('wheel', onWheel, { passive: false });
+    dom.addEventListener('touchstart', onTouchStart, { passive: true });
+    dom.addEventListener('touchmove', onTouchMove, { passive: false });
+    dom.addEventListener('touchend', onTouchEnd, { passive: true });
 
     // Keyboard WASD Controls for Dylan in 3D & Eah Interaction Shortcuts
     const onKeyDown = (e: KeyboardEvent) => {
@@ -5274,6 +7047,15 @@ export default function Office3D({
       if (['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ArrowUp', 'ArrowLeft', 'ArrowDown', 'ArrowRight'].includes(e.code)) {
         e.preventDefault();
         keysPressed.current.add(e.code);
+        if (characters.dylan && characters.dylan.dylanStep !== 'idle') {
+          characters.dylan.dylanStep = 'idle';
+        }
+      } else if (e.code === 'KeyF') {
+        // [F] Give fresh flowers to Eah ("Just to Be Fair" 💐🌹)
+        handleDylanGiveFlowers();
+      } else if (e.code === 'KeyG') {
+        // [G] Cook warm gourmet meal for Eah ("Just to Be Fair" 🍳🥞)
+        handleDylanCookForEah();
       } else if (e.code === 'KeyC') {
         // [C] Ask Eah to cook breakfast for Dylan
         const eah = characters.eah;
@@ -5301,13 +7083,23 @@ export default function Office3D({
           playSfx('click');
         }
       } else if (e.code === 'KeyE') {
-        // [E] Interact: Server audit if in server vault, Pet puppy if close, or sweet talk with Eah if close
+        // [E] Interact: Water dispenser (Bullpen or Boardroom), Server audit if in server vault, Pet puppy if close, or sweet talk with Eah if close
         const dylan = characters.dylan;
-        const inServerVault = dylan.group.position.x > 29.0 && dylan.group.position.z <= 11.5;
-        const distPuppy = Math.hypot(dylan.group.position.x - OFFICE_3D_LAYOUT.REST_AREA.dogBed.x, dylan.group.position.z - OFFICE_3D_LAYOUT.REST_AREA.dogBed.z);
+        const distBoardroomWater = Math.hypot(dylan.group.position.x - 22.4, dylan.group.position.z - 11.8);
+        const distBullpenWater = Math.hypot(dylan.group.position.x - 24.2, dylan.group.position.z - 4.2);
+        const inServerVault = dylan.group.position.x > 26.0 && dylan.group.position.z <= 11.5;
+        const pupPos = puppyRef.current ? puppyRef.current.group.position : OFFICE_3D_LAYOUT.REST_AREA.dogBed;
+        const distPuppy = Math.hypot(dylan.group.position.x - pupPos.x, dylan.group.position.z - pupPos.z);
+        const catPos = catRef.current ? catRef.current.group.position : OFFICE_3D_LAYOUT.REST_AREA.catBed;
+        const distCat = Math.hypot(dylan.group.position.x - catPos.x, dylan.group.position.z - catPos.z);
         const distArcade = Math.hypot(dylan.group.position.x - 10.2, dylan.group.position.z - 14.65);
         const distEah = characters.eah ? Math.hypot(dylan.group.position.x - characters.eah.group.position.x, dylan.group.position.z - characters.eah.group.position.z) : 999;
-        if (inServerVault) {
+        if (distBoardroomWater < 2.0 || distBullpenWater < 2.0) {
+          addFloatingPopup('💧 +100 HYDRATION! Ice-cold mineral water! 🧊✨', dylan.group.position.x, 2.8, dylan.group.position.z, '#38bdf8');
+          dylan.setSpeech('💧 Grabbing a cup of cold mineral water! Refreshing! ✨', 4.0);
+          play8BitGameSound('coin');
+          playSfx('click');
+        } else if (inServerVault) {
           setIsServerModalOpen(true);
           addFloatingPopup('🛡️ ZERO-TRUST AUDIT: All 4 Server Racks 100% Secure! 🔒', 34.0, 3.2, 5.0, '#00f59b');
           play8BitGameSound('quest');
@@ -5325,8 +7117,14 @@ export default function Office3D({
           playSfx('click');
         } else if (distPuppy < 2.5) {
           puppySpeechRef.current = { text: 'Arf arf! 🐶💕 *happy puppy tail wag & kisses for Dylan & Eah*', timer: 5.0 };
-          addFloatingPopup('🐶 +150 HAPPINESS! *kisses for Dylan & Eah*', 27.6, 1.6, 13.8, '#f59e0b');
+          addFloatingPopup('🐶 +150 HAPPINESS! *kisses for Dylan & Eah*', pupPos.x, 1.6, pupPos.z, '#f59e0b');
           play8BitGameSound('bark');
+          playSfx('click');
+        } else if (distCat < 2.5) {
+          const catPos = catRef.current ? catRef.current.group.position : OFFICE_3D_LAYOUT.REST_AREA.catBed;
+          catSpeechRef.current = { text: 'Purrrrrrr... Nyaa~ 💕 *Snowy leans in for warm chin scratches & purrs happily*', timer: 5.0 };
+          addFloatingPopup('🐱 +150 HAPPINESS! *soft purring & cozy headbonk!*', catPos.x, 1.6, catPos.z, '#38bdf8');
+          play8BitGameSound('meow');
           playSfx('click');
         } else if (distEah < 2.8) {
           const quotes = [
@@ -5368,8 +7166,12 @@ export default function Office3D({
     let lastTime = performance.now();
     let ceoDoorProgress = 0; // 0 = closed, 1 = open
     let boardDoorProgress = 0;
+    let serverDoorProgress = 0;
+    let meetingDoorProgress = 0;
     let lastCeoDoorState = 0;
     let lastBoardDoorState = 0;
+    let lastServerDoorState = 0;
+    let lastMeetingDoorState = 0;
 
     const animate = (time: number) => {
       animId = requestAnimationFrame(animate);
@@ -5386,12 +7188,31 @@ export default function Office3D({
       const cosY = Math.cos(currentYaw);
       const sinY = Math.sin(currentYaw);
 
+      if (currentPitch > 1.48) {
+        // High top-down plan view: set camera up vector to avoid gimbal lock & maintain true 90° orientation
+        camera.up.set(-sinY, 0, -cosY);
+      } else {
+        camera.up.set(0, 1, 0);
+      }
+
       camera.position.set(
         currentCenter.x + cameraRadius * cosP * sinY,
         currentCenter.y + cameraRadius * sinP,
         currentCenter.z + cameraRadius * cosP * cosY
       );
       camera.lookAt(currentCenter.x, currentCenter.y, currentCenter.z);
+
+      // Guarantee all 4 walls maintain uniform architectural height (2.40m) at ALL camera angles
+      // Completely eliminates trapezoid slanting, mismatched wall heights, and corner asymmetry!
+      northWallGroup.scale.y = 1.0;
+      southWallGroup.scale.y = 1.0;
+      westWallGroup.scale.y = 1.0;
+      eastWallGroup.scale.y = 1.0;
+
+      if (northPlaqueBg) northPlaqueBg.visible = true;
+      if (northPlaqueGold) northPlaqueGold.visible = true;
+      if (eastCableTray) eastCableTray.visible = true;
+      if (eastCableGlow) eastCableGlow.visible = true;
 
       // Pulse & modulate Server Room Rack LEDs to simulate real active computing
       const sec = time * 0.001;
@@ -5427,8 +7248,38 @@ export default function Office3D({
         }
       }
 
+      // Server Room Automated High-Tech Sliding Door Proximity (x = 26.0, z = 6.50)
+      let serverActive = false;
+      if (Math.hypot(characters.dylan.group.position.x - 26.0, characters.dylan.group.position.z - 6.50) < 3.0) {
+        serverActive = true;
+      } else {
+        for (const char of Object.values(characters)) {
+          if (Math.hypot(char.group.position.x - 26.0, char.group.position.z - 6.50) < 2.8) {
+            serverActive = true;
+            break;
+          }
+        }
+      }
+
+      // Meeting Room / Boardroom Automated Sliding Door Proximity (x = 21.0, z = 16.075)
+      let meetingActive = inMeetingModeRef.current;
+      if (!meetingActive) {
+        if (Math.hypot(characters.dylan.group.position.x - 21.0, characters.dylan.group.position.z - 16.075) < 3.1) {
+          meetingActive = true;
+        } else {
+          for (const char of Object.values(characters)) {
+            if (Math.hypot(char.group.position.x - 21.0, char.group.position.z - 16.075) < 2.8) {
+              meetingActive = true;
+              break;
+            }
+          }
+        }
+      }
+
       const ceoTarget = ceoActive ? 1.0 : 0.0;
       const boardTarget = boardActive ? 1.0 : 0.0;
+      const serverTarget = serverActive ? 1.0 : 0.0;
+      const meetingTarget = meetingActive ? 1.0 : 0.0;
 
       if (ceoTarget !== lastCeoDoorState) {
         lastCeoDoorState = ceoTarget;
@@ -5438,16 +7289,32 @@ export default function Office3D({
         lastBoardDoorState = boardTarget;
         playSfx('door');
       }
+      if (serverTarget !== lastServerDoorState) {
+        lastServerDoorState = serverTarget;
+        playSfx('door');
+      }
+      if (meetingTarget !== lastMeetingDoorState) {
+        lastMeetingDoorState = meetingTarget;
+        playSfx('door');
+      }
 
       ceoDoorProgress += (ceoTarget - ceoDoorProgress) * Math.min(1.0, delta * 4.8);
       boardDoorProgress += (boardTarget - boardDoorProgress) * Math.min(1.0, delta * 4.8);
+      serverDoorProgress += (serverTarget - serverDoorProgress) * Math.min(1.0, delta * 4.8);
+      meetingDoorProgress += (meetingTarget - meetingDoorProgress) * Math.min(1.0, delta * 4.8);
 
-      // Slide CEO door leaf along Z axis into wall pocket
-      ceoDoorGroup.position.z = 8.5 + ceoDoorProgress * 1.85;
+      // Slide CEO door leaf along Z axis to the opposite side (North into the 6.4m glass partition)
+      ceoDoorGroup.position.z = 8.5 - ceoDoorProgress * 1.85;
 
-      // Bi-part slide Boardroom door leaves along X axis
+      // Bi-part slide Boardroom concourse double doors along X axis
       boardDoorLeftGroup.position.x = 17.56 - boardDoorProgress * 1.40;
       boardDoorRightGroup.position.x = 19.44 + boardDoorProgress * 1.40;
+
+      // Slide Server Room high-tech door leaf along Z axis (North into partition: 6.50 down to 4.65)
+      serverDoorGroup.position.z = 6.50 - serverDoorProgress * 1.85;
+
+      // Slide Meeting Room executive door leaf along Z axis (South into partition: 16.075 up to 17.925)
+      meetingDoorGroup.position.z = 16.075 + meetingDoorProgress * 1.85;
 
       // Dynamic Sensor LED Color feedback (green when open/active, cyan/blue when idle)
       if (ceoDoorProgress > 0.08) {
@@ -5464,6 +7331,22 @@ export default function Office3D({
       } else {
         boardSensorMat.color.setHex(0x00f0ff);
         boardSensorMat.emissive.setHex(0x00f0ff);
+      }
+
+      if (serverDoorProgress > 0.08) {
+        serverSensorMat.color.setHex(0x00f59b);
+        serverSensorMat.emissive.setHex(0x00f59b);
+      } else {
+        serverSensorMat.color.setHex(0x00f0ff);
+        serverSensorMat.emissive.setHex(0x00f0ff);
+      }
+
+      if (meetingDoorProgress > 0.08) {
+        meetingSensorMat.color.setHex(0x10b981);
+        meetingSensorMat.emissive.setHex(0x10b981);
+      } else {
+        meetingSensorMat.color.setHex(0x00f0ff);
+        meetingSensorMat.emissive.setHex(0x00f0ff);
       }
 
       const dylan = characters.dylan;
@@ -5651,8 +7534,10 @@ export default function Office3D({
               char.currentActivity = 'petting_puppy';
               char.group.rotation.y = Math.PI * 0.25;
               char.waitTimer = 6.0;
-              char.setSpeech("You are the cutest puppy ever, Dylan will love you! 🐶✨", 5.0);
+              char.setSpeech("You are the cutest puppy and kitty ever, Dylan will love you both! 🐶🤍🐱", 5.0);
               puppySpeechRef.current = { text: 'Arf arf! 🐶💕 *happy puppy kisses for Dylan & Eah*', timer: 5.0 };
+              catSpeechRef.current = { text: 'Purrrrr... Nyaa~ 💕 *Snowy purrs happily for Eah & Dylan*', timer: 5.0 };
+              play8BitGameSound('meow');
             }
           } else if (char.eahStep === 'serving_food' || char.eahStep === 'serving_coffee' || char.eahStep === 'petting_puppy') {
             char.waitTimer -= delta;
@@ -5671,13 +7556,113 @@ export default function Office3D({
               char.setSpeech('Chilling on my iPad beside Dylan Ramos 💻✨', 4.5);
             }
           }
+        } else if (char.id === 'dylan') {
+          if (char.dylanStep === 'idle') {
+            // Autonomous Caring Cycle: Dylan occasionally stands up to give flowers or cook for Eah ("Just to Be Fair" 💖)
+            if (char.isSeated && char.pathQueue.length === 0 && !inMeetingModeRef.current && !inRestModeRef.current && !inKitchenGardenModeRef.current && keysPressed.current.size === 0) {
+              char.routineTimer -= delta;
+              if (char.routineTimer <= 0) {
+                char.routineTimer = 28 + Math.random() * 14;
+                char.dylanCycleCount++;
+                const cycle = char.dylanCycleCount % 2;
+
+                if (cycle === 1) {
+                  // ROUTINE 1: Surprise Eah with fresh luxury flowers!
+                  char.dylanStep = 'flower_walk';
+                  char.isSeated = false;
+                  char.currentActivity = 'delivering_flowers';
+                  char.setSpeech('Surprising Eah with fresh flowers to brighten her day! 💐🌹', 4.5);
+                  char.walkTo(OFFICE_3D_LAYOUT.CEO.eahSeat.x + 0.95, OFFICE_3D_LAYOUT.CEO.eahSeat.z);
+                } else {
+                  // ROUTINE 2: Cook a warm gourmet meal for Eah!
+                  char.dylanStep = 'cook_walk';
+                  char.isSeated = false;
+                  char.currentActivity = 'working';
+                  char.setSpeech('Eah always cooks for me—time to return the favor! 🍳✨', 4.5);
+                  char.walkTo(4.8, 12.7);
+                }
+              }
+            }
+          } else if (char.dylanStep === 'flower_walk') {
+            if (char.pathQueue.length === 0) {
+              char.dylanStep = 'giving_flowers';
+              char.currentActivity = 'delivering_flowers';
+              char.group.rotation.y = -Math.PI * 0.5;
+              char.waitTimer = 5.5;
+              char.setSpeech('These fresh flowers are for you, my dearest Eah! 💐🌹 Thank you for always taking care of me! 💖✨', 5.5);
+              servedEahTableItemRef.current = 'flowers';
+              addFloatingPopup('💐 Dylan Gave Fresh Flowers to Eah! 🌹 (+500 LOVE & MORALE)', char.currentX, 2.8, char.currentZ, '#fb7185');
+              play8BitGameSound('heart');
+              if (characters.eah) {
+                characters.eah.group.rotation.y = Math.PI * 0.5;
+                characters.eah.setSpeech('Awww Dylan, they are absolutely gorgeous! 🌹🥰 You are the sweetest! Thank you! 💖✨', 5.5);
+              }
+            }
+          } else if (char.dylanStep === 'cook_walk') {
+            if (char.pathQueue.length === 0) {
+              char.dylanStep = 'cooking';
+              char.currentActivity = 'kitchen_cooking';
+              char.group.rotation.y = Math.PI;
+              char.waitTimer = 7.0;
+              char.setSpeech('Sizzling fluffy golden pancakes & breakfast for Eah! 🥞🍳✨', 5.0);
+            }
+          } else if (char.dylanStep === 'cooking') {
+            char.waitTimer -= delta;
+            if (char.waitTimer <= 0) {
+              char.dylanStep = 'deliver_food_walk';
+              char.currentActivity = 'delivering_food';
+              char.setSpeech('Fresh and piping hot! Delivering to Eah! 🥞🍓✨', 4.0);
+              char.walkTo(OFFICE_3D_LAYOUT.CEO.eahSeat.x + 0.95, OFFICE_3D_LAYOUT.CEO.eahSeat.z);
+            }
+          } else if (char.dylanStep === 'deliver_food_walk') {
+            if (char.pathQueue.length === 0) {
+              char.dylanStep = 'serving_food';
+              char.currentActivity = 'delivering_food';
+              char.group.rotation.y = -Math.PI * 0.5;
+              char.waitTimer = 5.5;
+              char.setSpeech('Here is your special gourmet breakfast, Eah! 🥞✨ Made with love, enjoy! 💖', 5.5);
+              servedEahTableItemRef.current = 'food';
+              addFloatingPopup('🍳 Dylan Cooked Gourmet Meal for Eah! 🥞 (+500 AFFECTION)', char.currentX, 2.8, char.currentZ, '#f59e0b');
+              play8BitGameSound('quest');
+              if (characters.eah) {
+                characters.eah.group.rotation.y = Math.PI * 0.5;
+                characters.eah.setSpeech('Omg Dylan, you cooked for me?! 🥞😋 Smells amazing! Best partner ever! 💖✨', 5.5);
+              }
+            }
+          } else if (char.dylanStep === 'giving_flowers' || char.dylanStep === 'serving_food') {
+            char.waitTimer -= delta;
+            if (char.waitTimer <= 0) {
+              char.dylanStep = 'return_desk';
+              char.currentActivity = 'working';
+              char.setSpeech('Glad Eah loved it! Back to CEO command station 💻👑', 3.5);
+              char.walkTo(OFFICE_3D_LAYOUT.CEO.chair.x, OFFICE_3D_LAYOUT.CEO.chair.z);
+            }
+          } else if (char.dylanStep === 'return_desk') {
+            if (char.pathQueue.length === 0) {
+              char.dylanStep = 'idle';
+              char.isSeated = true;
+              char.currentActivity = 'idle';
+              char.group.rotation.y = 0;
+              char.routineTimer = 28 + Math.random() * 14;
+            }
+          }
         } else if (char.id !== 'dylan' && !inMeetingModeRef.current && !inRestModeRef.current && !inKitchenGardenModeRef.current && char.pathQueue.length === 0) {
           if (char.waitTimer > 0) {
             char.waitTimer -= delta;
+            if (char.currentActivity === 'reporting_to_ceo') {
+              char.group.rotation.y = Math.PI; // Face North directly towards Dylan's executive command desk
+              if (char.waitTimer > 4.0 && characters.dylan) {
+                characters.dylan.group.rotation.y = 0; // Dylan turns south to listen to worker
+              }
+            }
             if (char.waitTimer <= 0) {
+              if (char.currentActivity === 'reporting_to_ceo') {
+                char.setSpeech('Thank you Dylan! Returning to my desk with new directives! 💻✨', 4.0);
+              } else {
+                char.setSpeech('Back to work.');
+              }
               char.currentActivity = 'working';
               char.walkTo(char.deskX, char.deskZ);
-              char.setSpeech('Back to work.');
             }
           } else {
             char.routineTimer -= delta;
@@ -5772,13 +7757,21 @@ export default function Office3D({
                   char.setSpeech('🛋️ Sipping coffee and relaxing on the velvet sofa!');
                 }
                 char.waitTimer = 8.0;
-              } else if (act < 0.88) {
-                // 6. Work in Boardroom Suite with Laptop at Conference Table!
+              } else if (act < 0.83) {
+                // 6. Autonomous Task Completion Report to CEO Dylan Ramos!
+                char.isSeated = false;
+                char.currentActivity = 'reporting_to_ceo';
+                char.setSpeech('Reporting completed sprint tasks to CEO Dylan Ramos! 📋✨', 4.5);
+                char.walkTo(4.8, 5.4);
+                char.waitTimer = 11.0;
+                addFloatingPopup(`📋 ${char.name.split(' ')[0]} reporting completed task to Dylan!`, char.currentX, 2.8, char.currentZ, '#ffbe0b');
+              } else if (act < 0.90) {
+                // 7. Work in Boardroom Suite with Laptop at Conference Table!
                 char.walkTo(char.seatX, char.seatZ);
                 char.currentActivity = 'meeting';
                 char.setSpeech('💻 Bringing my laptop to work at the boardroom table!');
                 char.waitTimer = 9.0;
-              } else if (act < 0.94) {
+              } else if (act < 0.95) {
                 // 7. Visit Colleague for sync
                 const targetDesk = char.id === 'ray' ? OFFICE_3D_LAYOUT.DESKS.wendy.chair : OFFICE_3D_LAYOUT.DESKS.alex.chair;
                 char.walkTo(targetDesk.x, targetDesk.z);
@@ -5814,52 +7807,118 @@ export default function Office3D({
         });
       }
 
-      // Update living puppy animation & tail wagging
-      if (puppyRef.current) {
-        const isDylanNearPup = Math.hypot(characters.dylan.group.position.x - 27.6, characters.dylan.group.position.z - 13.8) < 2.5;
-        const isEahNearPup = characters.eah && Math.hypot(characters.eah.group.position.x - 27.6, characters.eah.group.position.z - 13.8) < 2.5;
-        puppyRef.current.update(delta, isDylanNearPup || isEahNearPup);
+      // Update served flowers / gourmet food visibility and animation on Eah's side table (Gift with Love 💖)
+      if (servedEahTableItemRef.current === 'flowers') {
+        servedEahTableGroup.visible = true;
+        eahVaseGroup.visible = true;
+        eahFoodGroup.visible = false;
+        eahSparkles.forEach((sp, idx) => {
+          sp.position.y = 0.35 + Math.sin(time * 0.003 + idx * 1.5) * 0.03;
+          sp.rotation.y = time * 0.002 + idx;
+        });
+      } else if (servedEahTableItemRef.current === 'food') {
+        servedEahTableGroup.visible = true;
+        eahVaseGroup.visible = false;
+        eahFoodGroup.visible = true;
+        eahFoodSteamPuffs.forEach((puff, idx) => {
+          puff.position.y = 0.12 + ((time * 0.001 + idx * 0.35) % 0.18);
+          puff.scale.setScalar(0.025 + Math.sin(time * 0.004 + idx) * 0.01);
+        });
       }
 
-      // Proximity Arcade HUD calculation
+      // Update living puppy animation, tail wagging & autonomous lounge circuit patrol
+      if (puppyRef.current) {
+        const pupPos = puppyRef.current.group.position;
+        const isDylanNearPup = Math.hypot(characters.dylan.group.position.x - pupPos.x, characters.dylan.group.position.z - pupPos.z) < 2.5;
+        const isEahNearPup = characters.eah && Math.hypot(characters.eah.group.position.x - pupPos.x, characters.eah.group.position.z - pupPos.z) < 2.5;
+        puppyRef.current.update(delta, isDylanNearPup || isEahNearPup, (text, timer) => {
+          puppySpeechRef.current = { text, timer };
+        });
+      }
+
+      // Update living white cat (Snowy) animation, purring & autonomous exploration
+      if (catRef.current) {
+        const catPos = catRef.current.group.position;
+        const isDylanNearCat = Math.hypot(characters.dylan.group.position.x - catPos.x, characters.dylan.group.position.z - catPos.z) < 2.5;
+        const isEahNearCat = characters.eah && Math.hypot(characters.eah.group.position.x - catPos.x, characters.eah.group.position.z - catPos.z) < 2.5;
+        catRef.current.update(delta, isDylanNearCat || isEahNearCat, (text, timer) => {
+          catSpeechRef.current = { text, timer };
+        });
+      }
+
+      // Proximity Arcade HUD calculation (State debounced - only dispatches on zone change!)
       const dylanX = characters.dylan.group.position.x;
       const dylanZ = characters.dylan.group.position.z;
       const distEah = characters.eah ? Math.hypot(dylanX - characters.eah.group.position.x, dylanZ - characters.eah.group.position.z) : 999;
-      const distPup = Math.hypot(dylanX - 27.6, dylanZ - 13.8);
+      const distPup = puppyRef.current ? Math.hypot(dylanX - puppyRef.current.group.position.x, dylanZ - puppyRef.current.group.position.z) : 999;
+      const distCat = catRef.current ? Math.hypot(dylanX - catRef.current.group.position.x, dylanZ - catRef.current.group.position.z) : 999;
       const distArcade = Math.hypot(dylanX - 10.2, dylanZ - 14.65);
 
-      const inServerVault = dylanX > 29.5 && dylanZ <= 11.5;
+      const inServerVault = dylanX > 26.0 && dylanZ <= 11.5;
+      const distBoardroomWater = Math.hypot(dylanX - 22.4, dylanZ - 11.8);
+      const distBullpenWater = Math.hypot(dylanX - 24.2, dylanZ - 4.2);
 
-      if (distEah < 2.8) {
-        setProximityHUD({
+      let nextProximityType: 'water' | 'eah' | 'puppy' | 'cat' | 'arcade' | 'server' | null = null;
+      let nextProximityObj: {
+        type: 'eah' | 'puppy' | 'cat' | 'arcade' | 'coffee' | 'server' | 'water' | 'none';
+        title: string;
+        badge: string;
+        color: string;
+      } | null = null;
+
+      if (distBoardroomWater < 2.0 || distBullpenWater < 2.0) {
+        nextProximityType = 'water';
+        nextProximityObj = {
+          type: 'water',
+          title: distBullpenWater < 2.0 ? 'Bullpen Cold Water Dispenser 💧' : 'Executive Mineral Water Dispenser 💧',
+          badge: '💧 HYDRATION STATION • PRESS [E]',
+          color: '#38bdf8',
+        };
+      } else if (distEah < 2.8) {
+        nextProximityType = 'eah';
+        nextProximityObj = {
           type: 'eah',
           title: 'Eah Ilagan is right beside you ✨',
           badge: '✨ EXECUTIVE PARTNER',
           color: '#fb7185',
-        });
+        };
       } else if (distPup < 2.5) {
-        setProximityHUD({
+        nextProximityType = 'puppy';
+        nextProximityObj = {
           type: 'puppy',
           title: 'Mochi is wagging his tail happily at you 🐶',
           badge: '🐶 CHIEF HAPPINESS OFFICER',
           color: '#f59e0b',
-        });
+        };
+      } else if (distCat < 2.5) {
+        nextProximityType = 'cat';
+        nextProximityObj = {
+          type: 'cat',
+          title: 'Snowy is purring softly and headbonking your hand 🐱🤍',
+          badge: '🐱 EXECUTIVE PURR OFFICER • PRESS [E]',
+          color: '#38bdf8',
+        };
       } else if (distArcade < 2.2) {
-        setProximityHUD({
+        nextProximityType = 'arcade';
+        nextProximityObj = {
           type: 'arcade',
           title: 'Retro Pixel Arcade Cabinet 🕹️',
           badge: '🕹️ HIGH SCORE: 128,400 PTS',
           color: '#ec4899',
-        });
+        };
       } else if (inServerVault) {
-        setProximityHUD({
+        nextProximityType = 'server';
+        nextProximityObj = {
           type: 'server',
           title: 'Zero-Trust SOC & Enterprise Server Vault 🛡️',
           badge: '🛡️ CYBER SECURITY OPERATIONS',
           color: '#22c55e',
-        });
-      } else {
-        setProximityHUD(null);
+        };
+      }
+
+      if (lastProximityTypeRef.current !== nextProximityType) {
+        lastProximityTypeRef.current = nextProximityType;
+        setProximityHUD(nextProximityObj);
       }
 
       // 2. Project 3D Overhead Coordinates to 2D Screen Space (100% Crisp HTML, Zero Blur!)
@@ -5890,8 +7949,10 @@ export default function Office3D({
           });
           return true;
         });
+        lastPopupCountRef.current = activePopups.length;
         setScreenPopups(activePopups);
-      } else {
+      } else if (lastPopupCountRef.current > 0) {
+        lastPopupCountRef.current = 0;
         setScreenPopups([]);
       }
 
@@ -5900,7 +7961,9 @@ export default function Office3D({
         puppySpeechRef.current.timer -= delta;
         const el = bubbleElsRef.current['puppy'];
         if (el) {
-          projVec.set(OFFICE_3D_LAYOUT.REST_AREA.dogBed.x, 1.45, OFFICE_3D_LAYOUT.REST_AREA.dogBed.z);
+          const pupX = puppyRef.current ? puppyRef.current.group.position.x : OFFICE_3D_LAYOUT.REST_AREA.dogBed.x;
+          const pupZ = puppyRef.current ? puppyRef.current.group.position.z : OFFICE_3D_LAYOUT.REST_AREA.dogBed.z;
+          projVec.set(pupX, 1.40, pupZ);
           projVec.project(camera);
           const screenX = ((projVec.x + 1) * currentW) / 2;
           const screenY = ((-projVec.y + 1) * currentH) / 2;
@@ -5920,6 +7983,39 @@ export default function Office3D({
         }
       } else {
         const el = bubbleElsRef.current['puppy'];
+        if (el) {
+          el.style.display = 'none';
+          el.style.opacity = '0';
+        }
+      }
+
+      // Project Cat (Snowy) Speech Bubble in screen space
+      if (catSpeechRef.current.timer > 0) {
+        catSpeechRef.current.timer -= delta;
+        const el = bubbleElsRef.current['cat'];
+        if (el) {
+          const catX = catRef.current ? catRef.current.group.position.x : OFFICE_3D_LAYOUT.REST_AREA.catBed.x;
+          const catZ = catRef.current ? catRef.current.group.position.z : OFFICE_3D_LAYOUT.REST_AREA.catBed.z;
+          projVec.set(catX, 1.35, catZ);
+          projVec.project(camera);
+          const screenX = ((projVec.x + 1) * currentW) / 2;
+          const screenY = ((-projVec.y + 1) * currentH) / 2;
+          const inBounds = screenX > -150 && screenX < currentW + 150 && screenY > -80 && screenY < currentH + 80;
+          if (inBounds) {
+            el.style.display = 'block';
+            el.style.opacity = '1';
+            el.style.pointerEvents = 'auto';
+            el.style.transform = `translate3d(${Math.round(screenX)}px, ${Math.round(screenY)}px, 0) translate(-50%, -100%)`;
+            const textNode = el.querySelector<HTMLDivElement>('.crisp-speech-text');
+            if (textNode && textNode.textContent !== catSpeechRef.current.text) {
+              textNode.textContent = catSpeechRef.current.text;
+            }
+          } else {
+            el.style.display = 'none';
+          }
+        }
+      } else {
+        const el = bubbleElsRef.current['cat'];
         if (el) {
           el.style.display = 'none';
           el.style.opacity = '0';
@@ -5962,27 +8058,20 @@ export default function Office3D({
         }
       });
 
-      // 3. Render Pipeline: Crisp HD Direct Render OR Retro Low-Res Target
-      if (isCrispModeRef.current) {
-        renderer.setRenderTarget(null);
-        renderer.render(scene, camera);
-      } else {
-        renderer.setRenderTarget(renderTarget);
-        renderer.render(scene, camera);
-
-        renderer.setRenderTarget(null);
-        renderer.render(postScene, postCamera);
-      }
+      // 3. Render Direct Pure High-Performance 3D
+      renderer.render(scene, camera);
     };
 
     animate(performance.now());
 
-    // Window Resize
+    // Window Resize with Dynamic High-DPI Re-calibration
     const onResize = () => {
       if (!container) return;
       const newW = container.clientWidth || window.innerWidth;
       const newH = container.clientHeight || window.innerHeight;
       const newAspect = newW / newH;
+
+      setWindowWidth(newW);
 
       camera.left = (-frustumSize * newAspect) / 2;
       camera.right = (frustumSize * newAspect) / 2;
@@ -5990,28 +8079,46 @@ export default function Office3D({
       camera.bottom = -frustumSize / 2;
       camera.updateProjectionMatrix();
 
-      renderer.setSize(newW, newH);
+      const newDpr = getTargetDpr();
+      if (renderer.getPixelRatio() !== newDpr) {
+        renderer.setPixelRatio(newDpr);
+      }
+      renderer.setSize(newW, newH, false);
     };
     window.addEventListener('resize', onResize);
+
+    // ResizeObserver ensures canvas aspect ratio updates immediately when sidepanel opens/closes
+    const resizeObserver = new ResizeObserver(() => {
+      onResize();
+    });
+    resizeObserver.observe(container);
 
     return () => {
       cancelAnimationFrame(animId);
       sse.close();
+      resizeObserver.disconnect();
       dom.removeEventListener('contextmenu', onContextMenu);
       dom.removeEventListener('mousedown', onPointerDown);
       window.removeEventListener('mousemove', onPointerMove);
       window.removeEventListener('mouseup', onPointerUp);
       dom.removeEventListener('wheel', onWheel);
+      dom.removeEventListener('touchstart', onTouchStart);
+      dom.removeEventListener('touchmove', onTouchMove);
+      dom.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('resize', onResize);
       window.removeEventListener('keydown', onKeyDown);
       window.removeEventListener('keyup', onKeyUp);
+      window.removeEventListener('office:report:ceo', onReportEvent);
       renderer.dispose();
-      renderTarget.dispose();
       if (dom.parentNode) {
         dom.parentNode.removeChild(dom);
       }
     };
   }, [playSfx, play8BitGameSound]);
+
+  const isMobile = windowWidth <= 768;
+  const isTablet = windowWidth > 768 && windowWidth <= 1120;
+  const isCompact = isMobile || isTablet;
 
   return (
     <div
@@ -6025,496 +8132,934 @@ export default function Office3D({
         backgroundColor: '#0a0c14',
       }}
     >
-      {/* 3D EXECUTIVE HUD OVERLAY (LARGE, CRISP, MODERN, NON-SQUISHED) */}
+      {/* 3D EXECUTIVE HUD OVERLAY (RESPONSIVE, MODULAR, RETINA CRISP) */}
       <div
         style={{
           position: 'absolute',
-          top: '16px',
-          left: '18px',
-          right: '18px',
+          top: isMobile ? '8px' : '14px',
+          left: isMobile ? '8px' : '16px',
+          right: isMobile ? '8px' : '16px',
           zIndex: 25,
-          background: 'rgba(10, 14, 26, 0.92)',
+          background: 'rgba(10, 14, 26, 0.94)',
           backdropFilter: 'blur(16px)',
           WebkitBackdropFilter: 'blur(16px)',
           border: '1.5px solid rgba(0, 240, 255, 0.35)',
-          borderRadius: '12px',
-          padding: '10px 18px',
+          borderRadius: isMobile ? '10px' : '12px',
+          padding: isMobile ? '8px 10px' : isTablet ? '8px 12px' : '10px 16px',
           display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '14px',
-          flexWrap: 'wrap',
-          rowGap: '10px',
-          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.7), 0 0 16px rgba(0, 240, 255, 0.12)',
+          flexDirection: 'column',
+          gap: isHudMinimized ? '0px' : '8px',
+          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.75), 0 0 16px rgba(0, 240, 255, 0.12)',
+          transition: 'all 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+          maxWidth: 'calc(100% - 32px)',
         }}
       >
-        {/* Left Section: ⚡ ASSIGN WORKER & AI Team Roster & Dylan Profile */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          {/* Main Action Trigger */}
-          {onOpenActionModal && (
-            <button
-              onClick={() => onOpenActionModal(selectedAgentId || 'alex')}
+        {/* ROW 1: MASTER IDENTITY & PRIMARY CONTROLS (Always Single Slim Row) */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: isMobile ? '6px' : '10px',
+            width: '100%',
+          }}
+        >
+          {/* Left: Brand + Assign Worker + Dylan Status */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '6px' : '10px', minWidth: 0 }}>
+            {/* AVERO HQ Master Corporate Brand Badge */}
+            <div
               style={{
-                backgroundColor: '#00f0ff',
-                color: '#05070e',
-                border: '2px solid #00f0ff',
+                background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.22), rgba(255, 190, 11, 0.15))',
+                border: '1.5px solid #00f0ff',
                 borderRadius: '8px',
-                padding: '10px 18px',
-                fontFamily: "'Press Start 2P', monospace",
-                fontSize: '11px',
-                fontWeight: 700,
-                letterSpacing: '0.5px',
-                cursor: 'pointer',
+                padding: isMobile ? '4px 8px' : '6px 12px',
+                height: isMobile ? '36px' : '40px',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '8px',
-                boxShadow: '0 0 18px rgba(0, 240, 255, 0.75)',
-                transition: 'all 0.15s ease',
-                height: '44px',
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'scale(1.03)';
-                e.currentTarget.style.boxShadow = '0 0 26px rgba(0, 240, 255, 1)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'scale(1)';
-                e.currentTarget.style.boxShadow = '0 0 18px rgba(0, 240, 255, 0.75)';
+                boxShadow: '0 0 12px rgba(0, 240, 255, 0.3)',
+                flexShrink: 0,
               }}
             >
-              <IconZap size={15} color="#05070e" />
-              <span>ASSIGN WORKER</span>
-            </button>
-          )}
-
-          {/* Quick Roster Pills */}
-          {onOpenActionModal && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {['alex', 'maya', 'wendy', 'ray', 'zane', 'eah'].map((id) => {
-                const meta = AGENT_ROSTER_INFO[id];
-                if (!meta) return null;
-                const isSelected = selectedAgentId === id;
-                return (
-                  <button
-                    key={id}
-                    onClick={() => onOpenActionModal(id)}
-                    title={`Assign direct task to ${meta.name} (${meta.title})`}
-                    style={{
-                      backgroundColor: isSelected ? `${meta.color}33` : 'rgba(255, 255, 255, 0.06)',
-                      border: isSelected ? `2px solid ${meta.color}` : '1.5px solid rgba(255, 255, 255, 0.15)',
-                      borderRadius: '8px',
-                      padding: '8px 14px',
-                      height: '44px',
-                      color: isSelected ? '#f8fafc' : '#cbd5e1',
-                      cursor: 'pointer',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      fontSize: '10px',
-                      fontFamily: "'Press Start 2P', monospace",
-                      fontWeight: 700,
-                      letterSpacing: '0.4px',
-                      transition: 'all 0.15s ease',
-                      boxShadow: isSelected ? `0 0 14px ${meta.color}55` : 'none',
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = meta.color;
-                      e.currentTarget.style.backgroundColor = `${meta.color}25`;
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = isSelected ? meta.color : 'rgba(255, 255, 255, 0.15)';
-                      e.currentTarget.style.backgroundColor = isSelected ? `${meta.color}33` : 'rgba(255, 255, 255, 0.06)';
-                    }}
-                  >
-                    {getAgentIcon(id, 15, isSelected ? meta.color : '#cbd5e1')}
-                    <span>{meta.name}</span>
-                  </button>
-                );
-              })}
+              <IconBuilding size={isMobile ? 18 : 20} color="#00f0ff" />
+              <div style={{ display: 'flex', flexDirection: 'column', lineHeight: 1.15 }}>
+                <span
+                  style={{
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: isMobile ? '10px' : '11.5px',
+                    color: '#00f0ff',
+                    letterSpacing: '0.5px',
+                    textShadow: '0 0 10px rgba(0, 240, 255, 0.7)',
+                  }}
+                >
+                  AVERO HQ
+                </span>
+                {!isMobile && (
+                  <span style={{ fontSize: '7px', color: '#ffbe0b', fontFamily: "'Press Start 2P', monospace", letterSpacing: '0.5px' }}>
+                    AI VIRTUAL OFFICE
+                  </span>
+                )}
+              </div>
             </div>
-          )}
 
-          <div style={{ width: '2px', height: '30px', backgroundColor: 'rgba(255, 255, 255, 0.18)', margin: '0 4px' }} />
-
-          {/* Dylan Ramos CEO Badge */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span
-              style={{
-                width: '10px',
-                height: '10px',
-                borderRadius: '50%',
-                backgroundColor: '#00f59b',
-                boxShadow: '0 0 10px #00f59b',
-              }}
-            />
-            <div style={{ display: 'flex', flexDirection: 'column' }}>
-              <span
+            {/* Main Action Trigger: ASSIGN WORKER */}
+            {onOpenActionModal && (
+              <button
+                onClick={() => onOpenActionModal(selectedAgentId || 'alex')}
                 style={{
+                  backgroundColor: '#00f0ff',
+                  color: '#05070e',
+                  border: '1.5px solid #00f0ff',
+                  borderRadius: '8px',
+                  padding: isMobile ? '6px 10px' : '8px 14px',
                   fontFamily: "'Press Start 2P', monospace",
-                  fontSize: '11px',
-                  fontWeight: 700,
-                  color: '#ffbe0b',
+                  fontSize: isMobile ? '8px' : '8.5px',
+                  fontWeight: 800,
                   letterSpacing: '0.5px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  boxShadow: '0 0 14px rgba(0, 240, 255, 0.65)',
+                  transition: 'all 0.15s ease',
+                  height: isMobile ? '36px' : '40px',
+                  whiteSpace: 'nowrap',
+                  flexShrink: 0,
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'scale(1.03)';
+                  e.currentTarget.style.boxShadow = '0 0 22px rgba(0, 240, 255, 1)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = '0 0 14px rgba(0, 240, 255, 0.65)';
                 }}
               >
-                DYLAN RAMOS
-              </span>
-              <span style={{ fontSize: '10px', color: '#94a3b8', fontFamily: "'Fira Code', monospace" }}>
-                3D HQ • {isDylanSeated ? 'Seated' : 'Roaming'}
-              </span>
-            </div>
+                <IconZap size={13} color="#05070e" />
+                <span>{isMobile ? 'ASSIGN' : 'ASSIGN WORKER'}</span>
+              </button>
+            )}
 
-            <button
-              onClick={handleToggleDylanSit}
+            {/* Dylan Ramos CEO Badge */}
+            <div
               style={{
-                background: isDylanSeated ? 'rgba(0, 240, 255, 0.2)' : 'rgba(255, 190, 11, 0.25)',
-                border: isDylanSeated ? '1.5px solid #00f0ff' : '1.5px solid #ffbe0b',
-                color: isDylanSeated ? '#00f0ff' : '#ffbe0b',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                fontSize: '10px',
-                fontFamily: "'Press Start 2P', monospace",
-                cursor: 'pointer',
-                fontWeight: 700,
-                height: '40px',
-                display: 'flex',
+                display: isMobile ? 'none' : 'flex',
                 alignItems: 'center',
-                gap: '6px',
+                gap: '8px',
+                padding: '0 6px',
+                borderLeft: '1px solid rgba(255, 255, 255, 0.12)',
+                flexShrink: 0,
               }}
             >
-              {isDylanSeated ? <IconFootprints size={14} color="#00f0ff" /> : <IconArmchair size={14} color="#ffbe0b" />}
-              <span>{isDylanSeated ? 'STAND UP' : 'SIT AT DESK'}</span>
+              <span
+                style={{
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  backgroundColor: '#00f59b',
+                  boxShadow: '0 0 8px #00f59b',
+                  flexShrink: 0,
+                }}
+              />
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <span
+                  style={{
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '9.5px',
+                    color: '#ffbe0b',
+                    letterSpacing: '0.5px',
+                  }}
+                >
+                  DYLAN RAMOS
+                </span>
+                <span style={{ fontSize: '7px', color: '#94a3b8', fontFamily: "'Press Start 2P', monospace", display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                  <span>AVERO HQ •</span>
+                  {isDylanSeated ? (
+                    <>
+                      <IconArmchair size={10} color="#00f59b" />
+                      <span>Seated</span>
+                    </>
+                  ) : (
+                    <>
+                      <IconFootprints size={10} color="#ffbe0b" />
+                      <span>Roaming</span>
+                    </>
+                  )}
+                </span>
+              </div>
+
+              <button
+                onClick={handleToggleDylanSit}
+                title={isDylanSeated ? 'Make Dylan stand up and roam the office' : 'Send Dylan back to executive desk'}
+                style={{
+                  background: isDylanSeated ? 'rgba(0, 240, 255, 0.18)' : 'rgba(255, 190, 11, 0.22)',
+                  border: isDylanSeated ? '1px solid #00f0ff' : '1px solid #ffbe0b',
+                  color: isDylanSeated ? '#00f0ff' : '#ffbe0b',
+                  borderRadius: '6px',
+                  padding: '6px 11px',
+                  fontSize: '8px',
+                  fontFamily: "'Press Start 2P', monospace",
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  height: '34px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '5px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {isDylanSeated ? <IconFootprints size={12} color="#00f0ff" /> : <IconArmchair size={12} color="#ffbe0b" />}
+                <span>{isDylanSeated ? 'STAND' : 'SIT'}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Right: Tab Filter (on compact), Sound Toggle, Sidebar Toggle & Minimize/Expand */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '5px' : '8px', flexShrink: 0 }}>
+            {/* Filter buttons on smaller screens when expanded */}
+            {isCompact && !isHudMinimized && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  borderRadius: '6px',
+                  padding: '2px',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                }}
+              >
+                <button
+                  onClick={() => setActiveHudTab('actions')}
+                  style={{
+                    background: activeHudTab === 'actions' ? 'rgba(0, 240, 255, 0.25)' : 'transparent',
+                    border: activeHudTab === 'actions' ? '1px solid #00f0ff' : 'none',
+                    color: activeHudTab === 'actions' ? '#00f0ff' : '#94a3b8',
+                    borderRadius: '4px',
+                    padding: '4px 7px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '7.5px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  ACT
+                </button>
+                <button
+                  onClick={() => setActiveHudTab('roster')}
+                  style={{
+                    background: activeHudTab === 'roster' ? 'rgba(0, 240, 255, 0.25)' : 'transparent',
+                    border: activeHudTab === 'roster' ? '1px solid #00f0ff' : 'none',
+                    color: activeHudTab === 'roster' ? '#00f0ff' : '#94a3b8',
+                    borderRadius: '4px',
+                    padding: '4px 7px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '7.5px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  AI
+                </button>
+                <button
+                  onClick={() => setActiveHudTab('cameras')}
+                  style={{
+                    background: activeHudTab === 'cameras' ? 'rgba(0, 240, 255, 0.25)' : 'transparent',
+                    border: activeHudTab === 'cameras' ? '1px solid #00f0ff' : 'none',
+                    color: activeHudTab === 'cameras' ? '#00f0ff' : '#94a3b8',
+                    borderRadius: '4px',
+                    padding: '4px 7px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '7.5px',
+                    cursor: 'pointer',
+                  }}
+                >
+                  CAM
+                </button>
+              </div>
+            )}
+
+            {/* Sound Toggle */}
+            <button
+              onClick={() => setSoundEnabled(!soundEnabled)}
+              title={soundEnabled ? 'Mute 8-Bit Audio' : 'Enable 8-Bit Sound Effects'}
+              style={{
+                background: soundEnabled ? 'rgba(0, 245, 155, 0.2)' : 'rgba(255, 255, 255, 0.06)',
+                border: soundEnabled ? '1.5px solid #00f59b' : '1px solid rgba(255, 255, 255, 0.15)',
+                color: soundEnabled ? '#00f59b' : '#94a3b8',
+                borderRadius: '7px',
+                padding: isMobile ? '5px 8px' : '6px 10px',
+                fontSize: '8px',
+                fontFamily: "'Press Start 2P', monospace",
+                cursor: 'pointer',
+                height: isMobile ? '34px' : '38px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              {soundEnabled ? <IconVolume2 size={13} color="#00f59b" /> : <IconVolumeX size={13} color="#94a3b8" />}
+              {!isMobile && <span>{soundEnabled ? 'ON' : 'OFF'}</span>}
+            </button>
+
+            {/* Toggle Sidebar Button */}
+            <button
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('office:toggle:sidebar'));
+              }}
+              title="Toggle Dylan Ramos Command Sidebar"
+              style={{
+                background: 'rgba(0, 240, 255, 0.15)',
+                border: '1.5px solid #00f0ff',
+                color: '#00f0ff',
+                borderRadius: '7px',
+                padding: isMobile ? '5px 8px' : '6px 12px',
+                fontSize: '8px',
+                fontFamily: "'Press Start 2P', monospace",
+                letterSpacing: '0.4px',
+                cursor: 'pointer',
+                height: isMobile ? '34px' : '38px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                boxShadow: '0 0 10px rgba(0, 240, 255, 0.25)',
+              }}
+            >
+              <IconSidebar size={13} color="#00f0ff" />
+              <span>{isMobile ? 'PANEL' : 'SIDEBAR'}</span>
+            </button>
+
+            {/* Minimize / Expand HUD Toggle */}
+            <button
+              onClick={() => setIsHudMinimized(!isHudMinimized)}
+              title={isHudMinimized ? 'Expand full team & camera toolbars' : 'Minimize HUD for maximum 3D view'}
+              style={{
+                background: isHudMinimized ? 'rgba(255, 190, 11, 0.2)' : 'rgba(255, 255, 255, 0.08)',
+                border: isHudMinimized ? '1.5px solid #ffbe0b' : '1px solid rgba(255, 255, 255, 0.18)',
+                color: isHudMinimized ? '#ffbe0b' : '#cbd5e1',
+                borderRadius: '7px',
+                padding: isMobile ? '5px 8px' : '6px 10px',
+                fontSize: '8px',
+                fontFamily: "'Press Start 2P', monospace",
+                letterSpacing: '0.4px',
+                cursor: 'pointer',
+                height: isMobile ? '34px' : '38px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+              }}
+            >
+              {isHudMinimized ? <IconChevronDown size={12} /> : <IconChevronUp size={12} />}
+              {!isMobile && <span>{isHudMinimized ? 'EXPAND' : 'MIN'}</span>}
             </button>
           </div>
         </div>
 
-        {/* Center: Team Action Buttons (Pixelated Retro Game Style, High Visibility) */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          <button
-            onClick={handleAllWorkersStand}
-            style={{
-              background: 'rgba(56, 189, 248, 0.18)',
-              border: '2px solid #38bdf8',
-              color: '#38bdf8',
-              borderRadius: '8px',
-              padding: '10px 16px',
-              height: '44px',
-              fontSize: '10px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontWeight: 700,
-              letterSpacing: '0.5px',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 0 12px rgba(56, 189, 248, 0.3)',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            <IconActivity size={14} color="#38bdf8" />
-            <span>WORKERS STAND</span>
-          </button>
-
-          {/* Team Rest / Laptop Lounge Work Toggle */}
-          <button
-            onClick={handleToggleRestMode}
-            title="Send team with laptops to work at the lounge sofa & collaborative oak bench"
-            style={{
-              background: inRestMode ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.18)',
-              border: inRestMode ? '2px solid #10b981' : '2px solid #059669',
-              color: inRestMode ? '#34d399' : '#10b981',
-              borderRadius: '8px',
-              padding: '10px 16px',
-              height: '44px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '10px',
-              fontWeight: 700,
-              letterSpacing: '0.5px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              boxShadow: inRestMode ? '0 0 16px rgba(16, 185, 129, 0.45)' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            {inRestMode ? <IconBriefcase size={14} color="#34d399" /> : <IconLaptop size={14} color="#10b981" />}
-            <span>{inRestMode ? 'DESK WORK' : 'LAPTOP LOUNGE'}</span>
-          </button>
-
-          {/* Kitchen & Outdoor Garden Work/Hangout Toggle */}
-          <button
-            onClick={handleToggleKitchenGarden}
-            title="Send team with laptops to work & hang out in the Gourmet Kitchen & Outdoor Zen Garden"
-            style={{
-              background: inKitchenGardenMode ? 'rgba(245, 158, 11, 0.3)' : 'rgba(245, 158, 11, 0.18)',
-              border: inKitchenGardenMode ? '2px solid #f59e0b' : '2px solid #d97706',
-              color: inKitchenGardenMode ? '#fbbf24' : '#f59e0b',
-              borderRadius: '8px',
-              padding: '10px 16px',
-              height: '44px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '10px',
-              fontWeight: 700,
-              letterSpacing: '0.5px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              boxShadow: inKitchenGardenMode ? '0 0 16px rgba(245, 158, 11, 0.45)' : 'none',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-            }}
-          >
-            {inKitchenGardenMode ? <IconBriefcase size={14} color="#fbbf24" /> : <IconCoffee size={14} color="#f59e0b" />}
-            <span>{inKitchenGardenMode ? 'DESK WORK' : 'KITCHEN & GARDEN'}</span>
-          </button>
-
-          {/* All-Hands Meeting Toggle */}
-          <button
-            onClick={handleToggleMeetingMode}
-            style={{
-              background: inMeetingMode ? 'rgba(255, 190, 11, 0.3)' : 'rgba(0, 240, 255, 0.18)',
-              border: inMeetingMode ? '2px solid #ffbe0b' : '2px solid #00f0ff',
-              color: inMeetingMode ? '#ffbe0b' : '#00f0ff',
-              borderRadius: '8px',
-              padding: '10px 16px',
-              height: '44px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '10px',
-              fontWeight: 700,
-              letterSpacing: '0.5px',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: inMeetingMode ? '0 0 20px rgba(255, 190, 11, 0.65)' : '0 0 14px rgba(0, 240, 255, 0.35)',
-            }}
-          >
-            {inMeetingMode ? <IconBriefcase size={14} color="#ffbe0b" /> : <IconUsers size={14} color="#00f0ff" />}
-            <span>{inMeetingMode ? 'DISMISS' : 'ALL-HANDS MEETING'}</span>
-          </button>
-        </div>
-
-        {/* Right Section: HD Crisp Toggle, Camera Presets, Sound */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-          {/* Resolution Mode Switcher: Crisp HD vs Retro Pixel */}
-          <button
-            onClick={() => setIsCrispMode(!isCrispMode)}
-            style={{
-              background: isCrispMode ? 'rgba(0, 240, 255, 0.22)' : 'rgba(255, 190, 11, 0.22)',
-              border: isCrispMode ? '1.5px solid #00f0ff' : '1.5px solid #ffbe0b',
-              color: isCrispMode ? '#00f0ff' : '#ffbe0b',
-              borderRadius: '8px',
-              padding: '8px 12px',
-              height: '42px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '9px',
-              letterSpacing: '0.4px',
-              cursor: 'pointer',
-              fontWeight: 700,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-            title="Toggle between Crisp High-Definition Voxel 3D and Retro Pixelated 3D"
-          >
-            {isCrispMode ? <IconMonitor size={14} color="#00f0ff" /> : <IconGamepad size={14} color="#ffbe0b" />}
-            <span>{isCrispMode ? 'CRISP 3D HD' : 'RETRO PIXEL'}</span>
-          </button>
-
-          {/* 3D Tilt Angle Presets */}
+        {/* EXPANDABLE TOOLBARS (Organized Horizontal Strips with smooth horizontal scrolling) */}
+        {!isHudMinimized && (
           <div
             style={{
               display: 'flex',
-              alignItems: 'center',
-              background: 'rgba(255, 255, 255, 0.06)',
-              borderRadius: '8px',
-              padding: '3px',
-              border: '1.5px solid rgba(255, 255, 255, 0.12)',
-              height: '42px',
-              boxSizing: 'border-box',
+              flexDirection: 'column',
+              gap: '8px',
+              borderTop: '1px solid rgba(255, 255, 255, 0.08)',
+              paddingTop: '8px',
+              width: '100%',
+              overflow: 'hidden',
             }}
           >
-            <button
-              onClick={() => cameraControlRef.current.setTilt(0.48, 'cinematic')}
-              style={{
-                background: tiltMode === 'cinematic' ? 'rgba(0, 240, 255, 0.3)' : 'transparent',
-                border: tiltMode === 'cinematic' ? '1px solid #00f0ff' : 'none',
-                color: tiltMode === 'cinematic' ? '#00f0ff' : '#94a3b8',
-                borderRadius: '6px',
-                padding: '6px 10px',
-                fontFamily: "'Press Start 2P', monospace",
-                fontSize: '9px',
-                cursor: 'pointer',
-                fontWeight: 700,
-                height: '34px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-              }}
-              title="Cinematic Tilted 3D Angle (~28°)"
-            >
-              <IconCompass size={13} color={tiltMode === 'cinematic' ? '#00f0ff' : '#94a3b8'} />
-              <span>28° TILT</span>
-            </button>
-            <button
-              onClick={() => cameraControlRef.current.setTilt(0.66, 'isometric')}
-              style={{
-                background: tiltMode === 'isometric' ? 'rgba(0, 240, 255, 0.3)' : 'transparent',
-                border: tiltMode === 'isometric' ? '1px solid #00f0ff' : 'none',
-                color: tiltMode === 'isometric' ? '#00f0ff' : '#94a3b8',
-                borderRadius: '6px',
-                padding: '6px 10px',
-                fontFamily: "'Press Start 2P', monospace",
-                fontSize: '9px',
-                cursor: 'pointer',
-                fontWeight: 700,
-                height: '34px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-              }}
-              title="Isometric 3D Angle (~38°)"
-            >
-              <IconBox size={13} color={tiltMode === 'isometric' ? '#00f0ff' : '#94a3b8'} />
-              <span>38° ISO</span>
-            </button>
-            <button
-              onClick={() => cameraControlRef.current.setTilt(0.96, 'topdown')}
-              style={{
-                background: tiltMode === 'topdown' ? 'rgba(0, 240, 255, 0.3)' : 'transparent',
-                border: tiltMode === 'topdown' ? '1px solid #00f0ff' : 'none',
-                color: tiltMode === 'topdown' ? '#00f0ff' : '#94a3b8',
-                borderRadius: '6px',
-                padding: '6px 10px',
-                fontFamily: "'Press Start 2P', monospace",
-                fontSize: '9px',
-                cursor: 'pointer',
-                fontWeight: 700,
-                height: '34px',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '5px',
-              }}
-              title="High Top-Down View (~55°)"
-            >
-              <IconGrid size={13} color={tiltMode === 'topdown' ? '#00f0ff' : '#94a3b8'} />
-              <span>55° TOP</span>
-            </button>
+            {/* TOOLBAR 1: Quick Roster Pills */}
+            {(!isCompact || activeHudTab === 'all' || activeHudTab === 'roster') && onOpenActionModal && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  overflowX: 'auto',
+                  paddingBottom: '2px',
+                  scrollbarWidth: 'none',
+                  width: '100%',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '8px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontWeight: 800,
+                    color: '#38bdf8',
+                    marginRight: '6px',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    letterSpacing: '0.8px',
+                  }}
+                >
+                  AI ROSTER:
+                </span>
+                {['alex', 'maya', 'wendy', 'ray', 'zane', 'eah'].map((id) => {
+                  const meta = AGENT_ROSTER_INFO[id];
+                  if (!meta) return null;
+                  const isSelected = selectedAgentId === id;
+                  return (
+                    <button
+                      key={id}
+                      onClick={() => onOpenActionModal(id)}
+                      title={`Assign direct task to ${meta.name} (${meta.title})`}
+                      style={{
+                        backgroundColor: isSelected ? `${meta.color}33` : 'rgba(255, 255, 255, 0.05)',
+                        border: isSelected ? `2px solid ${meta.color}` : '1.5px solid rgba(255, 255, 255, 0.12)',
+                        borderRadius: '7px',
+                        padding: '6px 10px',
+                        height: '34px',
+                        color: isSelected ? '#f8fafc' : '#cbd5e1',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        fontSize: '8px',
+                        fontFamily: "'Press Start 2P', monospace",
+                        fontWeight: 700,
+                        letterSpacing: '0.3px',
+                        transition: 'all 0.15s ease',
+                        boxShadow: isSelected ? `0 0 12px ${meta.color}55` : 'none',
+                        flexShrink: 0,
+                        whiteSpace: 'nowrap',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = meta.color;
+                        e.currentTarget.style.backgroundColor = `${meta.color}25`;
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = isSelected ? meta.color : 'rgba(255, 255, 255, 0.12)';
+                        e.currentTarget.style.backgroundColor = isSelected ? `${meta.color}33` : 'rgba(255, 255, 255, 0.05)';
+                      }}
+                    >
+                      {getAgentIcon(id, 13, isSelected ? meta.color : '#cbd5e1')}
+                      <span>{meta.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* TOOLBAR 2: Team Routines & Directives */}
+            {(!isCompact || activeHudTab === 'all' || activeHudTab === 'actions') && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  overflowX: 'auto',
+                  paddingBottom: '2px',
+                  scrollbarWidth: 'none',
+                  width: '100%',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '8px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontWeight: 800,
+                    color: '#ffbe0b',
+                    marginRight: '6px',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    letterSpacing: '0.8px',
+                  }}
+                >
+                  ROUTINES:
+                </span>
+
+                <button
+                  onClick={handleAllWorkersStand}
+                  style={{
+                    background: 'rgba(56, 189, 248, 0.18)',
+                    border: '1.5px solid #38bdf8',
+                    color: '#38bdf8',
+                    borderRadius: '7px',
+                    padding: '6px 10px',
+                    height: '34px',
+                    fontSize: '8px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontWeight: 700,
+                    letterSpacing: '0.4px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 0 10px rgba(56, 189, 248, 0.25)',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <IconActivity size={13} color="#38bdf8" />
+                  <span>WORKERS STAND</span>
+                </button>
+
+                <button
+                  onClick={handleToggleRestMode}
+                  title="Send team with laptops to work at the lounge sofa & collaborative oak bench"
+                  style={{
+                    background: inRestMode ? 'rgba(16, 185, 129, 0.3)' : 'rgba(16, 185, 129, 0.18)',
+                    border: inRestMode ? '1.5px solid #10b981' : '1.5px solid #059669',
+                    color: inRestMode ? '#34d399' : '#10b981',
+                    borderRadius: '7px',
+                    padding: '6px 10px',
+                    height: '34px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '8px',
+                    fontWeight: 700,
+                    letterSpacing: '0.4px',
+                    cursor: 'pointer',
+                    boxShadow: inRestMode ? '0 0 14px rgba(16, 185, 129, 0.45)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {inRestMode ? <IconBriefcase size={13} color="#34d399" /> : <IconLaptop size={13} color="#10b981" />}
+                  <span>{inRestMode ? 'DESK WORK' : 'LAPTOP LOUNGE'}</span>
+                </button>
+
+                <button
+                  onClick={handleToggleKitchenGarden}
+                  title="Send team with laptops to work & hang out in the Gourmet Kitchen & Outdoor Zen Garden"
+                  style={{
+                    background: inKitchenGardenMode ? 'rgba(245, 158, 11, 0.3)' : 'rgba(245, 158, 11, 0.18)',
+                    border: inKitchenGardenMode ? '1.5px solid #f59e0b' : '1.5px solid #d97706',
+                    color: inKitchenGardenMode ? '#fbbf24' : '#f59e0b',
+                    borderRadius: '7px',
+                    padding: '6px 10px',
+                    height: '34px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '8px',
+                    fontWeight: 700,
+                    letterSpacing: '0.4px',
+                    cursor: 'pointer',
+                    boxShadow: inKitchenGardenMode ? '0 0 14px rgba(245, 158, 11, 0.45)' : 'none',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {inKitchenGardenMode ? <IconBriefcase size={13} color="#fbbf24" /> : <IconCoffee size={13} color="#f59e0b" />}
+                  <span>{inKitchenGardenMode ? 'DESK WORK' : 'KITCHEN & GARDEN'}</span>
+                </button>
+
+                <button
+                  onClick={handleToggleMeetingMode}
+                  style={{
+                    background: inMeetingMode ? 'rgba(255, 190, 11, 0.3)' : 'rgba(0, 240, 255, 0.18)',
+                    border: inMeetingMode ? '1.5px solid #ffbe0b' : '1.5px solid #00f0ff',
+                    color: inMeetingMode ? '#ffbe0b' : '#00f0ff',
+                    borderRadius: '7px',
+                    padding: '6px 10px',
+                    height: '34px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '8px',
+                    fontWeight: 700,
+                    letterSpacing: '0.4px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: inMeetingMode ? '0 0 16px rgba(255, 190, 11, 0.6)' : '0 0 10px rgba(0, 240, 255, 0.3)',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  {inMeetingMode ? <IconBriefcase size={13} color="#ffbe0b" /> : <IconUsers size={12} color="#00f0ff" />}
+                  <span>{inMeetingMode ? 'DISMISS' : 'ALL-HANDS MEETING'}</span>
+                </button>
+
+                <button
+                  onClick={() => handleReportToCeo(selectedAgentId || 'alex')}
+                  title="Dispatch worker to CEO Suite to report completed tasks directly to Dylan Ramos"
+                  style={{
+                    background: 'rgba(255, 190, 11, 0.22)',
+                    border: '1.5px solid #ffbe0b',
+                    color: '#ffbe0b',
+                    borderRadius: '7px',
+                    padding: '6px 10px',
+                    height: '34px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '8px',
+                    fontWeight: 700,
+                    letterSpacing: '0.4px',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 0 12px rgba(255, 190, 11, 0.4)',
+                    flexShrink: 0,
+                    whiteSpace: 'nowrap',
+                  }}
+                >
+                  <IconCheckCircle size={13} color="#ffbe0b" />
+                  <span>REPORT TO CEO</span>
+                </button>
+
+                {onLock && (
+                  <button
+                    onClick={onLock}
+                    title="Lock Office and Return to Front Page"
+                    style={{
+                      background: 'rgba(239, 68, 68, 0.22)',
+                      border: '1.5px solid #ef4444',
+                      color: '#f87171',
+                      borderRadius: '7px',
+                      padding: '6px 10px',
+                      height: '34px',
+                      fontFamily: "'Press Start 2P', monospace",
+                      fontSize: '8px',
+                      fontWeight: 700,
+                      letterSpacing: '0.4px',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 0 10px rgba(239, 68, 68, 0.35)',
+                      flexShrink: 0,
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    <IconLock size={12} color="#f87171" />
+                    <span>LOCK HQ</span>
+                  </button>
+                )}
+              </div>
+            )}
+
+            {/* TOOLBAR 3: Camera Presets & Focus Angles */}
+            {(!isCompact || activeHudTab === 'all' || activeHudTab === 'cameras') && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  overflowX: 'auto',
+                  paddingBottom: '2px',
+                  scrollbarWidth: 'none',
+                  width: '100%',
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: '8px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontWeight: 800,
+                    color: '#00f59b',
+                    marginRight: '6px',
+                    whiteSpace: 'nowrap',
+                    flexShrink: 0,
+                    letterSpacing: '0.8px',
+                  }}
+                >
+                  CAMERAS:
+                </span>
+
+                {/* Pure 3D Ultra HD Architectural Engine Badge */}
+                <div
+                  style={{
+                    background: 'rgba(0, 240, 255, 0.16)',
+                    border: '1.5px solid #00f0ff',
+                    color: '#00f0ff',
+                    borderRadius: '7px',
+                    padding: '6px 9px',
+                    height: '34px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '8px',
+                    fontWeight: 800,
+                    letterSpacing: '0.5px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    flexShrink: 0,
+                    boxShadow: '0 0 12px rgba(0, 240, 255, 0.35)',
+                  }}
+                  title="AVERO HQ 4K Ultra-Sharp Supersampling Active (Zero Blur At Any Zoom Level)"
+                >
+                  <IconSparkles size={12} color="#00f0ff" />
+                  <span>4K CRISP HD</span>
+                </div>
+
+                {/* Direct Zoom In & Zoom Out Controls */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '7px',
+                    padding: '2px',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    flexShrink: 0,
+                    gap: '2px',
+                  }}
+                >
+                  <button
+                    onClick={() => cameraControlRef.current.zoomIn()}
+                    title="Zoom In (Razor-Sharp High-Definition View)"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#00f0ff',
+                      borderRadius: '5px',
+                      padding: '5px 8px',
+                      fontFamily: "'Press Start 2P', monospace",
+                      fontSize: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 800,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    + ZOOM
+                  </button>
+                  <button
+                    onClick={() => cameraControlRef.current.zoomOut()}
+                    title="Zoom Out (Wide View)"
+                    style={{
+                      background: 'transparent',
+                      border: 'none',
+                      color: '#94a3b8',
+                      borderRadius: '5px',
+                      padding: '5px 8px',
+                      fontFamily: "'Press Start 2P', monospace",
+                      fontSize: '8px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                  >
+                    - ZOOM
+                  </button>
+                </div>
+
+                {/* 3D Tilt Angle Presets */}
+                <div
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    background: 'rgba(255, 255, 255, 0.05)',
+                    borderRadius: '7px',
+                    padding: '2px',
+                    border: '1px solid rgba(255, 255, 255, 0.12)',
+                    flexShrink: 0,
+                  }}
+                >
+                  <button
+                    onClick={() => cameraControlRef.current.setTilt(0.38, 'front')}
+                    style={{
+                      background: tiltMode === 'front' ? 'rgba(0, 240, 255, 0.3)' : 'transparent',
+                      border: tiltMode === 'front' ? '1px solid #00f0ff' : 'none',
+                      color: tiltMode === 'front' ? '#00f0ff' : '#94a3b8',
+                      borderRadius: '5px',
+                      padding: '5px 7px',
+                      fontFamily: "'Press Start 2P', monospace",
+                      fontSize: '7.5px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title="0° Front Elevation - Parallel Vertical Walls"
+                  >
+                    <IconLayers size={11} color={tiltMode === 'front' ? '#00f0ff' : '#94a3b8'} />
+                    <span>0° FRONT</span>
+                  </button>
+                  <button
+                    onClick={() => cameraControlRef.current.setTilt(0.48, 'cinematic')}
+                    style={{
+                      background: tiltMode === 'cinematic' ? 'rgba(0, 240, 255, 0.3)' : 'transparent',
+                      border: tiltMode === 'cinematic' ? '1px solid #00f0ff' : 'none',
+                      color: tiltMode === 'cinematic' ? '#00f0ff' : '#94a3b8',
+                      borderRadius: '5px',
+                      padding: '5px 7px',
+                      fontFamily: "'Press Start 2P', monospace",
+                      fontSize: '7.5px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title="Cinematic Tilted 3D Angle (~28°)"
+                  >
+                    <IconCompass size={11} color={tiltMode === 'cinematic' ? '#00f0ff' : '#94a3b8'} />
+                    <span>28° TILT</span>
+                  </button>
+                  <button
+                    onClick={() => cameraControlRef.current.setTilt(0.66, 'isometric')}
+                    style={{
+                      background: tiltMode === 'isometric' ? 'rgba(0, 240, 255, 0.3)' : 'transparent',
+                      border: tiltMode === 'isometric' ? '1px solid #00f0ff' : 'none',
+                      color: tiltMode === 'isometric' ? '#00f0ff' : '#94a3b8',
+                      borderRadius: '5px',
+                      padding: '5px 7px',
+                      fontFamily: "'Press Start 2P', monospace",
+                      fontSize: '7.5px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title="Isometric 3D Angle (~38°)"
+                  >
+                    <IconBox size={11} color={tiltMode === 'isometric' ? '#00f0ff' : '#94a3b8'} />
+                    <span>38° ISO</span>
+                  </button>
+                  <button
+                    onClick={() => cameraControlRef.current.setTilt(Math.PI * 0.5 - 0.0001, 'topdown')}
+                    style={{
+                      background: tiltMode === 'topdown' ? 'rgba(0, 240, 255, 0.3)' : 'transparent',
+                      border: tiltMode === 'topdown' ? '1px solid #00f0ff' : 'none',
+                      color: tiltMode === 'topdown' ? '#00f0ff' : '#94a3b8',
+                      borderRadius: '5px',
+                      padding: '5px 7px',
+                      fontFamily: "'Press Start 2P', monospace",
+                      fontSize: '7.5px',
+                      cursor: 'pointer',
+                      fontWeight: 700,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '4px',
+                    }}
+                    title="True 90° Top-Down Blueprint Plan"
+                  >
+                    <IconGrid size={11} color={tiltMode === 'topdown' ? '#00f0ff' : '#94a3b8'} />
+                    <span>90° TOP</span>
+                  </button>
+                </div>
+
+                {/* Quick Camera Actions */}
+                <button
+                  onClick={() => cameraControlRef.current.snapCardinal()}
+                  style={{
+                    background: 'rgba(0, 240, 255, 0.16)',
+                    border: '1.5px solid #00f0ff',
+                    color: '#00f0ff',
+                    borderRadius: '7px',
+                    padding: '6px 8px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    height: '34px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    flexShrink: 0,
+                  }}
+                  title="Snap Camera to Exact 90° Orthogonal Alignment"
+                >
+                  <IconGrid size={11} color="#00f0ff" />
+                  <span>90° SNAP</span>
+                </button>
+
+                <button
+                  onClick={() => cameraControlRef.current.rotateBy(Math.PI * 0.25)}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1.5px solid rgba(255, 255, 255, 0.15)',
+                    color: '#e2e8f0',
+                    borderRadius: '7px',
+                    padding: '6px 8px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    height: '34px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    flexShrink: 0,
+                  }}
+                  title="Rotate camera 45° around the office"
+                >
+                  <IconRotateCw size={11} color="#e2e8f0" />
+                  <span>45°</span>
+                </button>
+
+                <button
+                  onClick={() => cameraControlRef.current.focusDylan()}
+                  style={{
+                    background: 'rgba(255, 190, 11, 0.18)',
+                    border: '1.5px solid #ffbe0b',
+                    color: '#ffbe0b',
+                    borderRadius: '7px',
+                    padding: '6px 8px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    height: '34px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    flexShrink: 0,
+                  }}
+                  title="Focus Camera on Dylan Ramos (CEO)"
+                >
+                  <IconTarget size={11} color="#ffbe0b" />
+                  <span>CEO</span>
+                </button>
+
+                <button
+                  onClick={() => cameraControlRef.current.focusServerRoom()}
+                  style={{
+                    background: 'rgba(34, 197, 94, 0.18)',
+                    border: '1.5px solid #22c55e',
+                    color: '#4ade80',
+                    borderRadius: '7px',
+                    padding: '6px 8px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    height: '34px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    flexShrink: 0,
+                  }}
+                  title="Focus Camera on Cyber Security & Server Vault"
+                >
+                  <IconServer size={11} color="#4ade80" />
+                  <span>SERVERS</span>
+                </button>
+
+                <button
+                  onClick={() => cameraControlRef.current.resetView()}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.06)',
+                    border: '1.5px solid rgba(255, 255, 255, 0.15)',
+                    color: '#94a3b8',
+                    borderRadius: '7px',
+                    padding: '6px 8px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    fontSize: '8px',
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    height: '34px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    flexShrink: 0,
+                  }}
+                  title="Reset Camera Center & Tilt"
+                >
+                  <IconRotateCcw size={11} color="#94a3b8" />
+                  <span>RESET</span>
+                </button>
+              </div>
+            )}
           </div>
-
-          {/* Quick Camera Actions */}
-          <button
-            onClick={() => cameraControlRef.current.rotateBy(Math.PI * 0.25)}
-            style={{
-              background: 'rgba(255, 255, 255, 0.06)',
-              border: '1.5px solid rgba(255, 255, 255, 0.15)',
-              color: '#e2e8f0',
-              borderRadius: '8px',
-              padding: '8px 12px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '9px',
-              cursor: 'pointer',
-              fontWeight: 700,
-              height: '42px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-            title="Rotate camera 45° around the office"
-          >
-            <IconRotateCw size={13} color="#e2e8f0" />
-            <span>45°</span>
-          </button>
-          <button
-            onClick={() => cameraControlRef.current.focusDylan()}
-            style={{
-              background: 'rgba(255, 190, 11, 0.18)',
-              border: '1.5px solid #ffbe0b',
-              color: '#ffbe0b',
-              borderRadius: '8px',
-              padding: '8px 12px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '9px',
-              cursor: 'pointer',
-              fontWeight: 700,
-              height: '42px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-            title="Focus Camera on Dylan Ramos (CEO)"
-          >
-            <IconTarget size={13} color="#ffbe0b" />
-            <span>CEO</span>
-          </button>
-          <button
-            onClick={() => cameraControlRef.current.focusServerRoom()}
-            style={{
-              background: 'rgba(34, 197, 94, 0.18)',
-              border: '1.5px solid #22c55e',
-              color: '#4ade80',
-              borderRadius: '8px',
-              padding: '8px 12px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '9px',
-              cursor: 'pointer',
-              fontWeight: 700,
-              height: '42px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-            title="Focus Camera on Cyber Security & Server Vault"
-          >
-            <IconServer size={13} color="#4ade80" />
-            <span>SERVERS</span>
-          </button>
-          <button
-            onClick={() => cameraControlRef.current.resetView()}
-            style={{
-              background: 'rgba(255, 255, 255, 0.06)',
-              border: '1.5px solid rgba(255, 255, 255, 0.15)',
-              color: '#94a3b8',
-              borderRadius: '8px',
-              padding: '8px 12px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontSize: '9px',
-              cursor: 'pointer',
-              fontWeight: 600,
-              height: '42px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-            title="Reset Camera Center & Tilt"
-          >
-            <IconRotateCcw size={13} color="#94a3b8" />
-            <span>RESET</span>
-          </button>
-
-          <button
-            onClick={() => setSoundEnabled(!soundEnabled)}
-            style={{
-              background: soundEnabled ? 'rgba(0, 245, 155, 0.2)' : 'rgba(255, 255, 255, 0.06)',
-              border: soundEnabled ? '1.5px solid #00f59b' : '1.5px solid rgba(255, 255, 255, 0.15)',
-              color: soundEnabled ? '#00f59b' : '#94a3b8',
-              borderRadius: '8px',
-              padding: '8px 14px',
-              fontSize: '10px',
-              fontFamily: "'Press Start 2P', monospace",
-              fontWeight: 700,
-              cursor: 'pointer',
-              height: '42px',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-            }}
-          >
-            {soundEnabled ? <IconVolume2 size={14} color="#00f59b" /> : <IconVolumeX size={14} color="#94a3b8" />}
-            <span>{soundEnabled ? 'ON' : 'OFF'}</span>
-          </button>
-        </div>
+        )}
       </div>
 
       {/* 100% CRISP HTML SPEECH BUBBLE OVERLAY (RETINA / HIGH-DPI SHARP, NEVER BLURRY!) */}
@@ -6690,7 +9235,7 @@ export default function Office3D({
         <div
           style={{
             position: 'absolute',
-            bottom: '72px',
+            bottom: isMobile ? '56px' : '72px',
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 30,
@@ -6698,11 +9243,14 @@ export default function Office3D({
             backdropFilter: 'blur(12px)',
             border: `1.5px solid ${proximityHUD.color}`,
             borderRadius: '12px',
-            padding: '10px 18px',
+            padding: isMobile ? '8px 12px' : '10px 18px',
             display: 'flex',
             alignItems: 'center',
-            gap: '14px',
+            gap: isMobile ? '8px' : '14px',
             boxShadow: `0 8px 30px rgba(0, 0, 0, 0.8), 0 0 16px ${proximityHUD.color}40`,
+            maxWidth: 'calc(100vw - 24px)',
+            overflowX: 'auto',
+            scrollbarWidth: 'none',
           }}
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
@@ -6718,8 +9266,8 @@ export default function Office3D({
             </span>
             <span
               style={{
-                fontSize: '12px',
-                fontFamily: "'Fira Code', monospace",
+                fontSize: '9px',
+                fontFamily: "'Press Start 2P', monospace",
                 color: '#f8fafc',
                 fontWeight: 600,
               }}
@@ -6751,9 +9299,9 @@ export default function Office3D({
                     border: '1px solid #f43f5e',
                     color: '#fb7185',
                     borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '11px',
-                    fontFamily: "'Fira Code', monospace",
+                    padding: '6px 10px',
+                    fontSize: '8px',
+                    fontFamily: "'Press Start 2P', monospace",
                     cursor: 'pointer',
                     fontWeight: 700,
                     display: 'flex',
@@ -6765,15 +9313,57 @@ export default function Office3D({
                   [E] TALK
                 </button>
                 <button
+                  onClick={handleDylanGiveFlowers}
+                  style={{
+                    background: 'rgba(244, 63, 94, 0.35)',
+                    border: '1px solid #f43f5e',
+                    color: '#ffe4e6',
+                    borderRadius: '6px',
+                    padding: '6px 10px',
+                    fontSize: '8px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 0 10px rgba(244, 63, 94, 0.4)',
+                  }}
+                >
+                  <IconSparkles size={12} color="#fb7185" />
+                  [F] FLOWERS 💐
+                </button>
+                <button
+                  onClick={handleDylanCookForEah}
+                  style={{
+                    background: 'rgba(245, 158, 11, 0.35)',
+                    border: '1px solid #f59e0b',
+                    color: '#fef3c7',
+                    borderRadius: '6px',
+                    padding: '6px 10px',
+                    fontSize: '8px',
+                    fontFamily: "'Press Start 2P', monospace",
+                    cursor: 'pointer',
+                    fontWeight: 700,
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    boxShadow: '0 0 10px rgba(245, 158, 11, 0.4)',
+                  }}
+                >
+                  <IconFlame size={12} color="#f59e0b" />
+                  [G] COOK FOR EAH 🍳
+                </button>
+                <button
                   onClick={handleEahCookBreakfast}
                   style={{
-                    background: 'rgba(245, 158, 11, 0.25)',
-                    border: '1px solid #f59e0b',
+                    background: 'rgba(245, 158, 11, 0.20)',
+                    border: '1px solid rgba(245, 158, 11, 0.5)',
                     color: '#fcd34d',
                     borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '11px',
-                    fontFamily: "'Fira Code', monospace",
+                    padding: '6px 10px',
+                    fontSize: '8px',
+                    fontFamily: "'Press Start 2P', monospace",
                     cursor: 'pointer',
                     fontWeight: 700,
                     display: 'flex',
@@ -6782,18 +9372,18 @@ export default function Office3D({
                   }}
                 >
                   <IconFlame size={12} color="#fcd34d" />
-                  [C] COOK
+                  [C] ASK COOK
                 </button>
                 <button
                   onClick={handleEahBrewCoffee}
                   style={{
-                    background: 'rgba(168, 85, 247, 0.25)',
-                    border: '1px solid #a855f7',
+                    background: 'rgba(168, 85, 247, 0.20)',
+                    border: '1px solid rgba(168, 85, 247, 0.5)',
                     color: '#c084fc',
                     borderRadius: '6px',
-                    padding: '6px 12px',
-                    fontSize: '11px',
-                    fontFamily: "'Fira Code', monospace",
+                    padding: '6px 10px',
+                    fontSize: '8px',
+                    fontFamily: "'Press Start 2P', monospace",
                     cursor: 'pointer',
                     fontWeight: 700,
                     display: 'flex',
@@ -6802,7 +9392,7 @@ export default function Office3D({
                   }}
                 >
                   <IconCoffee size={12} color="#c084fc" />
-                  [B] COFFEE
+                  [B] ASK COFFEE
                 </button>
               </>
             ) : proximityHUD.type === 'puppy' ? (
@@ -6812,8 +9402,9 @@ export default function Office3D({
                     text: 'WOOF WOOF! 🐾 *wags tail excitedly for Dylan Ramos!*',
                     timer: 4.5,
                   };
-                  play8BitGameSound('bark');
-                  addFloatingPopup('🐾 +20 HAPPINESS', OFFICE_3D_LAYOUT.REST_AREA.dogBed.x, 1.8, OFFICE_3D_LAYOUT.REST_AREA.dogBed.z, '#f59e0b');
+                  const pupX = puppyRef.current ? puppyRef.current.group.position.x : OFFICE_3D_LAYOUT.REST_AREA.dogBed.x;
+                  const pupZ = puppyRef.current ? puppyRef.current.group.position.z : OFFICE_3D_LAYOUT.REST_AREA.dogBed.z;
+                  addFloatingPopup('🐾 +20 HAPPINESS', pupX, 1.8, pupZ, '#f59e0b');
                 }}
                 style={{
                   background: 'rgba(245, 158, 11, 0.25)',
@@ -6832,6 +9423,37 @@ export default function Office3D({
               >
                 <IconHeart size={12} color="#fcd34d" />
                 [E] PET MOCHI
+              </button>
+            ) : proximityHUD.type === 'cat' ? (
+              <button
+                onClick={() => {
+                  catSpeechRef.current = {
+                    text: 'Purrrrrrr... Nyaa~ 💕 *Snowy leans in for warm chin scratches & purrs*',
+                    timer: 5.0,
+                  };
+                  const catX = catRef.current ? catRef.current.group.position.x : OFFICE_3D_LAYOUT.REST_AREA.catBed.x;
+                  const catZ = catRef.current ? catRef.current.group.position.z : OFFICE_3D_LAYOUT.REST_AREA.catBed.z;
+                  addFloatingPopup('🐱 +150 HAPPINESS! *soft purring & cozy headbonk!*', catX, 1.8, catZ, '#38bdf8');
+                  play8BitGameSound('meow');
+                  playSfx('click');
+                }}
+                style={{
+                  background: 'rgba(56, 189, 248, 0.25)',
+                  border: '1px solid #38bdf8',
+                  color: '#bae6fd',
+                  borderRadius: '6px',
+                  padding: '6px 14px',
+                  fontSize: '10px',
+                  fontFamily: "'Press Start 2P', monospace",
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <IconHeart size={12} color="#38bdf8" />
+                [E] PET SNOWY
               </button>
             ) : proximityHUD.type === 'arcade' ? (
               <button
@@ -6892,35 +9514,75 @@ export default function Office3D({
                 <IconShield size={12} color="#4ade80" />
                 [E] AUDIT SERVERS
               </button>
+            ) : proximityHUD.type === 'water' ? (
+              <button
+                onClick={() => {
+                  const dylan = charactersRef.current['dylan'];
+                  if (dylan) {
+                    play8BitGameSound('coin');
+                    playSfx('click');
+                    addFloatingPopup('💧 +100 HYDRATION! Ice-cold mineral water! 🧊✨', 22.4, 2.8, 11.8, '#38bdf8');
+                    dylan.setSpeech('💧 Grabbing a cup of cold mineral water before the meeting! Refreshing! ✨', 4.0);
+                  }
+                }}
+                style={{
+                  background: 'rgba(56, 189, 248, 0.25)',
+                  border: '1px solid #38bdf8',
+                  color: '#38bdf8',
+                  borderRadius: '6px',
+                  padding: '6px 14px',
+                  fontSize: '10px',
+                  fontFamily: "'Press Start 2P', monospace",
+                  cursor: 'pointer',
+                  fontWeight: 700,
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                }}
+              >
+                <IconZap size={12} color="#38bdf8" />
+                [E] DRINK WATER
+              </button>
             ) : null}
           </div>
         </div>
       )}
 
-      {/* 3D CONTROLS TIP BANNER (Bottom Left) */}
+      {/* 3D CONTROLS TIP BANNER (Bottom Left - Responsive) */}
       <div
         style={{
           position: 'absolute',
-          bottom: '16px',
-          left: '20px',
+          bottom: isMobile ? '10px' : '16px',
+          left: isMobile ? '10px' : '20px',
           zIndex: 20,
-          background: 'rgba(15, 23, 42, 0.88)',
+          background: 'rgba(15, 23, 42, 0.90)',
           backdropFilter: 'blur(8px)',
           border: '1px solid rgba(99, 115, 178, 0.3)',
           borderRadius: '8px',
-          padding: '8px 14px',
+          padding: isMobile ? '6px 10px' : '8px 14px',
           display: 'flex',
           alignItems: 'center',
-          gap: '10px',
-          fontSize: '11px',
-          fontFamily: "'Fira Code', monospace",
+          gap: '8px',
+          fontSize: isMobile ? '7.5px' : '8.5px',
+          fontFamily: "'Press Start 2P', monospace",
           color: '#94a3b8',
           boxShadow: '0 4px 16px rgba(0, 0, 0, 0.6)',
+          maxWidth: isMobile ? 'calc(100vw - 20px)' : 'calc(100vw - 40px)',
+          whiteSpace: 'nowrap',
+          overflowX: 'auto',
+          scrollbarWidth: 'none',
         }}
       >
-        <IconGamepad size={15} color="#38bdf8" />
-        <span>WASD to Walk • Left-Drag to Tilt & Orbit • Right-Drag to Pan • Wheel to Zoom • [C] Cook • [B] Coffee • [E] Interact</span>
+        <IconGamepad size={isMobile ? 13 : 15} color="#38bdf8" />
+        <span>
+          {isMobile
+            ? 'Drag to Orbit • Pinch/Wheel to Zoom • [E] Interact'
+            : isTablet
+            ? 'WASD to Walk • Drag to Orbit • Wheel to Zoom • [E] Interact'
+            : 'WASD to Walk • Left-Drag to Tilt & Orbit • Right-Drag to Pan • Wheel to Zoom • [C] Cook • [B] Coffee • [E] Interact'}
+        </span>
       </div>
+
 
       {/* High-Tech Cyber Security & Server Vault Operations Modal */}
       <ServerRoomModal
