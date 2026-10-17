@@ -560,6 +560,24 @@ export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
           {/* Primary Golden "▶ ENTER HQ" Button */}
           <button
             onClick={handleOpenPasswordModal}
+            style={{
+              background: 'linear-gradient(180deg, #fef08a 0%, #facc15 50%, #eab308 100%)',
+              border: '4px solid #0f172a',
+              borderRadius: '16px',
+              padding: '16px 52px',
+              fontSize: 'clamp(14px, 2.2vw, 22px)',
+              fontWeight: 700,
+              fontFamily: "'Press Start 2P', monospace",
+              color: '#0f172a',
+              cursor: 'pointer',
+              letterSpacing: '2px',
+              boxShadow: '0 6px 0 #854d0e, 0 10px 20px rgba(0, 0, 0, 0.35)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              transform: 'translateY(0)',
+              transition: 'transform 0.08s ease, box-shadow 0.08s ease',
+            }}
             onMouseEnter={(e) => {
               playArcadeSfx('hover', 0.1);
               e.currentTarget.style.transform = 'translateY(-2px)';
