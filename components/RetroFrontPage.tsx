@@ -95,9 +95,14 @@ export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
         body: JSON.stringify({ passcode: clean }),
       });
 
-      const data = await res.json();
+      let data: any = null;
+      try {
+        data = await res.json();
+      } catch {
+        // Body was not JSON (e.g. serverless 500 error page)
+      }
 
-      if (res.ok && data.success) {
+      if (res.ok && data?.success) {
         soundSfx('success');
         setIsSuccess(true);
         setErrorMsg('');
@@ -108,13 +113,16 @@ export default function RetroFrontPage({ onEnter }: RetroFrontPageProps) {
       } else {
         soundSfx('error');
         setShake(true);
-        setErrorMsg(data.error || 'ACCESS DENIED: INVALID EXECUTIVE PASSCODE');
+        const fallbackMsg = res.status >= 500
+          ? `SERVER ERROR (${res.status}). CHECK LOGS.`
+          : 'ACCESS DENIED: INVALID EXECUTIVE PASSCODE';
+        setErrorMsg(data?.error || fallbackMsg);
         setTimeout(() => setShake(false), 500);
       }
     } catch {
       soundSfx('error');
       setShake(true);
-      setErrorMsg('CONNECTION ERROR. RETRY.');
+      setErrorMsg('NETWORK ERROR. RETRY.');
       setTimeout(() => setShake(false), 500);
     } finally {
       setIsSubmitting(false);

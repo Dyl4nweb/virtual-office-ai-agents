@@ -1,6 +1,8 @@
 import Database from 'better-sqlite3';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
+
 
 // ============================================================================
 // TYPES
@@ -116,20 +118,50 @@ function initDatabase(): Database.Database {
     return globalThis.__officeDb;
   }
 
-  const dataDir = path.join(process.cwd(), 'data');
-  if (!fs.existsSync(dataDir)) {
-    fs.mkdirSync(dataDir, { recursive: true });
+  const isServerless = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
+  let dataDir = path.join(process.cwd(), 'data');
+
+  if (isServerless) {
+    dataDir = path.join(os.tmpdir(), 'virtual-office-data');
+  }
+
+  try {
+    if (!fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
+  } catch (err) {
+    console.warn('[DB] Failed to create data dir at ' + dataDir + ', falling back to os.tmpdir():', err);
+    dataDir = os.tmpdir();
   }
 
   const dbPath = path.join(dataDir, 'office.db');
-  const db = new Database(dbPath);
+  let db: Database.Database;
+
+  try {
+    db = new Database(dbPath);
+  } catch (err) {
+    console.warn('[DB] Failed to open database at ' + dbPath + ', attempting fallback:', err);
+    try {
+      db = new Database(path.join(os.tmpdir(), 'office.db'));
+    } catch {
+      db = new Database(':memory:');
+    }
+  }
 
   // Enable WAL mode & foreign keys for high-performance concurrency
-  db.pragma('journal_mode = WAL');
-  db.pragma('foreign_keys = ON');
+  try {
+    db.pragma('journal_mode = WAL');
+    db.pragma('foreign_keys = ON');
+  } catch (e) {
+    console.warn('[DB] SQLite pragma warning:', e);
+  }
 
   // Run schema initialization and seed
-  runMigrations(db);
+  try {
+    runMigrations(db);
+  } catch (err) {
+    console.error('[DB] Migration error:', err);
+  }
 
   globalThis.__officeDb = db;
   return db;

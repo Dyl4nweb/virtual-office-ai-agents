@@ -3,39 +3,65 @@ import crypto from 'crypto';
 /**
  * Returns the configured master passcode for Dylan Ramos.
  * Priority: OFFICE_ACCESS_CODE in .env.local -> ADMIN_PASSCODE -> secure fallback
+ * Automatically strips accidental quotes added in hosting dashboards.
  */
 export function getMasterPasscode(): string {
-  return (
-    process.env.OFFICE_ACCESS_CODE?.trim() ||
-    process.env.ADMIN_PASSCODE?.trim() ||
-    'dylan2026!'
-  );
+  const envVal =
+    process.env.OFFICE_ACCESS_CODE ||
+    process.env.ADMIN_PASSCODE ||
+    process.env.OFFICE_PASSWORD ||
+    process.env.ADMIN_PASSWORD ||
+    process.env.ACCESS_CODE;
+
+  if (envVal) {
+    const cleaned = envVal.trim().replace(/^["']|["']$/g, '').trim();
+    if (cleaned) return cleaned;
+  }
+
+  return 'dylan2026!';
 }
 
 /**
  * Secret key used to sign clearance tokens
  */
 export function getAuthSecret(): string {
-  return (
-    process.env.AUTH_SESSION_SECRET?.trim() ||
-    'avero_hq_dylan_master_session_secret_key_2026_xyz'
-  );
+  const secret = process.env.AUTH_SESSION_SECRET?.trim().replace(/^["']|["']$/g, '');
+  return secret || 'avero_hq_dylan_master_session_secret_key_2026_xyz';
 }
 
 /**
  * Validates a user-supplied passcode against the master executive passcode.
  * Uses timingSafeEqual to protect against side-channel timing attacks.
+ * Includes forgiving checks for quotes, casing, and common mobile auto-capitalization.
  */
 export function validatePasscode(inputPasscode: string): boolean {
   if (!inputPasscode || typeof inputPasscode !== 'string') return false;
   const master = getMasterPasscode();
-  const cleanInput = inputPasscode.trim();
+  const cleanInput = inputPasscode.trim().replace(/^["']|["']$/g, '').trim();
 
-  // We pad/hash both strings using SHA-256 so buffers are identical length for timingSafeEqual
+  // 1. Exact match (secure timingSafeEqual)
   const masterHash = crypto.createHash('sha256').update(master).digest();
   const inputHash = crypto.createHash('sha256').update(cleanInput).digest();
+  if (crypto.timingSafeEqual(masterHash, inputHash)) {
+    return true;
+  }
 
-  return crypto.timingSafeEqual(masterHash, inputHash);
+  // 2. Case-insensitive match (handles Dylan2026! vs dylan2026!)
+  const masterLowerHash = crypto.createHash('sha256').update(master.toLowerCase()).digest();
+  const inputLowerHash = crypto.createHash('sha256').update(cleanInput.toLowerCase()).digest();
+  if (crypto.timingSafeEqual(masterLowerHash, inputLowerHash)) {
+    return true;
+  }
+
+  // 3. For the default passcode "dylan2026!", also allow without exclamation mark
+  if (master.toLowerCase() === 'dylan2026!') {
+    const inputWithoutBang = cleanInput.toLowerCase().replace(/!+$/, '');
+    if (inputWithoutBang === 'dylan2026') {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 /**

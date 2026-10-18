@@ -21,3 +21,5 @@ Thumbs.db
 # Build & scratch cache
 tsconfig.tsbuildinfo
 scratch/
+
+.vercel
